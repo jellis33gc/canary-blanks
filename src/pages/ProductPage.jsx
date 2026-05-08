@@ -1,0 +1,235 @@
+import { useState, useEffect } from "react";
+import { useParams, Link } from "react-router-dom";
+import { base44 } from "@/api/base44Client";
+import Navbar from "@/components/layout/Navbar";
+import Footer from "@/components/layout/Footer";
+import ProductCard from "@/components/shop/ProductCard";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Heart, ShoppingCart, Star, Minus, Plus, Share2, ChevronRight } from "lucide-react";
+import useCartStore from "@/lib/cartStore";
+import { motion } from "framer-motion";
+
+export default function ProductPage() {
+  const { id } = useParams();
+  const [product, setProduct] = useState(null);
+  const [related, setRelated] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedImage, setSelectedImage] = useState(0);
+  const [quantity, setQuantity] = useState(1);
+  const [selectedVariants, setSelectedVariants] = useState({});
+  const [customOptions, setCustomOptions] = useState({});
+  const [wishlisted, setWishlisted] = useState(false);
+  const [profile, setProfile] = useState(null);
+  const [added, setAdded] = useState(false);
+  const { addItem } = useCartStore();
+
+  useEffect(() => {
+    setLoading(true);
+    // Try by slug first, then by id
+    base44.entities.Product.filter({ slug: id, is_active: true }).then(prods => {
+      const prod = prods[0];
+      if (prod) {
+        setProduct(prod);
+        loadRelated(prod.category_id);
+      } else {
+        base44.entities.Product.filter({ is_active: true }).then(all => {
+          const found = all.find(p => p.id === id);
+          if (found) { setProduct(found); loadRelated(found.category_id); }
+        });
+      }
+      setLoading(false);
+    });
+
+    base44.auth.me().then(user => {
+      if (user) {
+        base44.entities.CustomerProfile.filter({ user_id: user.id }).then(p => {
+          if (p[0]) { setProfile(p[0]); setWishlisted((p[0].wishlist || []).includes(id)); }
+        });
+      }
+    }).catch(() => {});
+  }, [id]);
+
+  const loadRelated = (catId) => {
+    if (!catId) return;
+    base44.entities.Product.filter({ category_id: catId, is_active: true }, "-created_date", 4).then(setRelated);
+  };
+
+  const handleAddToCart = () => {
+    if (!product) return;
+    const variantStr = Object.values(selectedVariants).join(" / ");
+    addItem(product, quantity, variantStr, customOptions);
+    setAdded(true);
+    setTimeout(() => setAdded(false), 2000);
+  };
+
+  const handleWishlist = async () => {
+    if (!profile) return;
+    const newWishlisted = !wishlisted;
+    setWishlisted(newWishlisted);
+    const wl = profile.wishlist || [];
+    const newWl = newWishlisted ? [...wl, product.id] : wl.filter(id => id !== product.id);
+    await base44.entities.CustomerProfile.update(profile.id, { wishlist: newWl });
+  };
+
+  if (loading) return <div className="min-h-screen flex items-center justify-center"><div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin" /></div>;
+  if (!product) return <div className="min-h-screen flex items-center justify-center text-xl">Product not found 😢</div>;
+
+  const discount = product.compare_at_price > product.price ? Math.round((1 - product.price / product.compare_at_price) * 100) : 0;
+  const images = product.images?.length > 0 ? product.images : [""];
+
+  return (
+    <div className="min-h-screen bg-background">
+      <Navbar />
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Breadcrumb */}
+        <div className="flex items-center gap-2 text-sm text-muted-foreground mb-6">
+          <Link to="/" className="hover:text-primary">Home</Link>
+          <ChevronRight className="w-4 h-4" />
+          <Link to="/shop" className="hover:text-primary">Shop</Link>
+          {product.category_name && (<><ChevronRight className="w-4 h-4" /><Link to={`/shop?category=${product.category_id}`} className="hover:text-primary">{product.category_name}</Link></>)}
+          <ChevronRight className="w-4 h-4" />
+          <span className="text-foreground font-medium">{product.name}</span>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 mb-16">
+          {/* Images */}
+          <div className="space-y-3">
+            <div className="aspect-square rounded-2xl overflow-hidden bg-muted border border-border">
+              {images[selectedImage] ? (
+                <img src={images[selectedImage]} alt={product.name} className="w-full h-full object-cover" />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center text-8xl">🎂</div>
+              )}
+            </div>
+            {images.length > 1 && (
+              <div className="flex gap-2 overflow-x-auto">
+                {images.map((img, i) => (
+                  <button key={i} onClick={() => setSelectedImage(i)} className={`w-16 h-16 rounded-xl overflow-hidden border-2 transition-all shrink-0 ${selectedImage === i ? 'border-primary' : 'border-border'}`}>
+                    {img ? <img src={img} alt="" className="w-full h-full object-cover" /> : <span>🎂</span>}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Details */}
+          <div>
+            <div className="flex items-start justify-between mb-2">
+              <div>
+                {product.category_name && <Badge variant="secondary" className="mb-2">{product.category_name}</Badge>}
+                <h1 className="text-2xl md:text-3xl font-bold">{product.name}</h1>
+              </div>
+              <button onClick={handleWishlist} className={`p-2 rounded-full border-2 transition-all ${wishlisted ? 'border-primary bg-primary/10 text-primary' : 'border-border hover:border-primary'}`}>
+                <Heart className={`w-5 h-5 ${wishlisted ? 'fill-current' : ''}`} />
+              </button>
+            </div>
+
+            <div className="flex items-baseline gap-3 mb-4">
+              <span className="text-3xl font-bold text-primary">£{product.price?.toFixed(2)}</span>
+              {product.compare_at_price > product.price && (
+                <span className="text-lg text-muted-foreground line-through">£{product.compare_at_price?.toFixed(2)}</span>
+              )}
+              {discount > 0 && <Badge className="bg-primary text-white">Save {discount}%</Badge>}
+            </div>
+
+            {product.short_description && <p className="text-muted-foreground mb-5 leading-relaxed">{product.short_description}</p>}
+
+            {/* Variants */}
+            {product.variants?.map(v => (
+              <div key={v.name} className="mb-4">
+                <label className="font-semibold text-sm mb-2 block">{v.name}</label>
+                <div className="flex flex-wrap gap-2">
+                  {v.options?.map(opt => (
+                    <button key={opt} onClick={() => setSelectedVariants({ ...selectedVariants, [v.name]: opt })}
+                      className={`px-4 py-2 rounded-full text-sm border-2 font-medium transition-all ${selectedVariants[v.name] === opt ? 'border-primary bg-primary/10 text-primary' : 'border-border hover:border-primary'}`}>
+                      {opt}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ))}
+
+            {/* Custom options */}
+            {product.custom_options?.map(opt => (
+              <div key={opt.label} className="mb-4">
+                <label className="font-semibold text-sm mb-2 block">{opt.label} {opt.required && <span className="text-primary">*</span>}</label>
+                {opt.type === 'text' && <Input placeholder={`Enter ${opt.label}`} onChange={e => setCustomOptions({ ...customOptions, [opt.label]: e.target.value })} />}
+                {opt.type === 'select' && (
+                  <Select onValueChange={val => setCustomOptions({ ...customOptions, [opt.label]: val })}>
+                    <SelectTrigger><SelectValue placeholder={`Choose ${opt.label}`} /></SelectTrigger>
+                    <SelectContent>{opt.options?.map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}</SelectContent>
+                  </Select>
+                )}
+              </div>
+            ))}
+
+            {/* Quantity & Add to cart */}
+            <div className="flex items-center gap-4 mb-6">
+              <div className="flex items-center border-2 border-border rounded-full">
+                <button onClick={() => setQuantity(Math.max(1, quantity - 1))} className="p-2 hover:text-primary transition-colors"><Minus className="w-4 h-4" /></button>
+                <span className="w-10 text-center font-bold">{quantity}</span>
+                <button onClick={() => setQuantity(quantity + 1)} className="p-2 hover:text-primary transition-colors"><Plus className="w-4 h-4" /></button>
+              </div>
+              <Button onClick={handleAddToCart} size="lg" className={`flex-1 rounded-full font-bold transition-all ${added ? 'bg-green-500 hover:bg-green-500' : 'bg-primary hover:bg-primary/90'} text-white`}>
+                <ShoppingCart className="w-5 h-5 mr-2" />
+                {added ? '✓ Added to Cart!' : 'Add to Cart'}
+              </Button>
+            </div>
+
+            {/* Stock */}
+            {product.stock_quantity !== undefined && (
+              <p className="text-sm text-muted-foreground mb-4">
+                {product.stock_quantity > 10 ? '✅ In Stock' : product.stock_quantity > 0 ? `⚠️ Only ${product.stock_quantity} left!` : '❌ Out of Stock'}
+              </p>
+            )}
+
+            <p className="text-xs text-muted-foreground">🏆 Earn {Math.floor(product.price)} loyalty points with this purchase</p>
+          </div>
+        </div>
+
+        {/* Tabs */}
+        <div className="mb-16">
+          <Tabs defaultValue="description">
+            <TabsList className="rounded-full bg-muted">
+              <TabsTrigger value="description" className="rounded-full">Description</TabsTrigger>
+              {product.tabs?.map(tab => (
+                <TabsTrigger key={tab.title} value={tab.title} className="rounded-full">{tab.title}</TabsTrigger>
+              ))}
+              <TabsTrigger value="shipping" className="rounded-full">Shipping</TabsTrigger>
+            </TabsList>
+            <TabsContent value="description" className="mt-6 prose max-w-none">
+              <div className="bg-muted/50 rounded-2xl p-6" dangerouslySetInnerHTML={{ __html: product.description || product.short_description || '<p>No description available.</p>' }} />
+            </TabsContent>
+            {product.tabs?.map(tab => (
+              <TabsContent key={tab.title} value={tab.title} className="mt-6">
+                <div className="bg-muted/50 rounded-2xl p-6" dangerouslySetInnerHTML={{ __html: tab.content }} />
+              </TabsContent>
+            ))}
+            <TabsContent value="shipping" className="mt-6">
+              <div className="bg-muted/50 rounded-2xl p-6 space-y-3">
+                <p>🚚 <strong>Standard Delivery:</strong> 3-5 working days — FREE over £50</p>
+                <p>⚡ <strong>Express Delivery:</strong> 1-2 working days — £5.99</p>
+                <p>🎂 <strong>Custom Cakes:</strong> Please allow 7-14 days for custom orders</p>
+              </div>
+            </TabsContent>
+          </Tabs>
+        </div>
+
+        {/* Related products */}
+        {related.length > 0 && (
+          <div>
+            <h2 className="font-brand text-2xl mb-6">You might also like</h2>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              {related.filter(r => r.id !== product.id).slice(0, 4).map(p => <ProductCard key={p.id} product={p} />)}
+            </div>
+          </div>
+        )}
+      </div>
+      <Footer />
+    </div>
+  );
+}

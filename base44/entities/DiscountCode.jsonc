@@ -1,0 +1,52 @@
+{
+  "name": "DiscountCode",
+  "type": "object",
+  "properties": {
+    "code": {
+      "type": "string"
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "percentage",
+        "fixed"
+      ]
+    },
+    "value": {
+      "type": "number"
+    },
+    "min_order_value": {
+      "type": "number"
+    },
+    "usage_limit": {
+      "type": "number"
+    },
+    "used_count": {
+      "type": "number",
+      "default": 0
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true
+    },
+    "expires_at": {
+      "type": "string",
+      "format": "date"
+    },
+    "applicable_categories": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "one_per_customer": {
+      "type": "boolean",
+      "default": false
+    }
+  },
+  "required": [
+    "code",
+    "type",
+    "value"
+  ]
+}

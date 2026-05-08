@@ -1,0 +1,37 @@
+{
+  "name": "HomepageBlock",
+  "type": "object",
+  "properties": {
+    "type": {
+      "type": "string",
+      "enum": [
+        "hero",
+        "featured_products",
+        "sale_products",
+        "category_grid",
+        "banner",
+        "testimonials",
+        "newsletter"
+      ]
+    },
+    "title": {
+      "type": "string"
+    },
+    "subtitle": {
+      "type": "string"
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true
+    },
+    "sort_order": {
+      "type": "number"
+    },
+    "config": {
+      "type": "object"
+    }
+  },
+  "required": [
+    "type"
+  ]
+}

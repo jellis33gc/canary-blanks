@@ -1,0 +1,33 @@
+{
+  "name": "LoyaltyTransaction",
+  "type": "object",
+  "properties": {
+    "customer_id": {
+      "type": "string"
+    },
+    "customer_email": {
+      "type": "string"
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "earn",
+        "redeem"
+      ]
+    },
+    "points": {
+      "type": "number"
+    },
+    "order_id": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "customer_id",
+    "type",
+    "points"
+  ]
+}
