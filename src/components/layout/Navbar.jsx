@@ -5,7 +5,7 @@ import { base44 } from "@/api/base44Client";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import useCartStore from "@/lib/cartStore";
+import useCartStore from "@/lib/cartStore.jsx";
 
 export default function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);

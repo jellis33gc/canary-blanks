@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { Heart, ShoppingCart, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import useCartStore from "@/lib/cartStore";
+import useCartStore from "@/lib/cartStore.jsx";
 import { motion } from "framer-motion";
 
 export default function ProductCard({ product, wishlist = [], onWishlistToggle }) {

@@ -10,7 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Heart, ShoppingCart, Star, Minus, Plus, Share2, ChevronRight } from "lucide-react";
-import useCartStore from "@/lib/cartStore";
+import useCartStore from "@/lib/cartStore.jsx";
 import { motion } from "framer-motion";
 
 export default function ProductPage() {

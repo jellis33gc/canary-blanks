@@ -5,7 +5,7 @@ import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import PageNotFound from './lib/PageNotFound';
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
-import { CartProvider } from '@/lib/cartStore';
+import { CartProvider } from '@/lib/cartStore.jsx';
 
 // Public pages
 import Home from './pages/Home';
