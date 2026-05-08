@@ -26,6 +26,7 @@ import AdminCustomers from './pages/admin/Customers';
 import AdminCategories from './pages/admin/Categories';
 import AdminDiscounts from './pages/admin/Discounts';
 import HomepageBuilder from './pages/admin/HomepageBuilder';
+import AdminPromoBanners from './pages/admin/PromoBanners';
 import AdminSettings from './pages/admin/Settings';
 
 const AuthenticatedApp = () => {
@@ -69,6 +70,7 @@ const AuthenticatedApp = () => {
         <Route path="categories" element={<AdminCategories />} />
         <Route path="discounts" element={<AdminDiscounts />} />
         <Route path="homepage" element={<HomepageBuilder />} />
+        <Route path="promo-banners" element={<AdminPromoBanners />} />
         <Route path="settings" element={<AdminSettings />} />
       </Route>
 

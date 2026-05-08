@@ -1,0 +1,54 @@
+{
+  "name": "PromoBanner",
+  "type": "object",
+  "properties": {
+    "title": {
+      "type": "string"
+    },
+    "subtitle": {
+      "type": "string"
+    },
+    "badge_text": {
+      "type": "string"
+    },
+    "cta_label": {
+      "type": "string"
+    },
+    "cta_url": {
+      "type": "string"
+    },
+    "style": {
+      "type": "string",
+      "enum": [
+        "pink",
+        "yellow",
+        "purple",
+        "mint",
+        "dark"
+      ],
+      "default": "pink"
+    },
+    "emoji": {
+      "type": "string"
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true
+    },
+    "starts_at": {
+      "type": "string",
+      "format": "date"
+    },
+    "ends_at": {
+      "type": "string",
+      "format": "date"
+    },
+    "sort_order": {
+      "type": "number",
+      "default": 0
+    }
+  },
+  "required": [
+    "title"
+  ]
+}

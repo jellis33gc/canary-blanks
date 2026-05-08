@@ -7,6 +7,7 @@ import ProductCard from "@/components/shop/ProductCard";
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
 import { ArrowRight, Star, Truck, Shield, RefreshCw, Gift } from "lucide-react";
+import PromoBanners from "@/components/home/PromoBanners";
 
 export default function Home() {
   const [products, setProducts] = useState([]);
@@ -38,6 +39,8 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
+
+      <PromoBanners />
 
       {/* Hero Section */}
       <section className="relative overflow-hidden gradient-fun text-white">
