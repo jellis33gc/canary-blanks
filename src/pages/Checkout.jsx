@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Slider } from "@/components/ui/slider";
-import { CreditCard, Lock, Gift } from "lucide-react";
+import { CreditCard, Lock, Gift, ExternalLink } from "lucide-react";
 
 export default function Checkout() {
   const location = useLocation();
@@ -97,9 +97,26 @@ export default function Checkout() {
       }
     }
 
+    // Create SumUp checkout and redirect
+    const returnUrl = `${window.location.origin}/order-confirmation/${order.id}`;
+    const sumupRes = await base44.functions.invoke('sumupCheckout', {
+      amount: total,
+      currency: 'GBP',
+      description: `Love the Cake — ${orderNum}`,
+      orderId: order.id,
+      returnUrl,
+    });
+
     clearCart();
     setLoading(false);
-    navigate(`/order-confirmation/${order.id}`);
+
+    if (sumupRes.data?.checkoutUrl) {
+      await base44.entities.Order.update(order.id, { sumup_checkout_id: sumupRes.data.checkoutId });
+      window.location.href = sumupRes.data.checkoutUrl;
+    } else {
+      // Fallback: go to confirmation if SumUp fails
+      navigate(`/order-confirmation/${order.id}`);
+    }
   };
 
   return (
@@ -211,10 +228,10 @@ export default function Checkout() {
                 🏆 You'll earn <strong>{pointsEarnable} points</strong> from this order!
               </div>
               <Button type="submit" size="lg" disabled={loading || items.length === 0} className="w-full bg-primary text-white rounded-full font-bold">
-                {loading ? "Processing..." : <><Lock className="w-4 h-4 mr-2" />Place Order — £{total.toFixed(2)}</>}
+                {loading ? "Redirecting to payment..." : <><CreditCard className="w-4 h-4 mr-2" />Pay £{total.toFixed(2)} with SumUp</>}
               </Button>
               <p className="text-xs text-center text-muted-foreground flex items-center justify-center gap-1">
-                <Lock className="w-3 h-3" /> Secured & encrypted checkout
+                <Lock className="w-3 h-3" /> Secure payment via SumUp
               </p>
             </div>
           </div>
