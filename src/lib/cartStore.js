@@ -1,62 +1,60 @@
-import { create } from 'zustand';
+import { createContext, useContext, useState, useCallback } from "react";
 
-const useCartStore = create((set, get) => ({
-  items: JSON.parse(localStorage.getItem('ltc_cart') || '[]'),
-  
-  addItem: (product, quantity = 1, variant = '', customOptions = {}) => {
-    const items = get().items;
-    const key = `${product.id}-${variant}`;
-    const existing = items.find(i => `${i.product_id}-${i.variant}` === key);
-    
-    let newItems;
-    if (existing) {
-      newItems = items.map(i => 
-        `${i.product_id}-${i.variant}` === key 
-          ? { ...i, quantity: i.quantity + quantity }
-          : i
-      );
-    } else {
-      newItems = [...items, {
-        product_id: product.id,
-        product_name: product.name,
-        variant,
-        quantity,
-        price: product.price,
-        image: product.images?.[0] || '',
-        custom_options: customOptions
-      }];
-    }
-    localStorage.setItem('ltc_cart', JSON.stringify(newItems));
-    set({ items: newItems });
-  },
+const CartContext = createContext(null);
 
-  removeItem: (productId, variant = '') => {
-    const newItems = get().items.filter(i => !(i.product_id === productId && i.variant === variant));
-    localStorage.setItem('ltc_cart', JSON.stringify(newItems));
-    set({ items: newItems });
-  },
+const loadCart = () => {
+  try { return JSON.parse(localStorage.getItem('ltc_cart') || '[]'); } catch { return []; }
+};
 
-  updateQuantity: (productId, variant = '', quantity) => {
-    if (quantity <= 0) { get().removeItem(productId, variant); return; }
-    const newItems = get().items.map(i => 
-      i.product_id === productId && i.variant === variant ? { ...i, quantity } : i
-    );
-    localStorage.setItem('ltc_cart', JSON.stringify(newItems));
-    set({ items: newItems });
-  },
+const saveCart = (items) => localStorage.setItem('ltc_cart', JSON.stringify(items));
 
-  clearCart: () => {
-    localStorage.setItem('ltc_cart', '[]');
-    set({ items: [] });
-  },
+export function CartProvider({ children }) {
+  const [items, setItems] = useState(loadCart);
 
-  getSubtotal: () => {
-    return get().items.reduce((sum, i) => sum + i.price * i.quantity, 0);
-  },
+  const addItem = useCallback((product, quantity = 1, variant = '', customOptions = {}) => {
+    setItems(prev => {
+      const key = `${product.id}-${variant}`;
+      const existing = prev.find(i => `${i.product_id}-${i.variant}` === key);
+      const newItems = existing
+        ? prev.map(i => `${i.product_id}-${i.variant}` === key ? { ...i, quantity: i.quantity + quantity } : i)
+        : [...prev, { product_id: product.id, product_name: product.name, variant, quantity, price: product.price, image: product.images?.[0] || '', custom_options: customOptions }];
+      saveCart(newItems);
+      return newItems;
+    });
+  }, []);
 
-  getTotalItems: () => {
-    return get().items.reduce((sum, i) => sum + i.quantity, 0);
-  }
-}));
+  const removeItem = useCallback((productId, variant = '') => {
+    setItems(prev => {
+      const newItems = prev.filter(i => !(i.product_id === productId && i.variant === variant));
+      saveCart(newItems);
+      return newItems;
+    });
+  }, []);
 
-export default useCartStore;
+  const updateQuantity = useCallback((productId, variant = '', quantity) => {
+    if (quantity <= 0) { removeItem(productId, variant); return; }
+    setItems(prev => {
+      const newItems = prev.map(i => i.product_id === productId && i.variant === variant ? { ...i, quantity } : i);
+      saveCart(newItems);
+      return newItems;
+    });
+  }, [removeItem]);
+
+  const clearCart = useCallback(() => {
+    saveCart([]);
+    setItems([]);
+  }, []);
+
+  const getSubtotal = useCallback(() => items.reduce((sum, i) => sum + i.price * i.quantity, 0), [items]);
+  const getTotalItems = useCallback(() => items.reduce((sum, i) => sum + i.quantity, 0), [items]);
+
+  return (
+    <CartContext.Provider value={{ items, addItem, removeItem, updateQuantity, clearCart, getSubtotal, getTotalItems }}>
+      {children}
+    </CartContext.Provider>
+  );
+}
+
+export default function useCartStore() {
+  return useContext(CartContext);
+}

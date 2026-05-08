@@ -15,7 +15,6 @@ const navItems = [
   { path: "/admin/categories", icon: Grid3X3, label: "Categories" },
   { path: "/admin/discounts", icon: Tag, label: "Discount Codes" },
   { path: "/admin/homepage", icon: Home, label: "Homepage Builder" },
-  { path: "/admin/loyalty", icon: Star, label: "Loyalty" },
   { path: "/admin/settings", icon: Settings, label: "Settings" },
 ];
 
