@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { User, Package, Heart, Star, LogOut, Edit3, Save } from "lucide-react";
 import LoyaltyTracker from "@/components/account/LoyaltyTracker";
+import OrderHistory from "@/components/account/OrderHistory";
 import { format } from "date-fns";
 
 export default function Account() {
@@ -133,33 +134,7 @@ export default function Account() {
 
           {/* Orders */}
           <TabsContent value="orders">
-            <div className="space-y-4">
-              {orders.length === 0 ? (
-                <div className="text-center py-12 text-muted-foreground">
-                  <Package className="w-12 h-12 mx-auto mb-3 opacity-40" />
-                  <p>No orders yet! <Link to="/shop" className="text-primary underline">Start shopping</Link></p>
-                </div>
-              ) : orders.map(order => (
-                <div key={order.id} className="bg-card border border-border rounded-2xl p-5">
-                  <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
-                    <div>
-                      <p className="font-bold">{order.order_number}</p>
-                      <p className="text-sm text-muted-foreground">{format(new Date(order.created_date), "dd MMM yyyy")}</p>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <Badge className={statusColors[order.status] || "bg-gray-100"}>{order.status}</Badge>
-                      <p className="font-bold text-primary">£{order.total?.toFixed(2)}</p>
-                    </div>
-                  </div>
-                  <div className="space-y-1">
-                    {order.items?.slice(0, 3).map((item, i) => (
-                      <p key={i} className="text-sm text-muted-foreground">• {item.product_name} x{item.quantity}</p>
-                    ))}
-                    {order.items?.length > 3 && <p className="text-xs text-muted-foreground">+{order.items.length - 3} more items</p>}
-                  </div>
-                </div>
-              ))}
-            </div>
+            <OrderHistory orders={orders} />
           </TabsContent>
 
           {/* Wishlist */}
