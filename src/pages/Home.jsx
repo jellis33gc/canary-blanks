@@ -6,8 +6,9 @@ import Footer from "@/components/layout/Footer";
 import ProductCard from "@/components/shop/ProductCard";
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
-import { ArrowRight, Star, Truck, Shield, RefreshCw, Gift } from "lucide-react";
+import { Star, Truck, Shield, Gift } from "lucide-react";
 import PromoBanners from "@/components/home/PromoBanners";
+import HeroSlider from "@/components/home/HeroSlider";
 
 export default function Home() {
   const [products, setProducts] = useState([]);
@@ -41,34 +42,7 @@ export default function Home() {
       <Navbar />
 
       <PromoBanners />
-
-      {/* Hero Section */}
-      <section className="relative overflow-hidden gradient-fun text-white">
-        <div className="absolute inset-0 opacity-10">
-          <div className="absolute top-10 left-10 text-8xl">🎂</div>
-          <div className="absolute top-20 right-20 text-6xl">🧁</div>
-          <div className="absolute bottom-10 left-1/4 text-5xl">🎀</div>
-          <div className="absolute bottom-20 right-1/3 text-7xl">🍰</div>
-        </div>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 md:py-32 relative z-10">
-          <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }} className="max-w-2xl">
-            <h1 className="font-brand text-5xl md:text-7xl mb-4 leading-tight drop-shadow-lg">
-              {heroBlock?.title || "Bake Magic Happen!"}
-            </h1>
-            <p className="text-xl md:text-2xl mb-8 opacity-90 font-medium">
-              {heroBlock?.subtitle || "Custom cakes, cake toppers, decorations & everything you need to create your perfect celebration"}
-            </p>
-            <div className="flex flex-wrap gap-4">
-              <Button asChild size="lg" className="bg-white text-primary hover:bg-white/90 font-bold rounded-full px-8 shadow-lg">
-                <Link to="/shop">Shop Now <ArrowRight className="ml-2 w-5 h-5" /></Link>
-              </Button>
-              <Button asChild size="lg" variant="outline" className="border-white text-white hover:bg-white/20 font-bold rounded-full px-8">
-                <Link to="/shop?category=custom-cakes">Custom Cakes</Link>
-              </Button>
-            </div>
-          </motion.div>
-        </div>
-      </section>
+      <HeroSlider />
 
       {/* Trust badges */}
       <section className="border-b border-border bg-muted/50">
