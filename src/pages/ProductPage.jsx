@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Heart, ShoppingCart, Star, Minus, Plus, Share2, ChevronRight } from "lucide-react";
 import useCartStore from "@/lib/cartStore.jsx";
 import { motion } from "framer-motion";
+import ProductReviews from "@/components/product/ProductReviews";
 
 export default function ProductPage() {
   const { id } = useParams();
@@ -219,6 +220,7 @@ export default function ProductPage() {
                 <TabsTrigger key={tab.title} value={tab.title} className="rounded-full">{tab.title}</TabsTrigger>
               ))}
               <TabsTrigger value="shipping" className="rounded-full">Shipping</TabsTrigger>
+              <TabsTrigger value="reviews" className="rounded-full">Reviews</TabsTrigger>
             </TabsList>
             <TabsContent value="description" className="mt-6 prose max-w-none">
               <div className="bg-muted/50 rounded-2xl p-6" dangerouslySetInnerHTML={{ __html: product.description || product.short_description || '<p>No description available.</p>' }} />
@@ -233,6 +235,11 @@ export default function ProductPage() {
                 <p>🚚 <strong>Standard Delivery:</strong> 3-5 working days — FREE over £50</p>
                 <p>⚡ <strong>Express Delivery:</strong> 1-2 working days — £5.99</p>
                 <p>🎂 <strong>Custom Cakes:</strong> Please allow 7-14 days for custom orders</p>
+              </div>
+            </TabsContent>
+            <TabsContent value="reviews" className="mt-6">
+              <div className="bg-muted/50 rounded-2xl p-6">
+                <ProductReviews productId={product.id} productName={product.name} />
               </div>
             </TabsContent>
           </Tabs>
