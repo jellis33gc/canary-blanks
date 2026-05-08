@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { User, Package, Heart, Star, LogOut, Edit3, Save } from "lucide-react";
+import LoyaltyTracker from "@/components/account/LoyaltyTracker";
 import { format } from "date-fns";
 
 export default function Account() {
@@ -188,35 +189,11 @@ export default function Account() {
 
           {/* Loyalty */}
           <TabsContent value="loyalty">
-            <div className="space-y-4">
-              <div className="gradient-fun text-white rounded-2xl p-6 text-center">
-                <div className="text-5xl font-brand mb-2">{profile?.loyalty_points || 0}</div>
-                <p className="text-lg font-medium opacity-90">Loyalty Points</p>
-                <p className="text-sm opacity-75">= £{((profile?.loyalty_points || 0) / 100).toFixed(2)} discount value</p>
-              </div>
-              <div className="bg-card border border-border rounded-2xl p-5">
-                <h3 className="font-bold mb-2">How it works</h3>
-                <ul className="text-sm text-muted-foreground space-y-1">
-                  <li>✅ Earn 1 point for every £1 spent</li>
-                  <li>🎁 Redeem 100 points = £1 discount</li>
-                  <li>⏳ Points never expire</li>
-                </ul>
-              </div>
-              <h3 className="font-bold">Points History</h3>
-              {loyaltyHistory.length === 0 ? (
-                <p className="text-muted-foreground text-sm">No transactions yet</p>
-              ) : loyaltyHistory.map(t => (
-                <div key={t.id} className="bg-card border border-border rounded-xl p-4 flex justify-between items-center">
-                  <div>
-                    <p className="font-medium text-sm">{t.description}</p>
-                    <p className="text-xs text-muted-foreground">{format(new Date(t.created_date), "dd MMM yyyy")}</p>
-                  </div>
-                  <p className={`font-bold ${t.type === 'earn' ? 'text-green-600' : 'text-red-500'}`}>
-                    {t.type === 'earn' ? '+' : ''}{t.points} pts
-                  </p>
-                </div>
-              ))}
-            </div>
+            <LoyaltyTracker
+              profile={profile}
+              loyaltyHistory={loyaltyHistory}
+              onPointsRedeemed={(newPoints) => setProfile(p => ({ ...p, loyalty_points: newPoints }))}
+            />
           </TabsContent>
         </Tabs>
       </div>
