@@ -17,6 +17,7 @@ export default function ProductPage() {
   const { id } = useParams();
   const [product, setProduct] = useState(null);
   const [related, setRelated] = useState([]);
+  const [complementary, setComplementary] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedImage, setSelectedImage] = useState(0);
   const [quantity, setQuantity] = useState(1);
@@ -34,11 +35,11 @@ export default function ProductPage() {
       const prod = prods[0];
       if (prod) {
         setProduct(prod);
-        loadRelated(prod.category_id);
+        loadRelated(prod.category_id, prod);
       } else {
         base44.entities.Product.filter({ is_active: true }).then(all => {
           const found = all.find(p => p.id === id);
-          if (found) { setProduct(found); loadRelated(found.category_id); }
+          if (found) { setProduct(found); loadRelated(found.category_id, found); }
         });
       }
       setLoading(false);
@@ -53,9 +54,27 @@ export default function ProductPage() {
     }).catch(() => {});
   }, [id]);
 
-  const loadRelated = (catId) => {
+  const loadRelated = (catId, currentProduct) => {
     if (!catId) return;
-    base44.entities.Product.filter({ category_id: catId, is_active: true }, "-created_date", 4).then(setRelated);
+    base44.entities.Product.filter({ category_id: catId, is_active: true }, "-created_date", 5).then(prods => {
+      setRelated(prods.filter(p => p.id !== currentProduct?.id).slice(0, 4));
+    });
+
+    // Load complementary items: toppers, decorations, sprinkles, etc.
+    const complementaryKeywords = ['topper', 'decoration', 'sprinkle', 'candle', 'edible', 'icing', 'fondant', 'ribbon', 'board', 'stand', 'box', 'wrap'];
+    base44.entities.Product.list('-is_featured', 50).then(all => {
+      const filtered = all.filter(p =>
+        p.id !== currentProduct?.id &&
+        p.category_id !== catId &&
+        p.is_active &&
+        complementaryKeywords.some(kw =>
+          p.name?.toLowerCase().includes(kw) ||
+          p.category_name?.toLowerCase().includes(kw) ||
+          (p.tags || []).some(t => t.toLowerCase().includes(kw))
+        )
+      );
+      setComplementary(filtered.slice(0, 4));
+    });
   };
 
   const handleAddToCart = () => {
@@ -219,12 +238,25 @@ export default function ProductPage() {
           </Tabs>
         </div>
 
+        {/* Complementary products */}
+        {complementary.length > 0 && (
+          <div className="mb-12">
+            <div className="flex items-center gap-3 mb-6">
+              <h2 className="font-brand text-2xl">Complete the Look 🎀</h2>
+              <Badge variant="secondary" className="text-xs">Perfect pairings</Badge>
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              {complementary.map(p => <ProductCard key={p.id} product={p} />)}
+            </div>
+          </div>
+        )}
+
         {/* Related products */}
         {related.length > 0 && (
           <div>
             <h2 className="font-brand text-2xl mb-6">You might also like</h2>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              {related.filter(r => r.id !== product.id).slice(0, 4).map(p => <ProductCard key={p.id} product={p} />)}
+              {related.map(p => <ProductCard key={p.id} product={p} />)}
             </div>
           </div>
         )}
