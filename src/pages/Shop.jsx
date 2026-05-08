@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
@@ -12,19 +12,28 @@ import { Badge } from "@/components/ui/badge";
 import { SlidersHorizontal, X } from "lucide-react";
 
 export default function Shop() {
-  const urlParams = new URLSearchParams(window.location.search);
+  const location = useLocation();
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filterOpen, setFilterOpen] = useState(false);
-  const [selectedCategory, setSelectedCategory] = useState(urlParams.get("category") || "");
+  const [selectedCategory, setSelectedCategory] = useState("");
   const [sortBy, setSortBy] = useState("newest");
   const [priceRange, setPriceRange] = useState([0, 500]);
-  const [showOnSale, setShowOnSale] = useState(urlParams.get("sale") === "true");
-  const [showFeatured, setShowFeatured] = useState(urlParams.get("featured") === "true");
-  const [searchQuery, setSearchQuery] = useState(urlParams.get("search") || "");
+  const [showOnSale, setShowOnSale] = useState(false);
+  const [showFeatured, setShowFeatured] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
   const [wishlist, setWishlist] = useState([]);
   const [profile, setProfile] = useState(null);
+
+  // Sync filters from URL whenever the URL changes
+  useEffect(() => {
+    const urlParams = new URLSearchParams(location.search);
+    setSelectedCategory(urlParams.get("category") || "");
+    setShowOnSale(urlParams.get("sale") === "true");
+    setShowFeatured(urlParams.get("featured") === "true");
+    setSearchQuery(urlParams.get("search") || "");
+  }, [location.search]);
 
   useEffect(() => {
     base44.entities.Category.filter({ is_active: true }, "sort_order").then(setCategories);
