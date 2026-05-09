@@ -69,7 +69,7 @@ export default function Home() {
       {showCategories && categories.length > 0 && (
         <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
           <h2 className="font-brand text-3xl text-center mb-10 text-gradient">Shop by Category</h2>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+          <div className="grid grid-cols-5 gap-3">
             {categories.map((item, i) => {
               let href = "/shop";
               if (item.type === "category" && item.category_id) {
