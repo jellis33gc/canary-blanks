@@ -66,11 +66,15 @@ export default function ProductFormModal({ product, categories, onSave, onClose 
     const combos = cartesian(filledValues);
     const existing = {};
     combinations.forEach(c => { existing[c.combo] = c; });
+    const baseSku = form.sku?.trim();
     const newCombinations = combos.map(vals => {
       const attrMap = {};
       filled.forEach((a, i) => { attrMap[a.name] = vals[i]; });
       const key = vals.join(" / ");
-      return existing[key] || { combo: key, attributes: attrMap, price: "", sku: "" };
+      if (existing[key]) return existing[key];
+      const suffix = vals.map(v => v.trim().split(/\s+/).map(w => w[0]?.toUpperCase() || "").join("")).join("");
+      const autoSku = baseSku ? `${baseSku}-${suffix}` : suffix;
+      return { combo: key, attributes: attrMap, price: "", sku: autoSku };
     });
     setCombinations(newCombinations);
     // Sync to form.variants
