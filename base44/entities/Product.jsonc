@@ -43,7 +43,19 @@
           "options": {
             "type": "array",
             "items": {
-              "type": "string"
+              "type": "object",
+              "properties": {
+                "label": {
+                  "type": "string"
+                },
+                "price_modifier": {
+                  "type": "number",
+                  "default": 0
+                }
+              },
+              "required": [
+                "label"
+              ]
             }
           }
         }

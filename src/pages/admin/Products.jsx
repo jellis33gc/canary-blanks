@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Search, Upload, Edit, Trash2, Eye, EyeOff, Star, Tag, Package } from "lucide-react";
+import { Plus, Search, Upload, Download, Edit, Trash2, Eye, EyeOff, Star, Package } from "lucide-react";
 import ProductFormModal from "@/components/admin/ProductFormModal";
 import { format } from "date-fns";
 
@@ -54,42 +54,92 @@ export default function AdminProducts() {
     if (!file) return;
     setImporting(true);
     const { file_url } = await base44.integrations.Core.UploadFile({ file });
+
+    // Extract all rows from the spreadsheet as flat objects
     const result = await base44.integrations.Core.ExtractDataFromUploadedFile({
       file_url,
       json_schema: {
         type: "object",
         properties: {
-          products: {
+          rows: {
             type: "array",
             items: {
               type: "object",
               properties: {
+                sku: { type: "string" },
                 name: { type: "string" },
                 price: { type: "number" },
+                compare_at_price: { type: "number" },
                 description: { type: "string" },
+                short_description: { type: "string" },
                 category_name: { type: "string" },
                 stock_quantity: { type: "number" },
-                sku: { type: "string" },
-                is_active: { type: "boolean" }
+                is_active: { type: "boolean" },
+                is_featured: { type: "boolean" },
+                is_on_sale: { type: "boolean" },
+                tags: { type: "string" },
+                images: { type: "string" },
+                variant_type_1: { type: "string" },
+                variant_option_1: { type: "string" },
+                variant_modifier_1: { type: "number" },
+                variant_type_2: { type: "string" },
+                variant_option_2: { type: "string" },
+                variant_modifier_2: { type: "number" },
+                variant_type_3: { type: "string" },
+                variant_option_3: { type: "string" },
+                variant_modifier_3: { type: "number" },
+                variant_type_4: { type: "string" },
+                variant_option_4: { type: "string" },
+                variant_modifier_4: { type: "number" },
+                variant_type_5: { type: "string" },
+                variant_option_5: { type: "string" },
+                variant_modifier_5: { type: "number" }
               }
             }
           }
         }
       }
     });
+
     if (result.status === "success") {
-      const items = Array.isArray(result.output) ? result.output : result.output?.products || [];
-      for (const item of items) {
-        const cat = categories.find(c => c.name.toLowerCase() === (item.category_name || "").toLowerCase());
-        await base44.entities.Product.create({ ...item, is_active: item.is_active ?? true, category_id: cat?.id, category_name: cat?.name });
+      const rows = Array.isArray(result.output) ? result.output : result.output?.rows || [];
+      const response = await base44.functions.invoke("importProducts", { rows, categories });
+      if (response.data?.success) {
+        await loadData();
+        alert(`Import complete! Created: ${response.data.created}, Updated: ${response.data.updated}${response.data.errors?.length ? `, Errors: ${response.data.errors.length}` : ''}`);
+      } else {
+        alert("Import failed: " + (response.data?.error || "Unknown error"));
       }
-      await loadData();
-      alert(`Imported ${items.length} products successfully!`);
     } else {
-      alert("Import failed: " + result.details);
+      alert("Could not read file: " + result.details);
     }
     setImporting(false);
     e.target.value = "";
+  };
+
+  const handleDownloadSample = () => {
+    const headers = [
+      "sku", "name", "price", "compare_at_price", "description", "short_description",
+      "category_name", "stock_quantity", "is_active", "is_featured", "is_on_sale",
+      "tags", "images",
+      "variant_type_1", "variant_option_1", "variant_modifier_1",
+      "variant_type_2", "variant_option_2", "variant_modifier_2",
+      "variant_type_3", "variant_option_3", "variant_modifier_3"
+    ];
+    const rows = [
+      ["CAKE001", "Vanilla Dream Cake", "45.00", "", "Delicious vanilla sponge with buttercream", "Classic vanilla cake", "Cakes", "10", "true", "true", "false", "bestseller,vanilla", "https://example.com/img.jpg", "Size", "6 inch", "0", "Size", "8 inch", "10", "Size", "10 inch", "20"],
+      ["CAKE001", "", "", "", "", "", "", "", "", "", "", "", "", "Flavour", "Vanilla", "0", "Flavour", "Chocolate", "0", "Flavour", "Lemon", "2", "", "", ""],
+      ["CAKE002", "Chocolate Fudge Cake", "50.00", "60.00", "Rich chocolate sponge", "Indulgent choc cake", "Cakes", "8", "true", "false", "true", "chocolate,sale", "", "Size", "6 inch", "0", "Size", "8 inch", "12", "", "", "", "", "", ""],
+      ["TOPPER001", "Happy Birthday Topper", "4.99", "", "Acrylic happy birthday topper", "Gold glitter topper", "Toppers", "50", "true", "false", "false", "topper,birthday", "", "Colour", "Gold", "0", "Colour", "Silver", "0", "Colour", "Rose Gold", "0.50", "", "", ""],
+    ];
+    const csv = [headers, ...rows].map(r => r.map(v => `"${v}"`).join(",")).join("\n");
+    const blob = new Blob([csv], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "product_import_sample.csv";
+    a.click();
+    URL.revokeObjectURL(url);
   };
 
   const handleSave = async (data) => {
@@ -118,6 +168,9 @@ export default function AdminProducts() {
         </div>
         <div className="flex gap-2">
           <input type="file" ref={fileRef} className="hidden" accept=".csv,.xlsx,.xls" onChange={handleImport} />
+          <Button variant="outline" className="rounded-full" onClick={handleDownloadSample}>
+            <Download className="w-4 h-4 mr-2" />Sample CSV
+          </Button>
           <Button variant="outline" className="rounded-full" onClick={() => fileRef.current?.click()} disabled={importing}>
             <Upload className="w-4 h-4 mr-2" />{importing ? "Importing..." : "Import CSV/Excel"}
           </Button>

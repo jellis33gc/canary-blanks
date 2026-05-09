@@ -81,7 +81,7 @@ export default function ProductPage() {
   const handleAddToCart = () => {
     if (!product) return;
     const variantStr = Object.values(selectedVariants).join(" / ");
-    addItem(product, quantity, variantStr, customOptions);
+    addItem({ ...product, price: displayPrice }, quantity, variantStr, customOptions);
     setAdded(true);
     setTimeout(() => setAdded(false), 2000);
   };
@@ -100,6 +100,14 @@ export default function ProductPage() {
 
   const discount = product.compare_at_price > product.price ? Math.round((1 - product.price / product.compare_at_price) * 100) : 0;
   const images = product.images?.length > 0 ? product.images : [""];
+
+  // Calculate price with variant modifiers
+  const priceModifier = Object.entries(selectedVariants).reduce((total, [variantName, selectedLabel]) => {
+    const variant = product.variants?.find(v => v.name === variantName);
+    const option = variant?.options?.find(o => (typeof o === 'object' ? o.label : o) === selectedLabel);
+    return total + (typeof option === 'object' ? (option.price_modifier || 0) : 0);
+  }, 0);
+  const displayPrice = (product.price || 0) + priceModifier;
 
   return (
     <div className="min-h-screen bg-background">
@@ -149,7 +157,7 @@ export default function ProductPage() {
             </div>
 
             <div className="flex items-baseline gap-3 mb-4">
-              <span className="text-3xl font-bold text-primary">£{product.price?.toFixed(2)}</span>
+              <span className="text-3xl font-bold text-primary">£{displayPrice.toFixed(2)}</span>
               {product.compare_at_price > product.price && (
                 <span className="text-lg text-muted-foreground line-through">£{product.compare_at_price?.toFixed(2)}</span>
               )}
@@ -163,12 +171,16 @@ export default function ProductPage() {
               <div key={v.name} className="mb-4">
                 <label className="font-semibold text-sm mb-2 block">{v.name}</label>
                 <div className="flex flex-wrap gap-2">
-                  {v.options?.map(opt => (
-                    <button key={opt} onClick={() => setSelectedVariants({ ...selectedVariants, [v.name]: opt })}
-                      className={`px-4 py-2 rounded-full text-sm border-2 font-medium transition-all ${selectedVariants[v.name] === opt ? 'border-primary bg-primary/10 text-primary' : 'border-border hover:border-primary'}`}>
-                      {opt}
-                    </button>
-                  ))}
+                  {v.options?.map(opt => {
+                    const label = typeof opt === 'object' ? opt.label : opt;
+                    const modifier = typeof opt === 'object' ? (opt.price_modifier || 0) : 0;
+                    return (
+                      <button key={label} onClick={() => setSelectedVariants({ ...selectedVariants, [v.name]: label })}
+                        className={`px-4 py-2 rounded-full text-sm border-2 font-medium transition-all ${selectedVariants[v.name] === label ? 'border-primary bg-primary/10 text-primary' : 'border-border hover:border-primary'}`}>
+                        {label}{modifier !== 0 ? ` (${modifier > 0 ? '+' : ''}£${modifier.toFixed(2)})` : ''}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
             ))}
