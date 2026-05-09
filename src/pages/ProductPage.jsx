@@ -234,7 +234,10 @@ export default function ProductPage() {
                       {Array.from(new Set(
                         product.variants
                           ?.filter(v => v.attributes && v.attributes[attrName])
-                          .map(v => v.attributes[attrName])
+                          .map(v => {
+                            const val = v.attributes[attrName];
+                            return typeof val === 'object' ? JSON.stringify(val) : String(val);
+                          })
                       )).map(value => {
                         const isOOS = (oosMap[attrName] || []).includes(value);
                         return (
