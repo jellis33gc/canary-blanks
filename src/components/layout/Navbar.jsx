@@ -40,8 +40,8 @@ export default function Navbar() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
-          <Link to="/" className="font-brand text-2xl text-primary">
-            Love the Cake
+          <Link to="/" className="flex items-center">
+            <img src="https://media.base44.com/images/public/69fe13d34881fdc5bd6d6be8/42bb3f93f_LoveTheCakeLogoCropped1.png" alt="Love the Cake" className="h-12 w-auto" />
           </Link>
 
           {/* Desktop nav */}
