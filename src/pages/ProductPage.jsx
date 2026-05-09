@@ -205,18 +205,6 @@ export default function ProductPage() {
 
             {product.short_description && <p className="text-muted-foreground mb-5 leading-relaxed">{product.short_description}</p>}
 
-            {/* Debug: Show product variant info */}
-            {product.variants?.length === 0 && (
-              <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
-                ⚠️ No variants loaded for this product. Expected variants with attributes.
-              </div>
-            )}
-            {product.variants?.length > 0 && !usesAttributeVariants && (
-              <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg text-sm text-yellow-700">
-                Product has {product.variants.length} variants but none have attributes field. Format: {JSON.stringify(product.variants[0]?.name ? 'old' : 'unknown')}
-              </div>
-            )}
-
             {/* Variants */}
             {usesAttributeVariants ? (
               // Render attribute-based variants
