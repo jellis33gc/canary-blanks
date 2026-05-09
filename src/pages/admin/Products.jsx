@@ -7,7 +7,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Plus, Search, Upload, Download, Edit, Trash2, Eye, EyeOff, Star, Package, FileDown, Layers } from "lucide-react";
 import ProductFormModal from "@/components/admin/ProductFormModal";
 import BulkVariantEditor from "@/components/admin/BulkVariantEditor";
-import ProductPreview from "@/components/admin/ProductPreview";
 import { format } from "date-fns";
 
 export default function AdminProducts() {
@@ -18,10 +17,13 @@ export default function AdminProducts() {
   const [filterCategory, setFilterCategory] = useState("all");
   const [showModal, setShowModal] = useState(false);
   const [editProduct, setEditProduct] = useState(null);
-  const [previewProduct, setPreviewProduct] = useState(null);
   const [importing, setImporting] = useState(false);
   const [showBulkEditor, setShowBulkEditor] = useState(false);
   const fileRef = useRef();
+
+  const handlePreview = (product) => {
+    window.open(`/product/${product.slug}`, "_blank");
+  };
 
   useEffect(() => {
     loadData();
@@ -306,7 +308,7 @@ export default function AdminProducts() {
                   </td>
                   <td className="p-4">
                     <div className="flex items-center gap-1">
-                      <button onClick={() => setPreviewProduct(p)} title="Preview" className="p-1.5 rounded-lg hover:bg-blue-50 hover:text-blue-500 transition-colors"><Eye className="w-4 h-4" /></button>
+                      <button onClick={() => handlePreview(p)} title="Preview" className="p-1.5 rounded-lg hover:bg-blue-50 hover:text-blue-500 transition-colors"><Eye className="w-4 h-4" /></button>
                       <button onClick={() => { setEditProduct(p); setShowModal(true); }} className="p-1.5 rounded-lg hover:bg-primary/10 hover:text-primary transition-colors"><Edit className="w-4 h-4" /></button>
                       <button onClick={() => handleToggleFeatured(p)} className={`p-1.5 rounded-lg transition-colors ${p.is_featured ? 'text-yellow-500' : 'hover:text-yellow-500'}`}><Star className="w-4 h-4" /></button>
                       <button onClick={() => handleToggleActive(p)} className="p-1.5 rounded-lg hover:bg-muted transition-colors">{p.is_active ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}</button>
@@ -340,13 +342,6 @@ export default function AdminProducts() {
           categories={categories}
           onSave={handleSave}
           onClose={() => { setShowModal(false); setEditProduct(null); }}
-        />
-      )}
-
-      {previewProduct && (
-        <ProductPreview
-          product={previewProduct}
-          onClose={() => setPreviewProduct(null)}
         />
       )}
     </div>
