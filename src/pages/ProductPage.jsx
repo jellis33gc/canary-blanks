@@ -122,10 +122,16 @@ export default function ProductPage() {
     selectedCombo = product?.variants?.find(v =>
       v.attributes && Object.entries(v.attributes).every(([k, val]) => selectedVariants[k] === val)
     );
-    if (selectedCombo?.price !== undefined && selectedCombo?.price !== "" && selectedCombo?.price !== 0) {
-      displayPrice = parseFloat(selectedCombo.price) || product.price || 0;
-    } else if (selectedCombo && product.price) {
+    if (selectedCombo?.price !== undefined && selectedCombo?.price !== "" && parseFloat(selectedCombo.price) > 0) {
+      displayPrice = parseFloat(selectedCombo.price);
+    } else if (selectedCombo && product.price > 0) {
       displayPrice = product.price;
+    } else if (!selectedCombo && product.price === 0) {
+      // No variant selected and no base price — use min variant price
+      const variantPrices = product.variants
+        ?.filter(v => v.price && parseFloat(v.price) > 0)
+        .map(v => parseFloat(v.price));
+      displayPrice = variantPrices?.length > 0 ? Math.min(...variantPrices) : 0;
     }
   } else {
     // Old variant format with options
