@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Trash2, Save, GripVertical } from "lucide-react";
+import { Plus, Trash2, Save, GripVertical, Upload, X } from "lucide-react";
 
 const BG_OPTIONS = [
   { value: "from-pink-400 via-rose-400 to-fuchsia-500", label: "🌸 Pink / Rose" },
@@ -134,8 +134,41 @@ export default function HeroSlideEditor() {
                 <Input value={slide.cta2_url || ""} onChange={e => update(slide.id, "cta2_url", e.target.value)} placeholder="/shop" className="rounded-xl h-9" />
               </div>
               <div className="space-y-1 md:col-span-2">
-                <Label className="text-xs">Emojis (space-separated, up to 4)</Label>
+                <Label className="text-xs">Emojis (space-separated, up to 4 — ignored when a background image is set)</Label>
                 <Input value={slide.emoji || ""} onChange={e => update(slide.id, "emoji", e.target.value)} placeholder="🎂 🧁 🎀 🍰" className="rounded-xl h-9" />
+              </div>
+              <div className="space-y-2 md:col-span-2">
+                <Label className="text-xs">Background Image (optional — overrides gradient)</Label>
+                {slide.bg_image ? (
+                  <div className="relative rounded-xl overflow-hidden h-32 border border-border">
+                    <img src={slide.bg_image} alt="bg" className="w-full h-full object-cover" />
+                    <button
+                      onClick={() => update(slide.id, "bg_image", "")}
+                      className="absolute top-2 right-2 p-1.5 bg-black/60 hover:bg-black/80 text-white rounded-full transition-colors"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                ) : (
+                  <label className="flex items-center gap-2 cursor-pointer border border-dashed border-border rounded-xl px-4 py-3 hover:bg-muted/50 transition-colors">
+                    <Upload className="w-4 h-4 text-muted-foreground" />
+                    <span className="text-sm text-muted-foreground">Click to upload image</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={async (e) => {
+                        const file = e.target.files[0];
+                        if (!file) return;
+                        update(slide.id, "_uploading", true);
+                        const { file_url } = await base44.integrations.Core.UploadFile({ file });
+                        update(slide.id, "bg_image", file_url);
+                        update(slide.id, "_uploading", false);
+                      }}
+                    />
+                    {slide._uploading && <span className="text-xs text-primary ml-2">Uploading…</span>}
+                  </label>
+                )}
               </div>
             </div>
           )}

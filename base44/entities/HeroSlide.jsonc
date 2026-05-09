@@ -1,0 +1,57 @@
+{
+  "name": "HeroSlide",
+  "type": "object",
+  "properties": {
+    "sort_order": {
+      "type": "number",
+      "default": 0
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true
+    },
+    "badge": {
+      "type": "string"
+    },
+    "title": {
+      "type": "string"
+    },
+    "subtitle": {
+      "type": "string"
+    },
+    "cta_label": {
+      "type": "string"
+    },
+    "cta_url": {
+      "type": "string"
+    },
+    "cta2_label": {
+      "type": "string"
+    },
+    "cta2_url": {
+      "type": "string"
+    },
+    "bg": {
+      "type": "string",
+      "enum": [
+        "from-pink-400 via-rose-400 to-fuchsia-500",
+        "from-amber-400 via-orange-400 to-yellow-400",
+        "from-violet-500 via-purple-500 to-fuchsia-400",
+        "from-teal-400 via-emerald-400 to-cyan-400",
+        "from-blue-400 via-sky-400 to-cyan-400",
+        "from-red-400 via-rose-500 to-pink-500"
+      ],
+      "default": "from-pink-400 via-rose-400 to-fuchsia-500"
+    },
+    "bg_image": {
+      "type": "string"
+    },
+    "emoji": {
+      "type": "string",
+      "default": "\ud83c\udf82 \ud83e\uddc1 \ud83c\udf80 \ud83c\udf70"
+    }
+  },
+  "required": [
+    "title"
+  ]
+}
