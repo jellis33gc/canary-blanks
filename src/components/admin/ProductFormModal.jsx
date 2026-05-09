@@ -146,7 +146,15 @@ export default function ProductFormModal({ product, categories, onSave, onClose 
 
   const handleSubmit = async () => {
     if (!form.name.trim()) { alert("Product name is required"); return; }
-    if (!form.price && form.variants?.length === 0) { alert("Price is required for simple products"); return; }
+    
+    // Check if at least one variant has a price
+    const hasVariantPrice = form.variants?.some(v => v.price && parseFloat(v.price) > 0);
+    const hasBasePrice = form.price && parseFloat(form.price) > 0;
+    
+    if (!hasBasePrice && !hasVariantPrice) { 
+      alert("You must set either a base price OR at least one variant price"); 
+      return; 
+    }
     setSaving(true);
     const slug = form.slug || autoSlug(form.name);
     const { is_variable, ...rest } = form;
