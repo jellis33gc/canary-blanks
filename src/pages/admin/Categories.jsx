@@ -99,7 +99,17 @@ export default function AdminCategories() {
     );
   };
 
-  const parentOptions = categories.filter(c => !c.parent_id && c.id !== editingId);
+  const parentOptions = (() => {
+    const items = [];
+    const topLevel = categories.filter(c => !c.parent_id && c.id !== editingId);
+    topLevel.forEach(parent => {
+      items.push({ id: parent.id, label: parent.name });
+      categories.filter(c => c.parent_id === parent.id && c.id !== editingId).forEach(child => {
+        items.push({ id: child.id, label: `↳ ${child.name}` });
+      });
+    });
+    return items;
+  })();
 
   return (
     <div className="space-y-6">
@@ -131,7 +141,7 @@ export default function AdminCategories() {
                 <SelectTrigger className="rounded-xl"><SelectValue placeholder="None (top-level)" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="none">None (top-level)</SelectItem>
-                  {parentOptions.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
+                  {parentOptions.map(c => <SelectItem key={c.id} value={c.id}>{c.label}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
