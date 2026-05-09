@@ -113,6 +113,28 @@ export default function Shop() {
           {showFeatured && <Badge variant="secondary" className="rounded-full cursor-pointer" onClick={() => setShowFeatured(false)}>Featured <X className="ml-1 w-3 h-3" /></Badge>}
         </div>
 
+        {/* Sub-category cards */}
+        {selectedCategory && (() => {
+          const parentCat = categories.find(c => c.id === selectedCategory);
+          const subCategories = categories.filter(c => c.parent_id === selectedCategory);
+          return subCategories.length > 0 ? (
+            <div className="mb-8">
+              <p className="text-sm text-muted-foreground mb-3">Filter by {parentCat?.name}</p>
+              <div className="flex flex-wrap gap-3">
+                {subCategories.map(sub => (
+                  <button
+                    key={sub.id}
+                    onClick={() => setSelectedCategory(sub.id)}
+                    className="px-4 py-2 rounded-full border-2 border-border hover:border-primary hover:bg-primary/5 transition-all text-sm font-medium"
+                  >
+                    {sub.name}
+                  </button>
+                ))}
+              </div>
+            </div>
+          ) : null;
+        })()}
+
         <div className="flex gap-6">
           {/* Sidebar filters */}
           {filterOpen && (

@@ -18,7 +18,12 @@ export default function Navbar() {
 
   useEffect(() => {
     base44.auth.me().then(setUser).catch(() => {});
-    base44.entities.Category.filter({ is_active: true }, "sort_order", 20).then(setCategories).catch(() => {});
+    base44.entities.NavMenu.filter({ is_active: true }, "sort_order", 50).then(items => {
+      setCategories(items);
+    }).catch(() => {
+      // Fallback to categories if NavMenu not available
+      base44.entities.Category.filter({ is_active: true }, "sort_order", 20).then(setCategories).catch(() => {});
+    });
   }, []);
 
   const handleSearch = (e) => {
@@ -46,12 +51,19 @@ export default function Navbar() {
 
           {/* Desktop nav */}
           <div className="hidden md:flex items-center gap-6">
-            <Link to="/shop" className="text-sm font-semibold hover:text-primary transition-colors">All Products</Link>
-            {categories.slice(0, 5).map(cat => (
-              <Link key={cat.id} to={`/shop?category=${cat.id}`} className="text-sm font-medium hover:text-primary transition-colors">
-                {cat.name}
-              </Link>
-            ))}
+            {categories.map(item => {
+              let href = "/shop";
+              if (item.type === "category" && item.category_id) {
+                href = `/shop?category=${item.category_id}`;
+              } else if (item.type === "custom_url" && item.custom_url) {
+                href = item.custom_url;
+              }
+              return (
+                <Link key={item.id} to={href} className="text-sm font-medium hover:text-primary transition-colors">
+                  {item.label}
+                </Link>
+              );
+            })}
           </div>
 
           {/* Actions */}
@@ -98,12 +110,19 @@ export default function Navbar() {
         {/* Mobile menu */}
         {menuOpen && (
           <div className="md:hidden py-4 border-t border-border space-y-2">
-            <Link to="/shop" className="block py-2 font-semibold hover:text-primary" onClick={() => setMenuOpen(false)}>All Products</Link>
-            {categories.map(cat => (
-              <Link key={cat.id} to={`/shop?category=${cat.id}`} className="block py-2 hover:text-primary" onClick={() => setMenuOpen(false)}>
-                {cat.name}
-              </Link>
-            ))}
+            {categories.map(item => {
+              let href = "/shop";
+              if (item.type === "category" && item.category_id) {
+                href = `/shop?category=${item.category_id}`;
+              } else if (item.type === "custom_url" && item.custom_url) {
+                href = item.custom_url;
+              }
+              return (
+                <Link key={item.id} to={href} className="block py-2 hover:text-primary" onClick={() => setMenuOpen(false)}>
+                  {item.label}
+                </Link>
+              );
+            })}
             <Link to="/account" className="block py-2 hover:text-primary" onClick={() => setMenuOpen(false)}>My Account</Link>
             <Link to="/wishlist" className="block py-2 hover:text-primary" onClick={() => setMenuOpen(false)}>Wishlist</Link>
           </div>
