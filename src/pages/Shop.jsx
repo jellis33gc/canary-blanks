@@ -62,6 +62,21 @@ export default function Shop() {
     await base44.entities.CustomerProfile.update(profile.id, { wishlist: newWishlist });
   };
 
+  const getBreadcrumb = () => {
+    const breadcrumb = [];
+    let currentId = selectedCategory;
+    while (currentId) {
+      const cat = categories.find(c => c.id === currentId);
+      if (cat) {
+        breadcrumb.unshift({ id: cat.id, name: cat.name });
+        currentId = cat.parent_id;
+      } else {
+        break;
+      }
+    }
+    return breadcrumb;
+  };
+
   const filtered = products.filter(p => {
     if (selectedCategory) {
       // Include products in this category and all subcategories
@@ -117,12 +132,19 @@ export default function Shop() {
           </div>
         </div>
 
-        {/* Active filters */}
-        <div className="flex flex-wrap gap-2 mb-4">
-          {selectedCategory && <Badge variant="secondary" className="rounded-full cursor-pointer" onClick={() => setSelectedCategory("")}>{categories.find(c => c.id === selectedCategory)?.name} <X className="ml-1 w-3 h-3" /></Badge>}
-          {showOnSale && <Badge variant="secondary" className="rounded-full cursor-pointer" onClick={() => setShowOnSale(false)}>On Sale <X className="ml-1 w-3 h-3" /></Badge>}
-          {showFeatured && <Badge variant="secondary" className="rounded-full cursor-pointer" onClick={() => setShowFeatured(false)}>Featured <X className="ml-1 w-3 h-3" /></Badge>}
-        </div>
+        {/* Breadcrumb filters */}
+        {(selectedCategory || showOnSale || showFeatured) && (
+          <div className="flex flex-wrap gap-2 mb-4">
+            {selectedCategory && getBreadcrumb().map((cat, idx) => (
+              <Badge key={cat.id} variant="secondary" className="rounded-full cursor-pointer" onClick={() => setSelectedCategory(cat.id)}>
+                {cat.name}
+                {idx === getBreadcrumb().length - 1 && <X className="ml-1 w-3 h-3" />}
+              </Badge>
+            ))}
+            {showOnSale && <Badge variant="secondary" className="rounded-full cursor-pointer" onClick={() => setShowOnSale(false)}>On Sale <X className="ml-1 w-3 h-3" /></Badge>}
+            {showFeatured && <Badge variant="secondary" className="rounded-full cursor-pointer" onClick={() => setShowFeatured(false)}>Featured <X className="ml-1 w-3 h-3" /></Badge>}
+          </div>
+        )}
 
         {/* Sub-category cards */}
         {selectedCategory && (() => {
