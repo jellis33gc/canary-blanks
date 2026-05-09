@@ -307,15 +307,22 @@ export default function ProductFormModal({ product, categories, onSave, onClose 
                     {attributes.length > 0 && (
                       <Button className="w-full rounded-full bg-primary text-white" onClick={generateCombinations}>
                         <RefreshCw className="w-4 h-4 mr-2" />
-                        Generate Combinations
+                        {combinations.length > 0 ? "Update Combinations" : "Generate Combinations"}
                       </Button>
+                    )}
+                    {combinations.length > 0 && (
+                      <p className="text-xs text-muted-foreground text-center">
+                        ✅ Adding new values and clicking Update will add new combinations without affecting existing prices.
+                      </p>
                     )}
                   </div>
 
                   {/* Step 2: Price Combinations */}
                   {combinations.length > 0 && (
                     <div>
-                      <p className="font-semibold text-sm mb-3">Step 2 — Price Each Combination</p>
+                      <p className="font-semibold text-sm mb-3">
+                        {attributes.length > 0 ? "Step 2 — " : ""}Price Each Combination
+                      </p>
                       <div className="border border-border rounded-xl overflow-hidden">
                         <div className="grid grid-cols-12 bg-muted px-3 py-2 text-xs font-semibold text-muted-foreground">
                           <span className="col-span-5">Combination</span>
