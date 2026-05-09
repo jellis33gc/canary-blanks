@@ -63,7 +63,18 @@ export default function Shop() {
   };
 
   const filtered = products.filter(p => {
-    if (selectedCategory && p.category_id !== selectedCategory) return false;
+    if (selectedCategory) {
+      // Include products in this category and all subcategories
+      const allRelatedIds = [selectedCategory];
+      const addDescendants = (parentId) => {
+        categories.filter(c => c.parent_id === parentId).forEach(cat => {
+          allRelatedIds.push(cat.id);
+          addDescendants(cat.id);
+        });
+      };
+      addDescendants(selectedCategory);
+      if (!allRelatedIds.includes(p.category_id)) return false;
+    }
     if (showOnSale && !p.is_on_sale) return false;
     if (showFeatured && !p.is_featured) return false;
     if (p.price < priceRange[0] || p.price > priceRange[1]) return false;
