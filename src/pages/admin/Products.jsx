@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Plus, Search, Upload, Download, Edit, Trash2, Eye, EyeOff, Star, Package, FileDown, Layers } from "lucide-react";
 import ProductFormModal from "@/components/admin/ProductFormModal";
 import BulkVariantEditor from "@/components/admin/BulkVariantEditor";
+import ProductPreview from "@/components/admin/ProductPreview";
 import { format } from "date-fns";
 
 export default function AdminProducts() {
@@ -17,6 +18,7 @@ export default function AdminProducts() {
   const [filterCategory, setFilterCategory] = useState("all");
   const [showModal, setShowModal] = useState(false);
   const [editProduct, setEditProduct] = useState(null);
+  const [previewProduct, setPreviewProduct] = useState(null);
   const [importing, setImporting] = useState(false);
   const [showBulkEditor, setShowBulkEditor] = useState(false);
   const fileRef = useRef();
@@ -194,6 +196,20 @@ export default function AdminProducts() {
     await loadData();
   };
 
+  const getPriceDisplay = (p) => {
+    const hasVariants = p.variants?.some(v => v.attributes);
+    if (!hasVariants) {
+      return p.price ? `£${p.price.toFixed(2)}` : "—";
+    }
+    const variantPrices = p.variants
+      .filter(v => v.attributes && v.price)
+      .map(v => parseFloat(v.price));
+    if (variantPrices.length === 0) return "—";
+    const min = Math.min(...variantPrices);
+    const max = Math.max(...variantPrices);
+    return min === max ? `£${min.toFixed(2)}` : `£${min.toFixed(2)} – £${max.toFixed(2)}`;
+  };
+
   const filtered = products.filter(p => {
     const matchSearch = !search || p.name.toLowerCase().includes(search.toLowerCase()) || p.sku?.toLowerCase().includes(search.toLowerCase());
     const matchCat = filterCategory === "all" || p.category_id === filterCategory;
@@ -275,7 +291,7 @@ export default function AdminProducts() {
                     </div>
                   </td>
                   <td className="p-4 text-muted-foreground">{p.category_name || "—"}</td>
-                  <td className="p-4 font-bold">£{p.price?.toFixed(2)}</td>
+                  <td className="p-4 font-bold">{getPriceDisplay(p)}</td>
                   <td className="p-4">
                     <span className={`font-medium ${p.stock_quantity === 0 ? 'text-red-500' : p.stock_quantity < 5 ? 'text-yellow-600' : 'text-green-600'}`}>
                       {p.stock_quantity ?? "∞"}
@@ -290,6 +306,7 @@ export default function AdminProducts() {
                   </td>
                   <td className="p-4">
                     <div className="flex items-center gap-1">
+                      <button onClick={() => setPreviewProduct(p)} title="Preview" className="p-1.5 rounded-lg hover:bg-blue-50 hover:text-blue-500 transition-colors"><Eye className="w-4 h-4" /></button>
                       <button onClick={() => { setEditProduct(p); setShowModal(true); }} className="p-1.5 rounded-lg hover:bg-primary/10 hover:text-primary transition-colors"><Edit className="w-4 h-4" /></button>
                       <button onClick={() => handleToggleFeatured(p)} className={`p-1.5 rounded-lg transition-colors ${p.is_featured ? 'text-yellow-500' : 'hover:text-yellow-500'}`}><Star className="w-4 h-4" /></button>
                       <button onClick={() => handleToggleActive(p)} className="p-1.5 rounded-lg hover:bg-muted transition-colors">{p.is_active ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}</button>
@@ -323,6 +340,13 @@ export default function AdminProducts() {
           categories={categories}
           onSave={handleSave}
           onClose={() => { setShowModal(false); setEditProduct(null); }}
+        />
+      )}
+
+      {previewProduct && (
+        <ProductPreview
+          product={previewProduct}
+          onClose={() => setPreviewProduct(null)}
         />
       )}
     </div>
