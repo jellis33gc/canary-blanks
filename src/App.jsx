@@ -29,6 +29,7 @@ import HomepageBuilder from './pages/admin/HomepageBuilder';
 import AdminPromoBanners from './pages/admin/PromoBanners';
 import AdminSettings from './pages/admin/Settings';
 import AdminAttributes from './pages/admin/Attributes';
+import AdminMenu from './pages/admin/Menu';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -70,6 +71,7 @@ const AuthenticatedApp = () => {
         <Route path="customers" element={<AdminCustomers />} />
         <Route path="categories" element={<AdminCategories />} />
         <Route path="attributes" element={<AdminAttributes />} />
+        <Route path="menu" element={<AdminMenu />} />
         <Route path="discounts" element={<AdminDiscounts />} />
         <Route path="homepage" element={<HomepageBuilder />} />
         <Route path="promo-banners" element={<AdminPromoBanners />} />
