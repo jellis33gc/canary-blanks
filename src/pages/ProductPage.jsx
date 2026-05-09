@@ -141,6 +141,18 @@ export default function ProductPage() {
       return total + (typeof option === 'object' ? (option.price_modifier || 0) : 0);
     }, 0);
     displayPrice = (product.price || 0) + priceModifier;
+    
+    // If base price is 0 and no variant selected, show min variant option price
+    if (product.price === 0 && Object.keys(selectedVariants).length === 0) {
+      const allModifiers = [];
+      product.variants?.forEach(v => {
+        v.options?.forEach(opt => {
+          const mod = typeof opt === 'object' ? (opt.price_modifier || 0) : 0;
+          allModifiers.push(mod);
+        });
+      });
+      displayPrice = allModifiers.length > 0 ? Math.min(...allModifiers) : 0;
+    }
   }
 
   // Block add to cart if any selected variant is OOS (global attribute map OR per-combo flag)
@@ -319,7 +331,7 @@ export default function ProductPage() {
               </p>
             )}
 
-            <p className="text-xs text-muted-foreground">🏆 Earn {Math.floor(product.price)} loyalty points with this purchase</p>
+            <p className="text-xs text-muted-foreground">🏆 Earn {Math.floor(displayPrice)} loyalty points with this purchase</p>
           </div>
         </div>
 
