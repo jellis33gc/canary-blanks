@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Plus, Trash2, X, Pencil, Check } from "lucide-react";
+import { Plus, Trash2, X, Pencil, Check, AlertCircle } from "lucide-react";
 
 export default function AdminAttributes() {
   const [attributes, setAttributes] = useState([]);
@@ -26,7 +26,7 @@ export default function AdminAttributes() {
 
   const startEdit = (attr) => {
     setEditingId(attr.id);
-    setEditForm({ name: attr.name, values: [...(attr.values || [])] });
+    setEditForm({ name: attr.name, values: [...(attr.values || [])], out_of_stock_values: [...(attr.out_of_stock_values || [])] });
   };
 
   const cancelEdit = () => {
@@ -39,10 +39,20 @@ export default function AdminAttributes() {
     await base44.entities.ProductAttribute.update(editingId, {
       name: editForm.name.trim(),
       values: editForm.values.filter(v => v.trim()),
+      out_of_stock_values: editForm.out_of_stock_values || [],
     });
     setEditingId(null);
     await load();
     setSaving(false);
+  };
+
+  const toggleOOS = async (attr, value) => {
+    const current = attr.out_of_stock_values || [];
+    const updated = current.includes(value)
+      ? current.filter(v => v !== value)
+      : [...current, value];
+    await base44.entities.ProductAttribute.update(attr.id, { out_of_stock_values: updated });
+    setAttributes(prev => prev.map(a => a.id === attr.id ? { ...a, out_of_stock_values: updated } : a));
   };
 
   const deleteAttr = async (id) => {
@@ -171,16 +181,38 @@ export default function AdminAttributes() {
                 </div>
               ) : (
                 <div className="flex items-start justify-between gap-4">
-                  <div>
-                    <p className="font-semibold text-sm mb-1.5">{attr.name}</p>
-                    <div className="flex flex-wrap gap-1.5">
-                      {(attr.values || []).map((v, i) => (
-                        <span key={i} className="text-xs px-2.5 py-0.5 rounded-full bg-muted text-muted-foreground border border-border">{v}</span>
-                      ))}
+                  <div className="flex-1 min-w-0">
+                    <p className="font-semibold text-sm mb-2">{attr.name}</p>
+                    <div className="flex flex-wrap gap-2">
+                      {(attr.values || []).map((v, i) => {
+                        const isOOS = (attr.out_of_stock_values || []).includes(v);
+                        return (
+                          <button
+                            key={i}
+                            onClick={() => toggleOOS(attr, v)}
+                            title={isOOS ? "Click to mark as In Stock" : "Click to mark as Out of Stock"}
+                            className={`flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full border transition-all ${
+                              isOOS
+                                ? "bg-red-50 border-red-300 text-red-600 line-through"
+                                : "bg-muted border-border text-muted-foreground hover:border-red-300 hover:text-red-500"
+                            }`}
+                          >
+                            {isOOS && <AlertCircle className="w-3 h-3 shrink-0 no-underline" style={{textDecoration:'none'}} />}
+                            {v}
+                            {isOOS && <span className="text-[10px] no-underline not-italic ml-0.5" style={{textDecoration:'none'}}>(OOS)</span>}
+                          </button>
+                        );
+                      })}
                       {(!attr.values || attr.values.length === 0) && (
                         <span className="text-xs text-muted-foreground italic">No values</span>
                       )}
                     </div>
+                    {(attr.out_of_stock_values?.length > 0) && (
+                      <p className="text-xs text-muted-foreground mt-2">💡 Click a value to toggle out of stock status</p>
+                    )}
+                    {(!attr.out_of_stock_values?.length) && attr.values?.length > 0 && (
+                      <p className="text-xs text-muted-foreground mt-2">Click any value to mark it as out of stock</p>
+                    )}
                   </div>
                   <div className="flex gap-1 shrink-0">
                     <button onClick={() => startEdit(attr)} className="p-1.5 hover:text-primary rounded-lg hover:bg-muted transition-colors">

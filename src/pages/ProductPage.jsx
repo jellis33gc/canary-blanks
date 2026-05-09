@@ -27,6 +27,7 @@ export default function ProductPage() {
   const [wishlisted, setWishlisted] = useState(false);
   const [profile, setProfile] = useState(null);
   const [added, setAdded] = useState(false);
+  const [oosMap, setOosMap] = useState({}); // { "Colour": ["Red", "Blue"] }
   const { addItem } = useCartStore();
 
   useEffect(() => {
@@ -45,6 +46,14 @@ export default function ProductPage() {
       }
       setLoading(false);
     });
+
+    base44.entities.ProductAttribute.list("name", 200).then(attrs => {
+      const map = {};
+      attrs.forEach(a => {
+        if (a.out_of_stock_values?.length > 0) map[a.name] = a.out_of_stock_values;
+      });
+      setOosMap(map);
+    }).catch(() => {});
 
     base44.auth.me().then(user => {
       if (user) {
@@ -108,6 +117,11 @@ export default function ProductPage() {
     return total + (typeof option === 'object' ? (option.price_modifier || 0) : 0);
   }, 0);
   const displayPrice = (product.price || 0) + priceModifier;
+
+  // Block add to cart if any selected variant is OOS
+  const hasOOSSelected = Object.entries(selectedVariants).some(
+    ([variantName, label]) => (oosMap[variantName] || []).includes(label)
+  );
 
   return (
     <div className="min-h-screen bg-background">
@@ -174,10 +188,22 @@ export default function ProductPage() {
                   {v.options?.map(opt => {
                     const label = typeof opt === 'object' ? opt.label : opt;
                     const modifier = typeof opt === 'object' ? (opt.price_modifier || 0) : 0;
+                    const isOOS = (oosMap[v.name] || []).includes(label);
                     return (
-                      <button key={label} onClick={() => setSelectedVariants({ ...selectedVariants, [v.name]: label })}
-                        className={`px-4 py-2 rounded-full text-sm border-2 font-medium transition-all ${selectedVariants[v.name] === label ? 'border-primary bg-primary/10 text-primary' : 'border-border hover:border-primary'}`}>
+                      <button
+                        key={label}
+                        onClick={() => !isOOS && setSelectedVariants({ ...selectedVariants, [v.name]: label })}
+                        disabled={isOOS}
+                        className={`px-4 py-2 rounded-full text-sm border-2 font-medium transition-all relative ${
+                          isOOS
+                            ? 'border-border bg-muted text-muted-foreground line-through cursor-not-allowed opacity-60'
+                            : selectedVariants[v.name] === label
+                              ? 'border-primary bg-primary/10 text-primary'
+                              : 'border-border hover:border-primary'
+                        }`}
+                      >
                         {label}{modifier !== 0 ? ` (${modifier > 0 ? '+' : ''}£${modifier.toFixed(2)})` : ''}
+                        {isOOS && <span className="block text-[10px] not-italic leading-tight">Out of stock</span>}
                       </button>
                     );
                   })}
@@ -206,9 +232,14 @@ export default function ProductPage() {
                 <span className="w-10 text-center font-bold">{quantity}</span>
                 <button onClick={() => setQuantity(quantity + 1)} className="p-2 hover:text-primary transition-colors"><Plus className="w-4 h-4" /></button>
               </div>
-              <Button onClick={handleAddToCart} size="lg" className={`flex-1 rounded-full font-bold transition-all ${added ? 'bg-green-500 hover:bg-green-500' : 'bg-primary hover:bg-primary/90'} text-white`}>
+              <Button
+                onClick={handleAddToCart}
+                size="lg"
+                disabled={hasOOSSelected}
+                className={`flex-1 rounded-full font-bold transition-all ${added ? 'bg-green-500 hover:bg-green-500' : hasOOSSelected ? 'bg-muted text-muted-foreground' : 'bg-primary hover:bg-primary/90 text-white'}`}
+              >
                 <ShoppingCart className="w-5 h-5 mr-2" />
-                {added ? '✓ Added to Cart!' : 'Add to Cart'}
+                {hasOOSSelected ? 'Option Out of Stock' : added ? '✓ Added to Cart!' : 'Add to Cart'}
               </Button>
             </div>
 

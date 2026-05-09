@@ -10,6 +10,13 @@
       "items": {
         "type": "string"
       }
+    },
+    "out_of_stock_values": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Values that are currently out of stock and cannot be ordered"
     }
   },
   "required": [
