@@ -28,6 +28,7 @@ import AdminDiscounts from './pages/admin/Discounts';
 import HomepageBuilder from './pages/admin/HomepageBuilder';
 import AdminPromoBanners from './pages/admin/PromoBanners';
 import AdminSettings from './pages/admin/Settings';
+import AdminAttributes from './pages/admin/Attributes';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -68,6 +69,7 @@ const AuthenticatedApp = () => {
         <Route path="orders" element={<AdminOrders />} />
         <Route path="customers" element={<AdminCustomers />} />
         <Route path="categories" element={<AdminCategories />} />
+        <Route path="attributes" element={<AdminAttributes />} />
         <Route path="discounts" element={<AdminDiscounts />} />
         <Route path="homepage" element={<HomepageBuilder />} />
         <Route path="promo-banners" element={<AdminPromoBanners />} />
