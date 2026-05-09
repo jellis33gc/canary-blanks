@@ -111,7 +111,7 @@ export default function ProductPage() {
   const images = product.images?.length > 0 ? product.images : [""];
 
   // Detect if product uses new combination-based variants (with attributes) or old variant format
-  const usesAttributeVariants = product?.variants?.some(v => v.attributes);
+  const usesAttributeVariants = product?.variants?.length > 0 && product.variants.some(v => v.attributes);
 
   // Calculate price with variant modifiers
   let displayPrice = product.price || 0;
