@@ -118,10 +118,13 @@ export default function ProductPage() {
   }, 0);
   const displayPrice = (product.price || 0) + priceModifier;
 
-  // Block add to cart if any selected variant is OOS
+  // Block add to cart if any selected variant is OOS (global attribute map OR per-combo flag)
+  const selectedCombo = product?.variants?.find(v =>
+    v.attributes && Object.entries(v.attributes).every(([k, val]) => selectedVariants[k] === val)
+  );
   const hasOOSSelected = Object.entries(selectedVariants).some(
     ([variantName, label]) => (oosMap[variantName] || []).includes(label)
-  );
+  ) || selectedCombo?.out_of_stock === true;
 
   return (
     <div className="min-h-screen bg-background">

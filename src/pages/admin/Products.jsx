@@ -4,8 +4,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Search, Upload, Download, Edit, Trash2, Eye, EyeOff, Star, Package, FileDown } from "lucide-react";
+import { Plus, Search, Upload, Download, Edit, Trash2, Eye, EyeOff, Star, Package, FileDown, Layers } from "lucide-react";
 import ProductFormModal from "@/components/admin/ProductFormModal";
+import BulkVariantEditor from "@/components/admin/BulkVariantEditor";
 import { format } from "date-fns";
 
 export default function AdminProducts() {
@@ -17,6 +18,7 @@ export default function AdminProducts() {
   const [showModal, setShowModal] = useState(false);
   const [editProduct, setEditProduct] = useState(null);
   const [importing, setImporting] = useState(false);
+  const [showBulkEditor, setShowBulkEditor] = useState(false);
   const fileRef = useRef();
 
   useEffect(() => {
@@ -216,6 +218,9 @@ export default function AdminProducts() {
           <Button variant="outline" className="rounded-full" onClick={() => fileRef.current?.click()} disabled={importing}>
             <Upload className="w-4 h-4 mr-2" />{importing ? "Importing..." : "Import CSV/Excel"}
           </Button>
+          <Button variant="outline" className="rounded-full" onClick={() => setShowBulkEditor(true)}>
+            <Layers className="w-4 h-4 mr-2" /> Bulk Edit Variants
+          </Button>
           <Button className="bg-primary text-white rounded-full" onClick={() => { setEditProduct(null); setShowModal(true); }}>
             <Plus className="w-4 h-4 mr-2" /> Add Product
           </Button>
@@ -303,6 +308,14 @@ export default function AdminProducts() {
           </div>
         )}
       </div>
+
+      {showBulkEditor && (
+        <BulkVariantEditor
+          products={products}
+          onClose={() => setShowBulkEditor(false)}
+          onSaved={loadData}
+        />
+      )}
 
       {showModal && (
         <ProductFormModal
