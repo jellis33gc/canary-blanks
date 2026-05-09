@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Heart, Instagram, Facebook, Twitter } from "lucide-react";
+import { Heart, Instagram, Facebook } from "lucide-react";
 
 export default function Footer() {
   return (
@@ -12,9 +12,8 @@ export default function Footer() {
               Your one-stop shop for custom cakes, cake decorations, toppers, ingredients & party supplies. Made with love! 🎂
             </p>
             <div className="flex gap-3 mt-4">
-              <a href="#" className="p-2 bg-primary/10 rounded-full hover:bg-primary hover:text-white transition-all"><Instagram className="w-4 h-4" /></a>
-              <a href="#" className="p-2 bg-primary/10 rounded-full hover:bg-primary hover:text-white transition-all"><Facebook className="w-4 h-4" /></a>
-              <a href="#" className="p-2 bg-primary/10 rounded-full hover:bg-primary hover:text-white transition-all"><Twitter className="w-4 h-4" /></a>
+              <a href="https://www.instagram.com/lovethecake.es" target="_blank" rel="noopener noreferrer" className="p-2 bg-primary/10 rounded-full hover:bg-primary hover:text-white transition-all"><Instagram className="w-4 h-4" /></a>
+              <a href="https://www.facebook.com/lovethecake.es" target="_blank" rel="noopener noreferrer" className="p-2 bg-primary/10 rounded-full hover:bg-primary hover:text-white transition-all"><Facebook className="w-4 h-4" /></a>
             </div>
           </div>
 
