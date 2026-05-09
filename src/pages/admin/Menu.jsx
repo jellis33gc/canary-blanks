@@ -5,8 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import { X, Plus, GripVertical, Trash2 } from "lucide-react";
-import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
+import { X, Plus, ChevronUp, ChevronDown, Trash2 } from "lucide-react";
 
 export default function Menu() {
   const [items, setItems] = useState([]);
@@ -69,15 +68,20 @@ export default function Menu() {
     await Promise.all(items.map((item, idx) => base44.entities.NavMenu.update(item.id, { sort_order: idx })));
   };
 
-  const onDragEnd = (result) => {
-    const { source, destination } = result;
-    if (!destination || (source.index === destination.index && source.droppableId === destination.droppableId)) return;
-    
-    const newItems = Array.from(items);
-    const [removed] = newItems.splice(source.index, 1);
-    newItems.splice(destination.index, 0, removed);
+  const moveUp = async (idx) => {
+    if (idx === 0) return;
+    const newItems = [...items];
+    [newItems[idx], newItems[idx - 1]] = [newItems[idx - 1], newItems[idx]];
+    await handleReorder(newItems);
     setItems(newItems);
-    handleReorder(newItems);
+  };
+
+  const moveDown = async (idx) => {
+    if (idx === items.length - 1) return;
+    const newItems = [...items];
+    [newItems[idx], newItems[idx + 1]] = [newItems[idx + 1], newItems[idx]];
+    await handleReorder(newItems);
+    setItems(newItems);
   };
 
   if (loading) return <div className="flex justify-center py-20"><div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" /></div>;
@@ -150,45 +154,35 @@ export default function Menu() {
           <p className="text-muted-foreground">No menu items yet. Add one to get started!</p>
         </div>
       ) : (
-        <DragDropContext onDragEnd={onDragEnd}>
-          <Droppable droppableId="menu-items">
-            {(provided, snapshot) => (
-              <div className="space-y-2 bg-card border border-border rounded-2xl divide-y" {...provided.droppableProps} ref={provided.innerRef}>
-                {items.map((item, idx) => (
-                  <Draggable key={item.id} draggableId={item.id} index={idx}>
-                    {(provided, snapshot) => (
-                      <div
-                        ref={provided.innerRef}
-                        {...provided.draggableProps}
-                        className={`flex items-center gap-4 p-4 transition-colors group ${snapshot.isDragging ? 'bg-primary/10 shadow-lg' : 'hover:bg-muted/50'}`}
-                      >
-                        <div {...provided.dragHandleProps} className="p-1.5 rounded hover:bg-muted cursor-grab active:cursor-grabbing">
-                          <GripVertical className="w-4 h-4 text-muted-foreground" />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="font-semibold">{item.label}</p>
-                          <p className="text-xs text-muted-foreground">
-                            {item.type === "all_products" && "All Products"}
-                            {item.type === "category" && `Category: ${categories.find(c => c.id === item.category_id)?.name || "Unknown"}`}
-                            {item.type === "custom_url" && `URL: ${item.custom_url}`}
-                          </p>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          {item.is_active ? <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full">Active</span> : <span className="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded-full">Inactive</span>}
-                          <Button variant="outline" size="sm" onClick={() => handleEdit(item)} className="opacity-0 group-hover:opacity-100 transition-opacity">Edit</Button>
-                          <button onClick={() => handleDelete(item.id)} className="p-1.5 rounded hover:bg-red-100 text-muted-foreground hover:text-red-600 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </div>
-                      </div>
-                    )}
-                  </Draggable>
-                ))}
-                {provided.placeholder}
+        <div className="space-y-2 bg-card border border-border rounded-2xl divide-y">
+          {items.map((item, idx) => (
+            <div key={item.id} className="flex items-center gap-4 p-4 hover:bg-muted/50 transition-colors group">
+              <div className="flex flex-col gap-1">
+                <button onClick={() => moveUp(idx)} disabled={idx === 0} className="p-1 rounded hover:bg-muted disabled:opacity-30 disabled:cursor-not-allowed">
+                  <ChevronUp className="w-4 h-4 text-muted-foreground" />
+                </button>
+                <button onClick={() => moveDown(idx)} disabled={idx === items.length - 1} className="p-1 rounded hover:bg-muted disabled:opacity-30 disabled:cursor-not-allowed">
+                  <ChevronDown className="w-4 h-4 text-muted-foreground" />
+                </button>
               </div>
-            )}
-          </Droppable>
-        </DragDropContext>
+              <div className="flex-1 min-w-0">
+                <p className="font-semibold">{item.label}</p>
+                <p className="text-xs text-muted-foreground">
+                  {item.type === "all_products" && "All Products"}
+                  {item.type === "category" && `Category: ${categories.find(c => c.id === item.category_id)?.name || "Unknown"}`}
+                  {item.type === "custom_url" && `URL: ${item.custom_url}`}
+                </p>
+              </div>
+              <div className="flex items-center gap-2">
+                {item.is_active ? <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full">Active</span> : <span className="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded-full">Inactive</span>}
+                <Button variant="outline" size="sm" onClick={() => handleEdit(item)} className="opacity-0 group-hover:opacity-100 transition-opacity">Edit</Button>
+                <button onClick={() => handleDelete(item.id)} className="p-1.5 rounded hover:bg-red-100 text-muted-foreground hover:text-red-600 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
       )}
     </div>
   );
