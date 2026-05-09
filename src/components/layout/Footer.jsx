@@ -7,7 +7,7 @@ export default function Footer() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           <div>
-            <img src="https://media.base44.com/images/public/69fe13d34881fdc5bd6d6be8/42bb3f93f_LoveTheCakeLogoCropped1.png" alt="Love the Cake" className="h-16 w-auto mb-3" />
+            <img src="https://media.base44.com/images/public/69fe13d34881fdc5bd6d6be8/e211b7128_LoveTheCakeLogoTransparent1.png" alt="Love the Cake" className="h-16 w-auto mb-3" />
             <p className="text-sm text-muted-foreground leading-relaxed">
               Your one-stop shop for custom cakes, cake decorations, toppers, ingredients & party supplies. Made with love! 🎂
             </p>
