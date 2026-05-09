@@ -69,7 +69,7 @@ export default function AdminCategories() {
     const children = getChildren(cat.id);
     return (
       <div key={cat.id}>
-        <div className={`bg-white rounded-2xl border border-border p-4 flex items-center gap-4 shadow-sm hover:shadow-md transition-shadow ${depth > 0 ? 'ml-6 border-l-4 border-l-primary/20' : ''}`}>
+        <div className={`bg-white rounded-2xl border border-border p-4 flex items-center gap-4 shadow-sm hover:shadow-md transition-shadow ${depth === 1 ? 'ml-6 border-l-4 border-l-primary/20' : depth === 2 ? 'ml-12 border-l-4 border-l-primary/40' : ''}`}>
           {depth > 0 && <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" />}
           <div className="w-12 h-12 rounded-xl overflow-hidden bg-muted shrink-0">
             {cat.image ? <img src={cat.image} alt={cat.name} className="w-full h-full object-cover" /> : <div className="flex h-full items-center justify-center text-xl">{depth === 0 ? '📁' : '📂'}</div>}
