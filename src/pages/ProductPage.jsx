@@ -15,7 +15,7 @@ import { motion } from "framer-motion";
 import ProductReviews from "@/components/product/ProductReviews";
 
 export default function ProductPage() {
-  const { id } = useParams();
+  const { slug } = useParams();
   const [product, setProduct] = useState(null);
   const [related, setRelated] = useState([]);
   const [complementary, setComplementary] = useState([]);
@@ -33,14 +33,14 @@ export default function ProductPage() {
   useEffect(() => {
     setLoading(true);
     // Try by slug first, then by id
-    base44.entities.Product.filter({ slug: id, is_active: true }).then(prods => {
+    base44.entities.Product.filter({ slug: slug, is_active: true }).then(prods => {
       const prod = prods[0];
       if (prod) {
         setProduct(prod);
         loadRelated(prod.category_id, prod);
       } else {
         base44.entities.Product.filter({ is_active: true }).then(all => {
-          const found = all.find(p => p.id === id);
+          const found = all.find(p => p.id === slug);
           if (found) { setProduct(found); loadRelated(found.category_id, found); }
         });
       }
@@ -58,11 +58,11 @@ export default function ProductPage() {
     base44.auth.me().then(user => {
       if (user) {
         base44.entities.CustomerProfile.filter({ user_id: user.id }).then(p => {
-          if (p[0]) { setProfile(p[0]); setWishlisted((p[0].wishlist || []).includes(id)); }
+          if (p[0]) { setProfile(p[0]); setWishlisted((p[0].wishlist || []).includes(product?.id)); }
         });
       }
     }).catch(() => {});
-  }, [id]);
+  }, [slug, product?.id]);
 
   const loadRelated = (catId, currentProduct) => {
     if (!catId) return;
@@ -122,8 +122,10 @@ export default function ProductPage() {
     selectedCombo = product?.variants?.find(v =>
       v.attributes && Object.entries(v.attributes).every(([k, val]) => selectedVariants[k] === val)
     );
-    if (selectedCombo?.price) {
-      displayPrice = selectedCombo.price;
+    if (selectedCombo?.price !== undefined && selectedCombo?.price !== "" && selectedCombo?.price !== 0) {
+      displayPrice = parseFloat(selectedCombo.price) || product.price || 0;
+    } else if (selectedCombo && product.price) {
+      displayPrice = product.price;
     }
   } else {
     // Old variant format with options
@@ -196,6 +198,18 @@ export default function ProductPage() {
             </div>
 
             {product.short_description && <p className="text-muted-foreground mb-5 leading-relaxed">{product.short_description}</p>}
+
+            {/* Debug: Show product variant info */}
+            {product.variants?.length === 0 && (
+              <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
+                ⚠️ No variants loaded for this product. Expected variants with attributes.
+              </div>
+            )}
+            {product.variants?.length > 0 && !usesAttributeVariants && (
+              <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg text-sm text-yellow-700">
+                Product has {product.variants.length} variants but none have attributes field. Format: {JSON.stringify(product.variants[0]?.name ? 'old' : 'unknown')}
+              </div>
+            )}
 
             {/* Variants */}
             {usesAttributeVariants ? (
