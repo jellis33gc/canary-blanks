@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { X, Plus, Upload, Trash2 } from "lucide-react";
+import { X, Plus, Upload, Trash2, RefreshCw } from "lucide-react";
 
 export default function ProductFormModal({ product, categories, onSave, onClose }) {
   const [form, setForm] = useState({
@@ -28,8 +28,60 @@ export default function ProductFormModal({ product, categories, onSave, onClose 
     variants: product?.variants || [],
     is_variable: (product?.variants?.length > 0) ?? false,
   });
+  // attributes = [{ name: "Colour", values: ["Red", "Blue"] }, { name: "Size", values: ["S", "M"] }]
+  // combinations = [{ combo: "Red / S", attributes: { Colour: "Red", Size: "S" }, price: 0, sku: "" }]
+  const initAttributes = () => {
+    if (product?.variants?.length > 0) {
+      // Reconstruct attributes from existing combinations stored in variants
+      const attrs = {};
+      product.variants.forEach(v => {
+        if (v.attributes) {
+          Object.entries(v.attributes).forEach(([k, val]) => {
+            if (!attrs[k]) attrs[k] = new Set();
+            attrs[k].add(val);
+          });
+        }
+      });
+      return Object.entries(attrs).map(([name, vals]) => ({ name, values: [...vals] }));
+    }
+    return [];
+  };
+  const initCombinations = () => product?.variants?.filter(v => v.attributes)?.map(v => ({
+    combo: v.combo || Object.values(v.attributes || {}).join(" / "),
+    attributes: v.attributes || {},
+    price: v.price ?? "",
+    sku: v.sku || "",
+  })) || [];
+
+  const [attributes, setAttributes] = useState(initAttributes);
+  const [combinations, setCombinations] = useState(initCombinations);
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
+
+  const generateCombinations = () => {
+    const filled = attributes.filter(a => a.name.trim() && a.values.filter(v => v.trim()).length > 0);
+    if (filled.length === 0) return;
+    const filledValues = filled.map(a => a.values.filter(v => v.trim()));
+    const cartesian = (arrs) => arrs.reduce((acc, arr) => acc.flatMap(x => arr.map(y => [...x, y])), [[]]);
+    const combos = cartesian(filledValues);
+    const existing = {};
+    combinations.forEach(c => { existing[c.combo] = c; });
+    const newCombinations = combos.map(vals => {
+      const attrMap = {};
+      filled.forEach((a, i) => { attrMap[a.name] = vals[i]; });
+      const key = vals.join(" / ");
+      return existing[key] || { combo: key, attributes: attrMap, price: "", sku: "" };
+    });
+    setCombinations(newCombinations);
+    // Sync to form.variants
+    set("variants", newCombinations);
+  };
+
+  const updateCombo = (i, field, val) => {
+    const updated = combinations.map((c, idx) => idx === i ? { ...c, [field]: val } : c);
+    setCombinations(updated);
+    set("variants", updated);
+  };
 
   const set = (key, val) => setForm(f => ({ ...f, [key]: val }));
 
@@ -53,7 +105,8 @@ export default function ProductFormModal({ product, categories, onSave, onClose 
   const handleSubmit = async () => {
     setSaving(true);
     const slug = form.slug || autoSlug(form.name);
-    await onSave({ ...form, slug, price: parseFloat(form.price), compare_at_price: parseFloat(form.compare_at_price) || 0, stock_quantity: form.stock_quantity !== "" ? parseInt(form.stock_quantity) : undefined });
+    const { is_variable, ...rest } = form;
+    await onSave({ ...rest, slug, price: parseFloat(form.price), compare_at_price: parseFloat(form.compare_at_price) || 0, stock_quantity: form.stock_quantity !== "" ? parseInt(form.stock_quantity) : undefined });
     setSaving(false);
   };
 
@@ -166,104 +219,136 @@ export default function ProductFormModal({ product, categories, onSave, onClose 
             </TabsContent>
 
             <TabsContent value="variants" className="space-y-4">
+              {/* Toggle */}
               <div className="flex items-center gap-3 p-3 bg-muted rounded-xl">
                 <Checkbox
                   checked={form.is_variable}
                   onCheckedChange={v => {
                     set("is_variable", v);
-                    if (!v) set("variants", []);
+                    if (!v) { set("variants", []); setAttributes([]); setCombinations([]); }
                   }}
                 />
                 <div>
                   <p className="font-semibold text-sm">Variable Product</p>
-                  <p className="text-xs text-muted-foreground">Enable to add attributes like Size or Colour with individual pricing</p>
+                  <p className="text-xs text-muted-foreground">Define attributes (e.g. Colour, Size) then generate all combinations to price individually</p>
                 </div>
               </div>
 
               {form.is_variable && (
-                <div className="space-y-4">
-                  {form.variants.map((variant, vi) => (
-                    <div key={vi} className="border border-border rounded-xl p-4 space-y-3">
-                      <div className="flex items-center gap-2">
-                        <Input
-                          value={variant.name}
-                          onChange={e => {
-                            const v = [...form.variants];
-                            v[vi].name = e.target.value;
-                            set("variants", v);
-                          }}
-                          placeholder="Attribute name (e.g. Size, Colour)"
-                          className="rounded-lg font-semibold"
-                        />
-                        <button onClick={() => set("variants", form.variants.filter((_, i) => i !== vi))} className="p-1.5 hover:text-red-500 shrink-0">
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
+                <div className="space-y-5">
+                  {/* Step 1: Define Attributes */}
+                  <div>
+                    <div className="flex items-center justify-between mb-3">
+                      <p className="font-semibold text-sm">Step 1 — Define Attributes &amp; Values</p>
+                      <Button variant="outline" size="sm" className="rounded-full" onClick={() => setAttributes([...attributes, { name: "", values: [""] }])}>
+                        <Plus className="w-3 h-3 mr-1" /> Add Attribute
+                      </Button>
+                    </div>
 
-                      <div className="space-y-2">
-                        {(variant.options || []).map((opt, oi) => (
-                          <div key={oi} className="flex items-center gap-2 pl-3">
-                            <Input
-                              value={opt.label}
-                              onChange={e => {
-                                const v = [...form.variants];
-                                v[vi].options[oi].label = e.target.value;
-                                set("variants", v);
-                              }}
-                              placeholder="Option label (e.g. Small, Red)"
-                              className="rounded-lg"
-                            />
-                            <div className="flex items-center gap-1 shrink-0">
-                              <span className="text-sm text-muted-foreground">£</span>
+                    {attributes.length === 0 && (
+                      <p className="text-sm text-muted-foreground text-center py-4 border border-dashed border-border rounded-xl">
+                        Add at least one attribute to get started
+                      </p>
+                    )}
+
+                    {attributes.map((attr, ai) => (
+                      <div key={ai} className="border border-border rounded-xl p-3 mb-3 space-y-2">
+                        <div className="flex items-center gap-2">
+                          <Input
+                            value={attr.name}
+                            onChange={e => {
+                              const a = [...attributes];
+                              a[ai].name = e.target.value;
+                              setAttributes(a);
+                            }}
+                            placeholder="Attribute name (e.g. Colour, Size)"
+                            className="rounded-lg font-medium"
+                          />
+                          <button onClick={() => setAttributes(attributes.filter((_, i) => i !== ai))} className="p-1.5 hover:text-red-500 shrink-0">
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                        <div className="pl-2 space-y-1.5">
+                          {attr.values.map((val, vi) => (
+                            <div key={vi} className="flex items-center gap-2">
+                              <Input
+                                value={val}
+                                onChange={e => {
+                                  const a = [...attributes];
+                                  a[ai].values[vi] = e.target.value;
+                                  setAttributes(a);
+                                }}
+                                placeholder={`Value (e.g. ${ai === 0 ? "Red, Blue" : "S, M, L"})`}
+                                className="rounded-lg h-8 text-sm"
+                              />
+                              <button onClick={() => {
+                                const a = [...attributes];
+                                a[ai].values = a[ai].values.filter((_, i) => i !== vi);
+                                setAttributes(a);
+                              }} className="p-1 hover:text-red-500 shrink-0">
+                                <X className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                          ))}
+                          <button
+                            onClick={() => {
+                              const a = [...attributes];
+                              a[ai].values = [...a[ai].values, ""];
+                              setAttributes(a);
+                            }}
+                            className="text-xs text-primary hover:underline flex items-center gap-1 mt-1"
+                          >
+                            <Plus className="w-3 h-3" /> Add value
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+
+                    {attributes.length > 0 && (
+                      <Button className="w-full rounded-full bg-primary text-white" onClick={generateCombinations}>
+                        <RefreshCw className="w-4 h-4 mr-2" />
+                        Generate Combinations
+                      </Button>
+                    )}
+                  </div>
+
+                  {/* Step 2: Price Combinations */}
+                  {combinations.length > 0 && (
+                    <div>
+                      <p className="font-semibold text-sm mb-3">Step 2 — Price Each Combination</p>
+                      <div className="border border-border rounded-xl overflow-hidden">
+                        <div className="grid grid-cols-12 bg-muted px-3 py-2 text-xs font-semibold text-muted-foreground">
+                          <span className="col-span-5">Combination</span>
+                          <span className="col-span-4">Price (£)</span>
+                          <span className="col-span-3">SKU</span>
+                        </div>
+                        {combinations.map((combo, i) => (
+                          <div key={i} className="grid grid-cols-12 items-center px-3 py-2 border-t border-border gap-2">
+                            <span className="col-span-5 text-sm font-medium">{combo.combo}</span>
+                            <div className="col-span-4">
                               <Input
                                 type="number"
                                 step="0.01"
-                                value={opt.price ?? ""}
-                                onChange={e => {
-                                  const v = [...form.variants];
-                                  v[vi].options[oi].price = e.target.value === "" ? null : parseFloat(e.target.value);
-                                  set("variants", v);
-                                }}
-                                placeholder="Price"
-                                className="rounded-lg w-24"
+                                value={combo.price}
+                                onChange={e => updateCombo(i, "price", e.target.value)}
+                                placeholder="0.00"
+                                className="rounded-lg h-8 text-sm"
                               />
                             </div>
-                            <button onClick={() => {
-                              const v = [...form.variants];
-                              v[vi].options = v[vi].options.filter((_, i) => i !== oi);
-                              set("variants", v);
-                            }} className="p-1 hover:text-red-500 shrink-0">
-                              <X className="w-3.5 h-3.5" />
-                            </button>
+                            <div className="col-span-3">
+                              <Input
+                                value={combo.sku}
+                                onChange={e => updateCombo(i, "sku", e.target.value)}
+                                placeholder="SKU"
+                                className="rounded-lg h-8 text-sm"
+                              />
+                            </div>
                           </div>
                         ))}
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="rounded-full ml-3"
-                          onClick={() => {
-                            const v = [...form.variants];
-                            v[vi].options = [...(v[vi].options || []), { label: "", price: null, price_modifier: 0 }];
-                            set("variants", v);
-                          }}
-                        >
-                          <Plus className="w-3 h-3 mr-1" /> Add Option
-                        </Button>
                       </div>
+                      <p className="text-xs text-muted-foreground mt-2">💡 Leave price blank to fall back to the base product price.</p>
                     </div>
-                  ))}
-
-                  <Button
-                    variant="outline"
-                    className="rounded-full w-full"
-                    onClick={() => set("variants", [...form.variants, { name: "", options: [] }])}
-                  >
-                    <Plus className="w-4 h-4 mr-2" /> Add Attribute
-                  </Button>
-
-                  <p className="text-xs text-muted-foreground">
-                    💡 Set a price per option (e.g. £12.99 for Small, £15.99 for Large). The base price above is used as a fallback.
-                  </p>
+                  )}
                 </div>
               )}
             </TabsContent>
