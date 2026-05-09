@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Search, Upload, Download, Edit, Trash2, Eye, EyeOff, Star, Package } from "lucide-react";
+import { Plus, Search, Upload, Download, Edit, Trash2, Eye, EyeOff, Star, Package, FileDown } from "lucide-react";
 import ProductFormModal from "@/components/admin/ProductFormModal";
 import { format } from "date-fns";
 
@@ -117,29 +117,68 @@ export default function AdminProducts() {
     e.target.value = "";
   };
 
+  const downloadCsv = (filename, headers, rows) => {
+    const csv = [headers, ...rows].map(r => r.map(v => `"${String(v ?? "").replace(/"/g, '""')}"`).join(",")).join("\n");
+    const blob = new Blob([csv], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   const handleDownloadSample = () => {
     const headers = [
       "sku", "name", "price", "compare_at_price", "description", "short_description",
       "category_name", "stock_quantity", "is_active", "is_featured", "is_on_sale",
       "tags", "images",
-      "variant_type_1", "variant_option_1", "variant_modifier_1",
-      "variant_type_2", "variant_option_2", "variant_modifier_2",
-      "variant_type_3", "variant_option_3", "variant_modifier_3"
+      "combo", "combo_price", "combo_sku", "combo_attributes"
     ];
     const rows = [
-      ["CAKE001", "Vanilla Dream Cake", "45.00", "", "Delicious vanilla sponge with buttercream", "Classic vanilla cake", "Cakes", "10", "true", "true", "false", "bestseller,vanilla", "https://example.com/img.jpg", "Size", "6 inch", "0", "Size", "8 inch", "10", "Size", "10 inch", "20"],
-      ["CAKE001", "", "", "", "", "", "", "", "", "", "", "", "", "Flavour", "Vanilla", "0", "Flavour", "Chocolate", "0", "Flavour", "Lemon", "2", "", "", ""],
-      ["CAKE002", "Chocolate Fudge Cake", "50.00", "60.00", "Rich chocolate sponge", "Indulgent choc cake", "Cakes", "8", "true", "false", "true", "chocolate,sale", "", "Size", "6 inch", "0", "Size", "8 inch", "12", "", "", "", "", "", ""],
-      ["TOPPER001", "Happy Birthday Topper", "4.99", "", "Acrylic happy birthday topper", "Gold glitter topper", "Toppers", "50", "true", "false", "false", "topper,birthday", "", "Colour", "Gold", "0", "Colour", "Silver", "0", "Colour", "Rose Gold", "0.50", "", "", ""],
+      // Simple product (no variants)
+      ["TOPPER001", "Happy Birthday Topper", "4.99", "", "Acrylic happy birthday topper", "Gold glitter topper", "Toppers", "50", "true", "false", "false", "topper,birthday", "https://example.com/topper.jpg", "", "", "", ""],
+      // Variable product — one row per combination
+      ["CAKE001", "Vanilla Dream Cake", "45.00", "", "Delicious vanilla sponge with buttercream", "Classic vanilla cake", "Cakes", "10", "true", "true", "false", "bestseller,vanilla", "https://example.com/img.jpg", "6 inch / Vanilla", "45.00", "CAKE001-6V", '{"Size":"6 inch","Flavour":"Vanilla"}'],
+      ["CAKE001", "", "", "", "", "", "", "", "", "", "", "", "", "6 inch / Chocolate", "45.00", "CAKE001-6C", '{"Size":"6 inch","Flavour":"Chocolate"}'],
+      ["CAKE001", "", "", "", "", "", "", "", "", "", "", "", "", "8 inch / Vanilla", "55.00", "CAKE001-8V", '{"Size":"8 inch","Flavour":"Vanilla"}'],
+      ["CAKE001", "", "", "", "", "", "", "", "", "", "", "", "", "8 inch / Chocolate", "55.00", "CAKE001-8C", '{"Size":"8 inch","Flavour":"Chocolate"}'],
+      // Another variable product
+      ["CAKE002", "Chocolate Fudge Cake", "50.00", "60.00", "Rich chocolate sponge", "Indulgent choc cake", "Cakes", "8", "true", "false", "true", "chocolate,sale", "", "6 inch", "50.00", "CAKE002-6", '{"Size":"6 inch"}'],
+      ["CAKE002", "", "", "", "", "", "", "", "", "", "", "", "", "8 inch", "62.00", "CAKE002-8", '{"Size":"8 inch"}'],
     ];
-    const csv = [headers, ...rows].map(r => r.map(v => `"${v}"`).join(",")).join("\n");
-    const blob = new Blob([csv], { type: "text/csv" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "product_import_sample.csv";
-    a.click();
-    URL.revokeObjectURL(url);
+    downloadCsv("product_import_sample.csv", headers, rows);
+  };
+
+  const handleExport = () => {
+    const headers = [
+      "id", "sku", "name", "price", "compare_at_price", "description", "short_description",
+      "category_name", "stock_quantity", "is_active", "is_featured", "is_on_sale",
+      "tags", "images",
+      "combo", "combo_price", "combo_sku", "combo_attributes"
+    ];
+    const rows = [];
+    products.forEach(p => {
+      const base = [
+        p.id, p.sku || "", p.name, p.price, p.compare_at_price || "",
+        p.description || "", p.short_description || "", p.category_name || "",
+        p.stock_quantity ?? "", p.is_active ? "true" : "false",
+        p.is_featured ? "true" : "false", p.is_on_sale ? "true" : "false",
+        (p.tags || []).join(","), (p.images || []).join(","),
+      ];
+      const combos = (p.variants || []).filter(v => v.attributes);
+      if (combos.length > 0) {
+        combos.forEach((v, i) => {
+          rows.push([
+            ...( i === 0 ? base : Array(base.length).fill("")),
+            v.combo || "", v.price ?? "", v.sku || "", JSON.stringify(v.attributes || {})
+          ]);
+        });
+      } else {
+        rows.push([...base, "", "", "", ""]);
+      }
+    });
+    downloadCsv(`products_export_${new Date().toISOString().slice(0,10)}.csv`, headers, rows);
   };
 
   const handleSave = async (data) => {
@@ -170,6 +209,9 @@ export default function AdminProducts() {
           <input type="file" ref={fileRef} className="hidden" accept=".csv,.xlsx,.xls" onChange={handleImport} />
           <Button variant="outline" className="rounded-full" onClick={handleDownloadSample}>
             <Download className="w-4 h-4 mr-2" />Sample CSV
+          </Button>
+          <Button variant="outline" className="rounded-full" onClick={handleExport}>
+            <FileDown className="w-4 h-4 mr-2" />Export All
           </Button>
           <Button variant="outline" className="rounded-full" onClick={() => fileRef.current?.click()} disabled={importing}>
             <Upload className="w-4 h-4 mr-2" />{importing ? "Importing..." : "Import CSV/Excel"}
