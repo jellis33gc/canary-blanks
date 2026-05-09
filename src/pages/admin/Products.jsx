@@ -26,7 +26,7 @@ export default function AdminProducts() {
   const loadData = async () => {
     const [prods, cats] = await Promise.all([
       base44.entities.Product.list("-created_date", 500),
-      base44.entities.Category.filter({ is_active: true }, "sort_order"),
+      base44.entities.Category.filter({ is_active: true }, "sort_order", 200),
     ]);
     setProducts(prods);
     setCategories(cats);

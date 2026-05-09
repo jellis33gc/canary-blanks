@@ -91,19 +91,30 @@ export default function ProductFormModal({ product, categories, onSave, onClose 
                 <Select value={form.category_id} onValueChange={handleCategoryChange}>
                   <SelectTrigger className="rounded-xl"><SelectValue placeholder="Select category" /></SelectTrigger>
                   <SelectContent>
-                    {categories.filter(c => !c.parent_id).map(parent => {
-                      const children = categories.filter(c => c.parent_id === parent.id);
-                      return [
-                        <SelectItem key={parent.id} value={parent.id}>{parent.name}</SelectItem>,
-                        ...children.map(child => {
+                    {(() => {
+                      const items = [];
+                      const topLevel = categories.filter(c => !c.parent_id);
+                      const renderedIds = new Set();
+                      topLevel.forEach(parent => {
+                        items.push(<SelectItem key={parent.id} value={parent.id}>{parent.name}</SelectItem>);
+                        renderedIds.add(parent.id);
+                        const children = categories.filter(c => c.parent_id === parent.id);
+                        children.forEach(child => {
+                          items.push(<SelectItem key={child.id} value={child.id}>↳ {child.name}</SelectItem>);
+                          renderedIds.add(child.id);
                           const grandchildren = categories.filter(c => c.parent_id === child.id);
-                          return [
-                            <SelectItem key={child.id} value={child.id}>↳ {child.name}</SelectItem>,
-                            ...grandchildren.map(gc => <SelectItem key={gc.id} value={gc.id}>　↳ {gc.name}</SelectItem>)
-                          ];
-                        })
-                      ];
-                    })}
+                          grandchildren.forEach(gc => {
+                            items.push(<SelectItem key={gc.id} value={gc.id}>　↳ {gc.name}</SelectItem>);
+                            renderedIds.add(gc.id);
+                          });
+                        });
+                      });
+                      // Fallback: show any categories not already rendered
+                      categories.filter(c => !renderedIds.has(c.id)).forEach(c => {
+                        items.push(<SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>);
+                      });
+                      return items;
+                    })()}
                   </SelectContent>
                 </Select>
               </div>
