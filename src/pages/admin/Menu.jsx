@@ -12,6 +12,7 @@ export default function Menu() {
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
+  const [editingId, setEditingId] = useState(null);
   const [form, setForm] = useState({ label: "", type: "category", category_id: "", custom_url: "", is_active: true });
 
   useEffect(() => {
@@ -34,10 +35,28 @@ export default function Menu() {
     const data = { label: form.label, type: form.type, is_active: form.is_active };
     if (form.type === "category") data.category_id = form.category_id;
     if (form.type === "custom_url") data.custom_url = form.custom_url;
-    await base44.entities.NavMenu.create(data);
+    
+    if (editingId) {
+      await base44.entities.NavMenu.update(editingId, data);
+      setEditingId(null);
+    } else {
+      await base44.entities.NavMenu.create(data);
+    }
     setForm({ label: "", type: "category", category_id: "", custom_url: "", is_active: true });
     setShowForm(false);
     loadData();
+  };
+
+  const handleEdit = (item) => {
+    setEditingId(item.id);
+    setForm({
+      label: item.label,
+      type: item.type,
+      category_id: item.category_id || "",
+      custom_url: item.custom_url || "",
+      is_active: item.is_active
+    });
+    setShowForm(true);
   };
 
   const handleDelete = async (id) => {
@@ -124,8 +143,8 @@ export default function Menu() {
             <span className="text-sm font-medium">Active</span>
           </label>
           <div className="flex gap-3 justify-end">
-            <Button variant="outline" onClick={() => setShowForm(false)}>Cancel</Button>
-            <Button onClick={handleSave} className="bg-primary text-white">Add Item</Button>
+            <Button variant="outline" onClick={() => { setShowForm(false); setEditingId(null); }}>Cancel</Button>
+            <Button onClick={handleSave} className="bg-primary text-white">{editingId ? "Update" : "Add"} Item</Button>
           </div>
         </div>
       )}
@@ -153,6 +172,7 @@ export default function Menu() {
               </div>
               <div className="flex items-center gap-2">
                 {item.is_active ? <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full">Active</span> : <span className="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded-full">Inactive</span>}
+                <Button variant="outline" size="sm" onClick={() => handleEdit(item)} className="opacity-0 group-hover:opacity-100 transition-opacity">Edit</Button>
                 <button onClick={() => handleDelete(item.id)} className="p-1.5 rounded hover:bg-red-100 text-muted-foreground hover:text-red-600 opacity-0 group-hover:opacity-100 transition-opacity">
                   <Trash2 className="w-4 h-4" />
                 </button>
