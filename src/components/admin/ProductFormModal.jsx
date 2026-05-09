@@ -26,6 +26,7 @@ export default function ProductFormModal({ product, categories, onSave, onClose 
     is_on_sale: product?.is_on_sale ?? false,
     tabs: product?.tabs || [],
     variants: product?.variants || [],
+    is_variable: (product?.variants?.length > 0) ?? false,
   });
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -66,10 +67,11 @@ export default function ProductFormModal({ product, categories, onSave, onClose 
 
         <div className="p-6">
           <Tabs defaultValue="basic">
-            <TabsList className="rounded-full bg-muted mb-6">
+            <TabsList className="rounded-full bg-muted mb-6 flex-wrap h-auto gap-1">
               <TabsTrigger value="basic" className="rounded-full">Basic Info</TabsTrigger>
               <TabsTrigger value="media" className="rounded-full">Images</TabsTrigger>
               <TabsTrigger value="pricing" className="rounded-full">Pricing & Stock</TabsTrigger>
+              <TabsTrigger value="variants" className="rounded-full">Variants</TabsTrigger>
               <TabsTrigger value="content" className="rounded-full">Content</TabsTrigger>
             </TabsList>
 
@@ -161,6 +163,109 @@ export default function ProductFormModal({ product, categories, onSave, onClose 
                   <Input type="number" value={form.stock_quantity} onChange={e => set("stock_quantity", e.target.value)} className="rounded-xl" placeholder="Leave empty for unlimited" />
                 </div>
               </div>
+            </TabsContent>
+
+            <TabsContent value="variants" className="space-y-4">
+              <div className="flex items-center gap-3 p-3 bg-muted rounded-xl">
+                <Checkbox
+                  checked={form.is_variable}
+                  onCheckedChange={v => {
+                    set("is_variable", v);
+                    if (!v) set("variants", []);
+                  }}
+                />
+                <div>
+                  <p className="font-semibold text-sm">Variable Product</p>
+                  <p className="text-xs text-muted-foreground">Enable to add attributes like Size or Colour with individual pricing</p>
+                </div>
+              </div>
+
+              {form.is_variable && (
+                <div className="space-y-4">
+                  {form.variants.map((variant, vi) => (
+                    <div key={vi} className="border border-border rounded-xl p-4 space-y-3">
+                      <div className="flex items-center gap-2">
+                        <Input
+                          value={variant.name}
+                          onChange={e => {
+                            const v = [...form.variants];
+                            v[vi].name = e.target.value;
+                            set("variants", v);
+                          }}
+                          placeholder="Attribute name (e.g. Size, Colour)"
+                          className="rounded-lg font-semibold"
+                        />
+                        <button onClick={() => set("variants", form.variants.filter((_, i) => i !== vi))} className="p-1.5 hover:text-red-500 shrink-0">
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+
+                      <div className="space-y-2">
+                        {(variant.options || []).map((opt, oi) => (
+                          <div key={oi} className="flex items-center gap-2 pl-3">
+                            <Input
+                              value={opt.label}
+                              onChange={e => {
+                                const v = [...form.variants];
+                                v[vi].options[oi].label = e.target.value;
+                                set("variants", v);
+                              }}
+                              placeholder="Option label (e.g. Small, Red)"
+                              className="rounded-lg"
+                            />
+                            <div className="flex items-center gap-1 shrink-0">
+                              <span className="text-sm text-muted-foreground">£</span>
+                              <Input
+                                type="number"
+                                step="0.01"
+                                value={opt.price ?? ""}
+                                onChange={e => {
+                                  const v = [...form.variants];
+                                  v[vi].options[oi].price = e.target.value === "" ? null : parseFloat(e.target.value);
+                                  set("variants", v);
+                                }}
+                                placeholder="Price"
+                                className="rounded-lg w-24"
+                              />
+                            </div>
+                            <button onClick={() => {
+                              const v = [...form.variants];
+                              v[vi].options = v[vi].options.filter((_, i) => i !== oi);
+                              set("variants", v);
+                            }} className="p-1 hover:text-red-500 shrink-0">
+                              <X className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        ))}
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="rounded-full ml-3"
+                          onClick={() => {
+                            const v = [...form.variants];
+                            v[vi].options = [...(v[vi].options || []), { label: "", price: null, price_modifier: 0 }];
+                            set("variants", v);
+                          }}
+                        >
+                          <Plus className="w-3 h-3 mr-1" /> Add Option
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+
+                  <Button
+                    variant="outline"
+                    className="rounded-full w-full"
+                    onClick={() => set("variants", [...form.variants, { name: "", options: [] }])}
+                  >
+                    <Plus className="w-4 h-4 mr-2" /> Add Attribute
+                  </Button>
+
+                  <p className="text-xs text-muted-foreground">
+                    💡 Set a price per option (e.g. £12.99 for Small, £15.99 for Large). The base price above is used as a fallback.
+                  </p>
+                </div>
+              )}
             </TabsContent>
 
             <TabsContent value="content" className="space-y-4">
