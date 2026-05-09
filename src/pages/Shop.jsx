@@ -135,12 +135,27 @@ export default function Shop() {
         {/* Breadcrumb filters */}
         {(selectedCategory || showOnSale || showFeatured) && (
           <div className="flex flex-wrap gap-2 mb-4">
-            {selectedCategory && getBreadcrumb().map((cat, idx) => (
-              <Badge key={cat.id} variant="secondary" className="rounded-full cursor-pointer" onClick={() => setSelectedCategory(cat.id)}>
-                {cat.name}
-                {idx === getBreadcrumb().length - 1 && <X className="ml-1 w-3 h-3" />}
-              </Badge>
-            ))}
+            {selectedCategory && getBreadcrumb().map((cat, idx) => {
+              const breadcrumb = getBreadcrumb();
+              const isLast = idx === breadcrumb.length - 1;
+              const parent = idx > 0 ? breadcrumb[idx - 1].id : null;
+              return (
+                <Badge key={cat.id} variant="secondary" className="rounded-full cursor-pointer flex items-center gap-1" onClick={() => setSelectedCategory(cat.id)}>
+                  {cat.name}
+                  {isLast && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSelectedCategory(parent);
+                      }}
+                      className="hover:opacity-70"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  )}
+                </Badge>
+              );
+            })}
             {showOnSale && <Badge variant="secondary" className="rounded-full cursor-pointer" onClick={() => setShowOnSale(false)}>On Sale <X className="ml-1 w-3 h-3" /></Badge>}
             {showFeatured && <Badge variant="secondary" className="rounded-full cursor-pointer" onClick={() => setShowFeatured(false)}>Featured <X className="ml-1 w-3 h-3" /></Badge>}
           </div>
