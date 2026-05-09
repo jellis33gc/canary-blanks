@@ -78,14 +78,15 @@ export default function ProductFormModal({ product, categories, onSave, onClose 
   const handleLoadAttribute = (saved) => {
     const alreadyAdded = attributes.find(a => a.name.toLowerCase() === saved.name.toLowerCase());
     if (!alreadyAdded) {
-      setAttributes(prev => [...prev, { name: saved.name, values: [...saved.values] }]);
+      const vals = (saved.values || []).map(v => typeof v === 'string' ? { label: v, price: 0 } : v);
+      setAttributes(prev => [...prev, { name: saved.name, values: vals }]);
     }
   };
 
   const generateCombinations = () => {
-    const filled = attributes.filter(a => a.name.trim() && a.values.filter(v => v.trim()).length > 0);
+    const filled = attributes.filter(a => a.name.trim() && a.values.filter(v => (typeof v === 'string' ? v.trim() : v.label?.trim())).length > 0);
     if (filled.length === 0) return;
-    const filledValues = filled.map(a => a.values.filter(v => v.trim()));
+    const filledValues = filled.map(a => a.values.filter(v => (typeof v === 'string' ? v.trim() : v.label?.trim())));
     const cartesian = (arrs) => arrs.reduce((acc, arr) => acc.flatMap(x => arr.map(y => [...x, y])), [[]]);
     const combos = cartesian(filledValues);
     const existing = {};
@@ -93,15 +94,22 @@ export default function ProductFormModal({ product, categories, onSave, onClose 
     const baseSku = form.sku?.trim();
     const newCombinations = combos.map(vals => {
       const attrMap = {};
-      filled.forEach((a, i) => { attrMap[a.name] = vals[i]; });
+      let totalPrice = 0;
+      filled.forEach((a, i) => {
+        const val = vals[i];
+        const attrValue = a.values.find(av => (typeof av === 'string' ? av === val : av.label === val));
+        attrMap[a.name] = val;
+        if (attrValue && typeof attrValue === 'object' && attrValue.price) {
+          totalPrice += attrValue.price;
+        }
+      });
       const key = vals.join(" / ");
       if (existing[key]) return existing[key];
-      const suffix = vals.map(v => v.trim().split(/\s+/).map(w => w[0]?.toUpperCase() || "").join("")).join("");
+      const suffix = vals.map(v => (typeof v === 'string' ? v : v.label).trim().split(/\s+/).map(w => w[0]?.toUpperCase() || "").join("")).join("");
       const autoSku = baseSku ? `${baseSku}-${suffix}` : suffix;
-      return { combo: key, attributes: attrMap, price: "", sku: autoSku };
+      return { combo: key, attributes: attrMap, price: totalPrice > 0 ? totalPrice : "", sku: autoSku };
     });
     setCombinations(newCombinations);
-    // Sync to form.variants
     set("variants", newCombinations);
   };
 
@@ -131,10 +139,13 @@ export default function ProductFormModal({ product, categories, onSave, onClose 
   const autoSlug = (name) => name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 
   const handleSubmit = async () => {
+    if (!form.name.trim()) { alert("Product name is required"); return; }
+    if (!form.price && form.variants?.length === 0) { alert("Price is required for simple products"); return; }
     setSaving(true);
     const slug = form.slug || autoSlug(form.name);
     const { is_variable, ...rest } = form;
-    await onSave({ ...rest, slug, price: parseFloat(form.price), compare_at_price: parseFloat(form.compare_at_price) || 0, stock_quantity: form.stock_quantity !== "" ? parseInt(form.stock_quantity) : undefined });
+    const price = form.price ? parseFloat(form.price) : undefined;
+    await onSave({ ...rest, slug, price, compare_at_price: parseFloat(form.compare_at_price) || 0, stock_quantity: form.stock_quantity !== "" ? parseInt(form.stock_quantity) : undefined });
     setSaving(false);
   };
 
@@ -228,8 +239,9 @@ export default function ProductFormModal({ product, categories, onSave, onClose 
             <TabsContent value="pricing" className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1">
-                  <Label>Price (£) *</Label>
-                  <Input type="number" step="0.01" value={form.price} onChange={e => set("price", e.target.value)} className="rounded-xl" />
+                  <Label>Price (£) {combinations.length === 0 && "*"}</Label>
+                  <Input type="number" step="0.01" value={form.price} onChange={e => set("price", e.target.value)} className="rounded-xl" placeholder={combinations.length > 0 ? "Optional if variants set prices" : "Required"} />
+                  {combinations.length > 0 && <p className="text-xs text-muted-foreground">Optional — variants will use their individual prices</p>}
                 </div>
                 <div className="space-y-1">
                   <Label>Compare At Price (£)</Label>
@@ -323,31 +335,46 @@ export default function ProductFormModal({ product, categories, onSave, onClose 
                           </button>
                         </div>
                         <div className="pl-2 space-y-1.5">
-                          {attr.values.map((val, vi) => (
-                            <div key={vi} className="flex items-center gap-2">
-                              <Input
-                                value={val}
-                                onChange={e => {
+                          {attr.values.map((val, vi) => {
+                            const v = typeof val === 'string' ? { label: val, price: 0 } : val;
+                            return (
+                              <div key={vi} className="flex items-center gap-2">
+                                <Input
+                                  value={v.label}
+                                  onChange={e => {
+                                    const a = [...attributes];
+                                    a[ai].values[vi] = { ...v, label: e.target.value };
+                                    setAttributes(a);
+                                  }}
+                                  placeholder={`Value (e.g. ${ai === 0 ? "Red, Blue" : "S, M, L"})`}
+                                  className="rounded-lg h-8 text-sm"
+                                />
+                                <Input
+                                  type="number"
+                                  step="0.01"
+                                  value={v.price || 0}
+                                  onChange={e => {
+                                    const a = [...attributes];
+                                    a[ai].values[vi] = { ...v, price: parseFloat(e.target.value) || 0 };
+                                    setAttributes(a);
+                                  }}
+                                  placeholder="Price"
+                                  className="rounded-lg h-8 text-sm w-20"
+                                />
+                                <button onClick={() => {
                                   const a = [...attributes];
-                                  a[ai].values[vi] = e.target.value;
+                                  a[ai].values = a[ai].values.filter((_, i) => i !== vi);
                                   setAttributes(a);
-                                }}
-                                placeholder={`Value (e.g. ${ai === 0 ? "Red, Blue" : "S, M, L"})`}
-                                className="rounded-lg h-8 text-sm"
-                              />
-                              <button onClick={() => {
-                                const a = [...attributes];
-                                a[ai].values = a[ai].values.filter((_, i) => i !== vi);
-                                setAttributes(a);
-                              }} className="p-1 hover:text-red-500 shrink-0">
-                                <X className="w-3.5 h-3.5" />
-                              </button>
-                            </div>
-                          ))}
+                                }} className="p-1 hover:text-red-500 shrink-0">
+                                  <X className="w-3.5 h-3.5" />
+                                </button>
+                              </div>
+                            );
+                          })}
                           <button
                             onClick={() => {
                               const a = [...attributes];
-                              a[ai].values = [...a[ai].values, ""];
+                              a[ai].values = [...a[ai].values, { label: "", price: 0 }];
                               setAttributes(a);
                             }}
                             className="text-xs text-primary hover:underline flex items-center gap-1 mt-1"

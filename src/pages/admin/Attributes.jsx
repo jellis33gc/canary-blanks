@@ -26,7 +26,11 @@ export default function AdminAttributes() {
 
   const startEdit = (attr) => {
     setEditingId(attr.id);
-    setEditForm({ name: attr.name, values: [...(attr.values || [])], out_of_stock_values: [...(attr.out_of_stock_values || [])] });
+    setEditForm({
+      name: attr.name,
+      values: (attr.values || []).map(v => typeof v === 'string' ? { label: v, price: 0 } : v),
+      out_of_stock_values: [...(attr.out_of_stock_values || [])]
+    });
   };
 
   const cancelEdit = () => {
@@ -38,7 +42,7 @@ export default function AdminAttributes() {
     setSaving(true);
     await base44.entities.ProductAttribute.update(editingId, {
       name: editForm.name.trim(),
-      values: editForm.values.filter(v => v.trim()),
+      values: editForm.values.filter(v => (typeof v === 'string' ? v.trim() : v.label?.trim())),
       out_of_stock_values: editForm.out_of_stock_values || [],
     });
     setEditingId(null);
@@ -65,7 +69,7 @@ export default function AdminAttributes() {
     setSaving(true);
     await base44.entities.ProductAttribute.create({
       name: newAttr.name.trim(),
-      values: newAttr.values.filter(v => v.trim()),
+      values: newAttr.values.filter(v => (typeof v === 'string' ? v.trim() : v.label?.trim())),
     });
     setNewAttr({ name: "", values: [""] });
     setShowNew(false);
@@ -96,25 +100,40 @@ export default function AdminAttributes() {
             className="rounded-xl"
           />
           <div className="space-y-2">
-            {newAttr.values.map((val, i) => (
-              <div key={i} className="flex gap-2 items-center">
-                <Input
-                  value={val}
-                  onChange={e => {
-                    const v = [...newAttr.values];
-                    v[i] = e.target.value;
-                    setNewAttr(f => ({ ...f, values: v }));
-                  }}
-                  placeholder="Value (e.g. Red, Blue)"
-                  className="rounded-xl h-8 text-sm"
-                />
-                <button onClick={() => setNewAttr(f => ({ ...f, values: f.values.filter((_, idx) => idx !== i) }))} className="p-1 hover:text-red-500">
-                  <X className="w-3.5 h-3.5" />
-                </button>
-              </div>
-            ))}
+            {newAttr.values.map((val, i) => {
+              const v = typeof val === 'string' ? { label: val, price: 0 } : val;
+              return (
+                <div key={i} className="flex gap-2 items-center">
+                  <Input
+                    value={v.label}
+                    onChange={e => {
+                      const vals = [...newAttr.values];
+                      vals[i] = { ...v, label: e.target.value };
+                      setNewAttr(f => ({ ...f, values: vals }));
+                    }}
+                    placeholder="Value (e.g. Red, Blue)"
+                    className="rounded-xl h-8 text-sm"
+                  />
+                  <Input
+                    type="number"
+                    step="0.01"
+                    value={v.price || 0}
+                    onChange={e => {
+                      const vals = [...newAttr.values];
+                      vals[i] = { ...v, price: parseFloat(e.target.value) || 0 };
+                      setNewAttr(f => ({ ...f, values: vals }));
+                    }}
+                    placeholder="Price"
+                    className="rounded-xl h-8 text-sm w-20"
+                  />
+                  <button onClick={() => setNewAttr(f => ({ ...f, values: f.values.filter((_, idx) => idx !== i) }))} className="p-1 hover:text-red-500">
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              );
+            })}
             <button
-              onClick={() => setNewAttr(f => ({ ...f, values: [...f.values, ""] }))}
+              onClick={() => setNewAttr(f => ({ ...f, values: [...f.values, { label: "", price: 0 }] }))}
               className="text-xs text-primary hover:underline flex items-center gap-1"
             >
               <Plus className="w-3 h-3" /> Add value
@@ -148,25 +167,40 @@ export default function AdminAttributes() {
                     className="rounded-xl font-semibold"
                   />
                   <div className="space-y-2 pl-2">
-                    {editForm.values.map((val, i) => (
-                      <div key={i} className="flex gap-2 items-center">
-                        <Input
-                          value={val}
-                          onChange={e => {
-                            const v = [...editForm.values];
-                            v[i] = e.target.value;
-                            setEditForm(f => ({ ...f, values: v }));
-                          }}
-                          placeholder="Value"
-                          className="rounded-xl h-8 text-sm"
-                        />
-                        <button onClick={() => setEditForm(f => ({ ...f, values: f.values.filter((_, idx) => idx !== i) }))} className="p-1 hover:text-red-500">
-                          <X className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
-                    ))}
+                    {editForm.values.map((val, i) => {
+                      const v = typeof val === 'string' ? { label: val, price: 0 } : val;
+                      return (
+                        <div key={i} className="flex gap-2 items-center">
+                          <Input
+                            value={v.label}
+                            onChange={e => {
+                              const vals = [...editForm.values];
+                              vals[i] = { ...v, label: e.target.value };
+                              setEditForm(f => ({ ...f, values: vals }));
+                            }}
+                            placeholder="Value"
+                            className="rounded-xl h-8 text-sm"
+                          />
+                          <Input
+                            type="number"
+                            step="0.01"
+                            value={v.price || 0}
+                            onChange={e => {
+                              const vals = [...editForm.values];
+                              vals[i] = { ...v, price: parseFloat(e.target.value) || 0 };
+                              setEditForm(f => ({ ...f, values: vals }));
+                            }}
+                            placeholder="Price"
+                            className="rounded-xl h-8 text-sm w-20"
+                          />
+                          <button onClick={() => setEditForm(f => ({ ...f, values: f.values.filter((_, idx) => idx !== i) }))} className="p-1 hover:text-red-500">
+                            <X className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      );
+                    })}
                     <button
-                      onClick={() => setEditForm(f => ({ ...f, values: [...f.values, ""] }))}
+                      onClick={() => setEditForm(f => ({ ...f, values: [...f.values, { label: "", price: 0 }] }))}
                       className="text-xs text-primary hover:underline flex items-center gap-1 mt-1"
                     >
                       <Plus className="w-3 h-3" /> Add value
@@ -184,7 +218,9 @@ export default function AdminAttributes() {
                   <div className="flex-1 min-w-0">
                     <p className="font-semibold text-sm mb-2">{attr.name}</p>
                     <div className="flex flex-wrap gap-2">
-                      {(attr.values || []).map((v, i) => {
+                      {(attr.values || []).map((val, i) => {
+                        const v = typeof val === 'string' ? val : val.label;
+                        const price = typeof val === 'object' ? val.price : 0;
                         const isOOS = (attr.out_of_stock_values || []).includes(v);
                         return (
                           <button
@@ -198,7 +234,7 @@ export default function AdminAttributes() {
                             }`}
                           >
                             {isOOS && <AlertCircle className="w-3 h-3 shrink-0 no-underline" style={{textDecoration:'none'}} />}
-                            {v}
+                            {v} {price !== 0 && <span className="text-[10px] font-semibold">(+£{price.toFixed(2)})</span>}
                             {isOOS && <span className="text-[10px] no-underline not-italic ml-0.5" style={{textDecoration:'none'}}>(OOS)</span>}
                           </button>
                         );

@@ -8,7 +8,19 @@
     "values": {
       "type": "array",
       "items": {
-        "type": "string"
+        "type": "object",
+        "properties": {
+          "label": {
+            "type": "string"
+          },
+          "price": {
+            "type": "number",
+            "description": "Optional price modifier for this attribute value"
+          }
+        },
+        "required": [
+          "label"
+        ]
       }
     },
     "out_of_stock_values": {
@@ -16,7 +28,7 @@
       "items": {
         "type": "string"
       },
-      "description": "Values that are currently out of stock and cannot be ordered"
+      "description": "Labels that are currently out of stock and cannot be ordered"
     }
   },
   "required": [
