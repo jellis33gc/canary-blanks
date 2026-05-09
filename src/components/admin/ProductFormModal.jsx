@@ -86,7 +86,12 @@ export default function ProductFormModal({ product, categories, onSave, onClose 
   const generateCombinations = () => {
     const filled = attributes.filter(a => a.name.trim() && a.values.filter(v => (typeof v === 'string' ? v.trim() : v.label?.trim())).length > 0);
     if (filled.length === 0) return;
-    const filledValues = filled.map(a => a.values.filter(v => (typeof v === 'string' ? v.trim() : v.label?.trim())));
+    // Extract just the labels for cartesian product
+    const filledValues = filled.map(a =>
+      a.values
+        .filter(v => (typeof v === 'string' ? v.trim() : v.label?.trim()))
+        .map(v => typeof v === 'string' ? v : v.label)
+    );
     const cartesian = (arrs) => arrs.reduce((acc, arr) => acc.flatMap(x => arr.map(y => [...x, y])), [[]]);
     const combos = cartesian(filledValues);
     const existing = {};
@@ -96,16 +101,17 @@ export default function ProductFormModal({ product, categories, onSave, onClose 
       const attrMap = {};
       let totalPrice = 0;
       filled.forEach((a, i) => {
-        const val = vals[i];
-        const attrValue = a.values.find(av => (typeof av === 'string' ? av === val : av.label === val));
-        attrMap[a.name] = val;
+        const label = vals[i];
+        attrMap[a.name] = label;
+        // Find the matching value object to get price
+        const attrValue = a.values.find(av => (typeof av === 'string' ? av === label : av.label === label));
         if (attrValue && typeof attrValue === 'object' && attrValue.price) {
           totalPrice += attrValue.price;
         }
       });
       const key = vals.join(" / ");
       if (existing[key]) return existing[key];
-      const suffix = vals.map(v => (typeof v === 'string' ? v : v.label).trim().split(/\s+/).map(w => w[0]?.toUpperCase() || "").join("")).join("");
+      const suffix = vals.map(v => v.trim().split(/\s+/).map(w => w[0]?.toUpperCase() || "").join("")).join("");
       const autoSku = baseSku ? `${baseSku}-${suffix}` : suffix;
       return { combo: key, attributes: attrMap, price: totalPrice > 0 ? totalPrice : "", sku: autoSku };
     });
