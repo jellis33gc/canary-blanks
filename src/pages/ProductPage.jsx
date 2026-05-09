@@ -110,18 +110,32 @@ export default function ProductPage() {
   const discount = product.compare_at_price > product.price ? Math.round((1 - product.price / product.compare_at_price) * 100) : 0;
   const images = product.images?.length > 0 ? product.images : [""];
 
+  // Detect if product uses new combination-based variants (with attributes) or old variant format
+  const usesAttributeVariants = product?.variants?.some(v => v.attributes);
+
   // Calculate price with variant modifiers
-  const priceModifier = Object.entries(selectedVariants).reduce((total, [variantName, selectedLabel]) => {
-    const variant = product.variants?.find(v => v.name === variantName);
-    const option = variant?.options?.find(o => (typeof o === 'object' ? o.label : o) === selectedLabel);
-    return total + (typeof option === 'object' ? (option.price_modifier || 0) : 0);
-  }, 0);
-  const displayPrice = (product.price || 0) + priceModifier;
+  let displayPrice = product.price || 0;
+  let selectedCombo = null;
+
+  if (usesAttributeVariants) {
+    // New attribute-based variants
+    selectedCombo = product?.variants?.find(v =>
+      v.attributes && Object.entries(v.attributes).every(([k, val]) => selectedVariants[k] === val)
+    );
+    if (selectedCombo?.price) {
+      displayPrice = selectedCombo.price;
+    }
+  } else {
+    // Old variant format with options
+    const priceModifier = Object.entries(selectedVariants).reduce((total, [variantName, selectedLabel]) => {
+      const variant = product.variants?.find(v => v.name === variantName);
+      const option = variant?.options?.find(o => (typeof o === 'object' ? o.label : o) === selectedLabel);
+      return total + (typeof option === 'object' ? (option.price_modifier || 0) : 0);
+    }, 0);
+    displayPrice = (product.price || 0) + priceModifier;
+  }
 
   // Block add to cart if any selected variant is OOS (global attribute map OR per-combo flag)
-  const selectedCombo = product?.variants?.find(v =>
-    v.attributes && Object.entries(v.attributes).every(([k, val]) => selectedVariants[k] === val)
-  );
   const hasOOSSelected = Object.entries(selectedVariants).some(
     ([variantName, label]) => (oosMap[variantName] || []).includes(label)
   ) || selectedCombo?.out_of_stock === true;
@@ -184,35 +198,79 @@ export default function ProductPage() {
             {product.short_description && <p className="text-muted-foreground mb-5 leading-relaxed">{product.short_description}</p>}
 
             {/* Variants */}
-            {product.variants?.map(v => (
-              <div key={v.name} className="mb-4">
-                <label className="font-semibold text-sm mb-2 block">{v.name}</label>
-                <div className="flex flex-wrap gap-2">
-                  {v.options?.map(opt => {
-                    const label = typeof opt === 'object' ? opt.label : opt;
-                    const modifier = typeof opt === 'object' ? (opt.price_modifier || 0) : 0;
-                    const isOOS = (oosMap[v.name] || []).includes(label);
-                    return (
-                      <button
-                        key={label}
-                        onClick={() => !isOOS && setSelectedVariants({ ...selectedVariants, [v.name]: label })}
-                        disabled={isOOS}
-                        className={`px-4 py-2 rounded-full text-sm border-2 font-medium transition-all relative ${
-                          isOOS
-                            ? 'border-border bg-muted text-muted-foreground line-through cursor-not-allowed opacity-60'
-                            : selectedVariants[v.name] === label
-                              ? 'border-primary bg-primary/10 text-primary'
-                              : 'border-border hover:border-primary'
-                        }`}
-                      >
-                        {label}{modifier !== 0 ? ` (${modifier > 0 ? '+' : ''}£${modifier.toFixed(2)})` : ''}
-                        {isOOS && <span className="block text-[10px] not-italic leading-tight">Out of stock</span>}
-                      </button>
-                    );
-                  })}
+            {usesAttributeVariants ? (
+              // Render attribute-based variants
+              (() => {
+                // Extract unique attribute names from combinations
+                const attributeNames = new Set();
+                product.variants?.forEach(v => {
+                  if (v.attributes) Object.keys(v.attributes).forEach(k => attributeNames.add(k));
+                });
+                return Array.from(attributeNames).map(attrName => (
+                  <div key={attrName} className="mb-4">
+                    <label className="font-semibold text-sm mb-2 block">{attrName}</label>
+                    <div className="flex flex-wrap gap-2">
+                      {/* Get all unique values for this attribute */}
+                      {Array.from(new Set(
+                        product.variants
+                          ?.filter(v => v.attributes && v.attributes[attrName])
+                          .map(v => v.attributes[attrName])
+                      )).map(value => {
+                        const isOOS = (oosMap[attrName] || []).includes(value);
+                        return (
+                          <button
+                            key={value}
+                            onClick={() => !isOOS && setSelectedVariants({ ...selectedVariants, [attrName]: value })}
+                            disabled={isOOS}
+                            className={`px-4 py-2 rounded-full text-sm border-2 font-medium transition-all ${
+                              isOOS
+                                ? 'border-border bg-muted text-muted-foreground line-through cursor-not-allowed opacity-60'
+                                : selectedVariants[attrName] === value
+                                  ? 'border-primary bg-primary/10 text-primary'
+                                  : 'border-border hover:border-primary'
+                            }`}
+                          >
+                            {value}
+                            {isOOS && <span className="block text-[10px] not-italic leading-tight">Out of stock</span>}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ));
+              })()
+            ) : (
+              // Render old variant format with options
+              product.variants?.map(v => (
+                <div key={v.name} className="mb-4">
+                  <label className="font-semibold text-sm mb-2 block">{v.name}</label>
+                  <div className="flex flex-wrap gap-2">
+                    {v.options?.map(opt => {
+                      const label = typeof opt === 'object' ? opt.label : opt;
+                      const modifier = typeof opt === 'object' ? (opt.price_modifier || 0) : 0;
+                      const isOOS = (oosMap[v.name] || []).includes(label);
+                      return (
+                        <button
+                          key={label}
+                          onClick={() => !isOOS && setSelectedVariants({ ...selectedVariants, [v.name]: label })}
+                          disabled={isOOS}
+                          className={`px-4 py-2 rounded-full text-sm border-2 font-medium transition-all relative ${
+                            isOOS
+                              ? 'border-border bg-muted text-muted-foreground line-through cursor-not-allowed opacity-60'
+                              : selectedVariants[v.name] === label
+                                ? 'border-primary bg-primary/10 text-primary'
+                                : 'border-border hover:border-primary'
+                          }`}
+                        >
+                          {label}{modifier !== 0 ? ` (${modifier > 0 ? '+' : ''}£${modifier.toFixed(2)})` : ''}
+                          {isOOS && <span className="block text-[10px] not-italic leading-tight">Out of stock</span>}
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))
+            )}
 
             {/* Custom options */}
             {product.custom_options?.map(opt => (
