@@ -90,7 +90,21 @@ export default function ProductFormModal({ product, categories, onSave, onClose 
                 <Label>Category</Label>
                 <Select value={form.category_id} onValueChange={handleCategoryChange}>
                   <SelectTrigger className="rounded-xl"><SelectValue placeholder="Select category" /></SelectTrigger>
-                  <SelectContent>{categories.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent>
+                  <SelectContent>
+                    {categories.filter(c => !c.parent_id).map(parent => {
+                      const children = categories.filter(c => c.parent_id === parent.id);
+                      return [
+                        <SelectItem key={parent.id} value={parent.id}>{parent.name}</SelectItem>,
+                        ...children.map(child => {
+                          const grandchildren = categories.filter(c => c.parent_id === child.id);
+                          return [
+                            <SelectItem key={child.id} value={child.id}>↳ {child.name}</SelectItem>,
+                            ...grandchildren.map(gc => <SelectItem key={gc.id} value={gc.id}>　↳ {gc.name}</SelectItem>)
+                          ];
+                        })
+                      ];
+                    })}
+                  </SelectContent>
                 </Select>
               </div>
               <div className="flex gap-4">
