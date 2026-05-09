@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { X, Plus, Upload, Trash2, RefreshCw } from "lucide-react";
+import { X, Plus, Upload, Trash2, RefreshCw, BookmarkPlus, Library } from "lucide-react";
 
 export default function ProductFormModal({ product, categories, onSave, onClose }) {
   const [form, setForm] = useState({
@@ -57,6 +57,30 @@ export default function ProductFormModal({ product, categories, onSave, onClose 
   const [combinations, setCombinations] = useState(initCombinations);
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [savedAttrs, setSavedAttrs] = useState([]);
+
+  useEffect(() => {
+    base44.entities.ProductAttribute.list("name", 100).then(setSavedAttrs).catch(() => {});
+  }, []);
+
+  const handleSaveAttribute = async (attr) => {
+    if (!attr.name.trim()) return;
+    const exists = savedAttrs.find(a => a.name.toLowerCase() === attr.name.toLowerCase());
+    if (exists) {
+      await base44.entities.ProductAttribute.update(exists.id, { values: attr.values.filter(v => v.trim()) });
+      setSavedAttrs(prev => prev.map(a => a.id === exists.id ? { ...a, values: attr.values.filter(v => v.trim()) } : a));
+    } else {
+      const created = await base44.entities.ProductAttribute.create({ name: attr.name.trim(), values: attr.values.filter(v => v.trim()) });
+      setSavedAttrs(prev => [...prev, created]);
+    }
+  };
+
+  const handleLoadAttribute = (saved) => {
+    const alreadyAdded = attributes.find(a => a.name.toLowerCase() === saved.name.toLowerCase());
+    if (!alreadyAdded) {
+      setAttributes(prev => [...prev, { name: saved.name, values: [...saved.values] }]);
+    }
+  };
 
   const generateCombinations = () => {
     const filled = attributes.filter(a => a.name.trim() && a.values.filter(v => v.trim()).length > 0);
@@ -249,6 +273,25 @@ export default function ProductFormModal({ product, categories, onSave, onClose 
                       </Button>
                     </div>
 
+                    {/* Saved attribute library */}
+                    {savedAttrs.length > 0 && (
+                      <div className="mb-3 p-3 bg-muted/50 rounded-xl">
+                        <p className="text-xs font-semibold text-muted-foreground mb-2 flex items-center gap-1"><Library className="w-3 h-3" /> Saved Attributes — click to add</p>
+                        <div className="flex flex-wrap gap-1.5">
+                          {savedAttrs.map(sa => (
+                            <button
+                              key={sa.id}
+                              onClick={() => handleLoadAttribute(sa)}
+                              disabled={!!attributes.find(a => a.name.toLowerCase() === sa.name.toLowerCase())}
+                              className="text-xs px-2.5 py-1 rounded-full border border-border bg-white hover:border-primary hover:text-primary transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                            >
+                              {sa.name} <span className="text-muted-foreground">({sa.values?.length})</span>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
                     {attributes.length === 0 && (
                       <p className="text-sm text-muted-foreground text-center py-4 border border-dashed border-border rounded-xl">
                         Add at least one attribute to get started
@@ -268,6 +311,13 @@ export default function ProductFormModal({ product, categories, onSave, onClose 
                             placeholder="Attribute name (e.g. Colour, Size)"
                             className="rounded-lg font-medium"
                           />
+                          <button
+                            onClick={() => handleSaveAttribute(attr)}
+                            title="Save to library"
+                            className="p-1.5 hover:text-primary shrink-0"
+                          >
+                            <BookmarkPlus className="w-4 h-4" />
+                          </button>
                           <button onClick={() => setAttributes(attributes.filter((_, i) => i !== ai))} className="p-1.5 hover:text-red-500 shrink-0">
                             <Trash2 className="w-4 h-4" />
                           </button>
