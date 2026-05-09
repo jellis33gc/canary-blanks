@@ -110,8 +110,8 @@ export default function ProductPage() {
   const discount = product.compare_at_price > product.price ? Math.round((1 - product.price / product.compare_at_price) * 100) : 0;
   const images = product.images?.length > 0 ? product.images : [""];
 
-  // Detect if product uses new combination-based variants (with attributes) or old variant format
-  const usesAttributeVariants = product?.variants?.length > 0 && product.variants.some(v => v.attributes);
+  // Detect if product uses new combination-based variants (with attributes, combo, or sku fields)
+  const usesAttributeVariants = product?.variants?.length > 0 && product.variants.some(v => v.attributes || v.combo);
 
   // Calculate price with variant modifiers
   let displayPrice = product.price || 0;
@@ -224,7 +224,17 @@ export default function ProductPage() {
                 // Extract unique attribute names from combinations
                 const attributeNames = new Set();
                 product.variants?.forEach(v => {
-                  if (v.attributes) Object.keys(v.attributes).forEach(k => attributeNames.add(k));
+                  if (v.attributes) {
+                    Object.keys(v.attributes).forEach(k => attributeNames.add(k));
+                  } else if (v.combo) {
+                    // Parse combo string like "Red / S" to extract attribute names
+                    const parts = v.combo.split(" / ");
+                    if (parts.length > 1) {
+                      product.variants.forEach(variant => {
+                        if (variant.attributes) Object.keys(variant.attributes).forEach(k => attributeNames.add(k));
+                      });
+                    }
+                  }
                 });
                 return Array.from(attributeNames).map(attrName => (
                   <div key={attrName} className="mb-4">

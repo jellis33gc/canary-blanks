@@ -144,7 +144,21 @@ export default function ProductFormModal({ product, categories, onSave, onClose 
     const slug = form.slug || autoSlug(form.name);
     const { is_variable, ...rest } = form;
     const price = form.price ? parseFloat(form.price) : undefined;
-    await onSave({ ...rest, slug, price, compare_at_price: parseFloat(form.compare_at_price) || 0, stock_quantity: form.stock_quantity !== "" ? parseInt(form.stock_quantity) : undefined });
+    
+    // Ensure variants have proper attributes structure
+    let variants = rest.variants;
+    if (variants.length > 0 && !variants[0].attributes && attributes.length > 0) {
+      variants = variants.map(v => {
+        const attrMap = {};
+        const comboParts = v.combo?.split(" / ") || [];
+        attributes.forEach((attr, i) => {
+          attrMap[attr.name] = comboParts[i] || '';
+        });
+        return { ...v, attributes: attrMap };
+      });
+    }
+    
+    await onSave({ ...rest, variants, slug, price, compare_at_price: parseFloat(form.compare_at_price) || 0, stock_quantity: form.stock_quantity !== "" ? parseInt(form.stock_quantity) : undefined });
     setSaving(false);
   };
 
