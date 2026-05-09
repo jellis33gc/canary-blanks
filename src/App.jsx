@@ -23,7 +23,7 @@ import Dashboard from './pages/admin/Dashboard';
 import AdminProducts from './pages/admin/Products';
 import AdminOrders from './pages/admin/Orders';
 import AdminCustomers from './pages/admin/Customers';
-import AdminCategories from './pages/admin/Categories';
+import AdminCategories from './pages/admin/Categories.jsx';
 import AdminDiscounts from './pages/admin/Discounts';
 import HomepageBuilder from './pages/admin/HomepageBuilder';
 import AdminPromoBanners from './pages/admin/PromoBanners';

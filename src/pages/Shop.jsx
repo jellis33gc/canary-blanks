@@ -119,11 +119,35 @@ export default function Shop() {
             <div className="w-64 shrink-0 bg-card rounded-2xl border border-border p-5 h-fit sticky top-24 space-y-6">
               <div>
                 <h3 className="font-bold mb-3">Category</h3>
-                <div className="space-y-2">
+                <div className="space-y-1">
                   <button onClick={() => setSelectedCategory("")} className={`block w-full text-left text-sm py-1 px-2 rounded-lg transition-colors ${!selectedCategory ? 'bg-primary/10 text-primary font-semibold' : 'hover:bg-muted'}`}>All</button>
-                  {categories.map(cat => (
-                    <button key={cat.id} onClick={() => setSelectedCategory(cat.id)} className={`block w-full text-left text-sm py-1 px-2 rounded-lg transition-colors ${selectedCategory === cat.id ? 'bg-primary/10 text-primary font-semibold' : 'hover:bg-muted'}`}>{cat.name}</button>
-                  ))}
+                  {categories.filter(c => !c.parent_id).map(cat => {
+                    const children = categories.filter(c => c.parent_id === cat.id);
+                    return (
+                      <div key={cat.id}>
+                        <button onClick={() => setSelectedCategory(cat.id)} className={`block w-full text-left text-sm py-1 px-2 rounded-lg transition-colors font-medium ${selectedCategory === cat.id ? 'bg-primary/10 text-primary font-semibold' : 'hover:bg-muted'}`}>{cat.name}</button>
+                        {children.length > 0 && (
+                          <div className="ml-3 border-l border-border pl-2 space-y-0.5 mt-0.5">
+                            {children.map(sub => {
+                              const grandchildren = categories.filter(c => c.parent_id === sub.id);
+                              return (
+                                <div key={sub.id}>
+                                  <button onClick={() => setSelectedCategory(sub.id)} className={`block w-full text-left text-sm py-1 px-2 rounded-lg transition-colors ${selectedCategory === sub.id ? 'bg-primary/10 text-primary font-semibold' : 'hover:bg-muted text-muted-foreground'}`}>{sub.name}</button>
+                                  {grandchildren.length > 0 && (
+                                    <div className="ml-3 border-l border-border pl-2 space-y-0.5 mt-0.5">
+                                      {grandchildren.map(gc => (
+                                        <button key={gc.id} onClick={() => setSelectedCategory(gc.id)} className={`block w-full text-left text-xs py-1 px-2 rounded-lg transition-colors ${selectedCategory === gc.id ? 'bg-primary/10 text-primary font-semibold' : 'hover:bg-muted text-muted-foreground'}`}>{gc.name}</button>
+                                      ))}
+                                    </div>
+                                  )}
+                                </div>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
               <div>
