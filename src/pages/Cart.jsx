@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
@@ -15,7 +15,14 @@ export default function Cart() {
   const [appliedDiscount, setAppliedDiscount] = useState(null);
   const [discountError, setDiscountError] = useState("");
   const [applyingCode, setApplyingCode] = useState(false);
+  const [shippingCost, setShippingCost] = useState(5.99);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    base44.entities.SiteSettings.filter({ key: "shipping_cost" }).then(settings => {
+      if (settings[0]) setShippingCost(parseFloat(settings[0].value));
+    }).catch(() => {});
+  }, []);
 
   const subtotal = getSubtotal();
   const discountAmount = appliedDiscount
@@ -23,7 +30,7 @@ export default function Cart() {
       ? (subtotal * appliedDiscount.value) / 100
       : Math.min(appliedDiscount.value, subtotal)
     : 0;
-  const shipping = subtotal - discountAmount >= 50 ? 0 : 3.99;
+  const shipping = subtotal - discountAmount >= 50 ? 0 : shippingCost;
   const total = subtotal - discountAmount + shipping;
 
   const handleApplyDiscount = async () => {
