@@ -54,11 +54,26 @@ export default function ProductReviews({ productId, productName }) {
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [form, setForm] = useState({ rating: 0, title: "", body: "" });
+  const [hasPurchased, setHasPurchased] = useState(false);
+  const [checkingPurchase, setCheckingPurchase] = useState(false);
 
   useEffect(() => {
     base44.entities.Review.filter({ product_id: productId, is_approved: true }, "-created_date", 50)
       .then(setReviews).catch(() => {});
-    base44.auth.me().then(setUser).catch(() => {});
+    
+    base44.auth.me().then(async (u) => {
+      setUser(u);
+      if (u) {
+        setCheckingPurchase(true);
+        // Check if user has purchased this product
+        const orders = await base44.entities.Order.filter({ customer_email: u.email }, "-created_date", 100).catch(() => []);
+        const hasBought = orders.some(order =>
+          order.items?.some(item => item.product_id === productId)
+        );
+        setHasPurchased(hasBought);
+        setCheckingPurchase(false);
+      }
+    }).catch(() => {});
   }, [productId]);
 
   const avgRating = reviews.length > 0
@@ -72,7 +87,7 @@ export default function ProductReviews({ productId, productName }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!form.rating) return;
+    if (!form.rating || !hasPurchased) return;
     setSubmitting(true);
     await base44.entities.Review.create({
       product_id: productId,
@@ -90,6 +105,7 @@ export default function ProductReviews({ productId, productName }) {
     setSubmitted(true);
     setShowForm(false);
     setForm({ rating: 0, title: "", body: "" });
+    setTimeout(() => setSubmitted(false), 3000);
   };
 
   const formatDate = (dateStr) => {
@@ -119,20 +135,34 @@ export default function ProductReviews({ productId, productName }) {
         )}
 
         <div className="shrink-0">
-          {submitted ? (
-            <p className="text-green-600 font-semibold text-sm">✅ Thanks for your review!</p>
-          ) : (
-            <Button
-              onClick={() => {
-                if (!user) { base44.auth.redirectToLogin(); return; }
-                setShowForm(v => !v);
-              }}
-              className="rounded-full bg-primary text-white font-bold"
-            >
-              {showForm ? "Cancel" : "Write a Review"}
-            </Button>
-          )}
-        </div>
+           {submitted ? (
+             <p className="text-green-600 font-semibold text-sm">✅ Thanks for your review!</p>
+           ) : (
+             <>
+               {checkingPurchase ? (
+                 <p className="text-muted-foreground text-sm">Checking order history...</p>
+               ) : !user ? (
+                 <Button
+                   onClick={() => base44.auth.redirectToLogin()}
+                   className="rounded-full bg-primary text-white font-bold"
+                 >
+                   Sign in to Review
+                 </Button>
+               ) : !hasPurchased ? (
+                 <div className="text-sm text-muted-foreground bg-muted/50 rounded-lg p-3">
+                   <p className="font-medium">You must purchase this product to review it.</p>
+                 </div>
+               ) : (
+                 <Button
+                   onClick={() => setShowForm(v => !v)}
+                   className="rounded-full bg-primary text-white font-bold"
+                 >
+                   {showForm ? "Cancel" : "Write a Review"}
+                 </Button>
+               )}
+             </>
+           )}
+         </div>
       </div>
 
       {/* Review form */}

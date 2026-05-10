@@ -13,6 +13,7 @@ import { Heart, ShoppingCart, Star, Minus, Plus, Share2, ChevronRight } from "lu
 import useCartStore from "@/lib/cartStore.jsx";
 import { motion } from "framer-motion";
 import ProductReviews from "@/components/product/ProductReviews";
+import ProductRatingSummary from "@/components/product/ProductRatingSummary";
 
 export default function ProductPage() {
   const { slug } = useParams();
@@ -212,15 +213,18 @@ export default function ProductPage() {
               </button>
             </div>
 
-            <div className="flex items-baseline gap-3 mb-4">
-              <span className="text-3xl font-bold text-primary">£{displayPrice.toFixed(2)}</span>
-              {product.compare_at_price > product.price && (
-                <span className="text-lg text-muted-foreground line-through">£{product.compare_at_price?.toFixed(2)}</span>
-              )}
-              {discount > 0 && <Badge className="bg-primary text-white">Save {discount}%</Badge>}
+            <div>
+              <div className="flex items-baseline gap-3 mb-2">
+                <span className="text-3xl font-bold text-primary">£{displayPrice.toFixed(2)}</span>
+                {product.compare_at_price > product.price && (
+                  <span className="text-lg text-muted-foreground line-through">£{product.compare_at_price?.toFixed(2)}</span>
+                )}
+                {discount > 0 && <Badge className="bg-primary text-white">Save {discount}%</Badge>}
+              </div>
+              <ProductRatingSummary productId={product.id} />
             </div>
 
-            {product.short_description && <p className="text-muted-foreground mb-5 leading-relaxed">{product.short_description}</p>}
+            {product.short_description && <p className="text-muted-foreground mb-6 leading-relaxed">{product.short_description}</p>}
 
             {/* Variants */}
             {usesAttributeVariants ? (
