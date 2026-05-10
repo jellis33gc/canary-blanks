@@ -50,6 +50,24 @@ export default function Checkout() {
     
     // If cakes in cart, lock to local pickup; otherwise reset to local pickup as default
     setShippingMethod('local_pickup');
+    
+    // Fetch shipping rates if no cakes and items exist
+    if (items.length > 0 && !cakesInCart) {
+      setLoadingShipping(true);
+      const totalWeight = items.reduce((sum, item) => sum + (item.weight || 0.5), 0);
+      base44.functions.invoke('getShippingRates', {
+        destination_country: 'GB',
+        weight: Math.ceil(totalWeight * 1000), // grams
+      }).then(res => {
+        setShippingOptions(res.data?.rates || []);
+        setLoadingShipping(false);
+      }).catch(() => {
+        setShippingOptions([]);
+        setLoadingShipping(false);
+      });
+    } else {
+      setShippingOptions([]);
+    }
 
     base44.auth.me().then(u => {
       setUser(u);
@@ -222,7 +240,7 @@ export default function Checkout() {
               </div>
 
               {/* Shipping Address */}
-              {shippingMethod !== 'local_pickup' && (
+              {shippingMethod !== 'local_pickup' && shippingOptions.length > 0 && (
                 <div className="bg-card border border-border rounded-2xl p-6 space-y-4">
                   <h2 className="font-bold text-lg">Shipping Address</h2>
                   <div className="space-y-1">
