@@ -110,8 +110,8 @@ export default function ProductPage() {
   const discount = product.compare_at_price > product.price ? Math.round((1 - product.price / product.compare_at_price) * 100) : 0;
   const images = product.images?.length > 0 ? product.images : [""];
 
-  // Detect if product uses new combination-based variants (with attributes, combo, or sku fields)
-  const usesAttributeVariants = product?.variants?.length > 0 && product.variants.some(v => v.attributes || v.combo);
+  // Detect if product uses combination-based variants — must have an attributes object with at least one key
+  const usesAttributeVariants = product?.variants?.length > 0 && product.variants.some(v => v.attributes && typeof v.attributes === 'object' && Object.keys(v.attributes).length > 0);
 
   // Calculate price with variant modifiers
   let displayPrice = product.price || 0;

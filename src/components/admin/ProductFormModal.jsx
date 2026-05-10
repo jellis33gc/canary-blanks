@@ -38,7 +38,9 @@ export default function ProductFormModal({ product, categories, onSave, onClose 
         if (v.attributes) {
           Object.entries(v.attributes).forEach(([k, val]) => {
             if (!attrs[k]) attrs[k] = new Set();
-            attrs[k].add(val);
+            // Always store as plain string
+            const strVal = typeof val === 'object' && val !== null ? (val.label || val.value || String(val)) : String(val);
+            attrs[k].add(strVal);
           });
         }
       });
@@ -100,7 +102,8 @@ export default function ProductFormModal({ product, categories, onSave, onClose 
     const newCombinations = combos.map(vals => {
       const attrMap = {};
       filled.forEach((a, i) => {
-        const label = vals[i];
+        // Always store as plain string, never as object
+        const label = typeof vals[i] === 'object' && vals[i] !== null ? (vals[i].label || vals[i].value || String(vals[i])) : String(vals[i]);
         attrMap[a.name] = label;
       });
       const key = vals.join(" / ");
