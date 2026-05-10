@@ -62,13 +62,17 @@ export default function AdminProducts() {
     const file = e.target.files[0];
     if (!file) return;
     setImporting(true);
-    setImportStatus("Uploading and parsing file...");
+    setImportStatus("Reading and uploading file...");
 
-    const formData = new FormData();
-    formData.append("file", file);
-    formData.append("categories", JSON.stringify(categories));
+    const arrayBuffer = await file.arrayBuffer();
+    const base64 = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
 
-    const response = await base44.functions.invoke("importProducts", formData);
+    const response = await base44.functions.invoke("importProducts", {
+      fileBase64: base64,
+      fileName: file.name,
+      categories
+    });
+
     if (response.data?.success) {
       setImportStatus(`✓ Done! Created: ${response.data.created}, Updated: ${response.data.updated}${response.data.errors?.length ? `, Errors: ${response.data.errors.length}` : ''}`);
       await loadData();

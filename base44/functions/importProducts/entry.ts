@@ -9,28 +9,24 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Forbidden' }, { status: 403 });
     }
 
-    const contentType = req.headers.get('content-type') || '';
-
+    const body = await req.json();
     let rows = [];
-    let categories = [];
+    let categories = body.categories || [];
 
-    if (contentType.includes('multipart/form-data')) {
-      // Direct file upload — parse the file server-side
-      const formData = await req.formData();
-      const file = formData.get('file');
-      const catsJson = formData.get('categories');
-      categories = catsJson ? JSON.parse(catsJson) : [];
-
-      const arrayBuffer = await file.arrayBuffer();
-      const workbook = XLSX.read(new Uint8Array(arrayBuffer), { type: 'array' });
+    if (body.fileBase64) {
+      // Decode base64 and parse file
+      const binaryString = atob(body.fileBase64);
+      const bytes = new Uint8Array(binaryString.length);
+      for (let i = 0; i < binaryString.length; i++) {
+        bytes[i] = binaryString.charCodeAt(i);
+      }
+      const workbook = XLSX.read(bytes, { type: 'array' });
       const sheetName = workbook.SheetNames[0];
       const sheet = workbook.Sheets[sheetName];
       rows = XLSX.utils.sheet_to_json(sheet, { defval: '' });
     } else {
-      // Legacy JSON payload (rows already extracted by frontend)
-      const body = await req.json();
+      // Legacy: rows already extracted
       rows = body.rows || [];
-      categories = body.categories || [];
     }
 
     // Group rows by SKU — the export format puts product info on the first row
