@@ -43,16 +43,38 @@ Deno.serve(async (req) => {
       content: "All of our Cake Toppers are created using food safe PLA and are designed to be one time use only.\n\nIf you want to keep them as a reminder, please wash thoroughly using warm soapy water and then dry thoroughly before storing."
     };
 
-    let updated = 0;
+    const sizeTab = {
+      title: "Cake Topper Size Selection",
+      content: "We have a range of sizes available to suit all sizes of cakes.\n\nSmall - For cakes up to 4\" in diameter \nMedium - For cakes up to 6\" in diameter \nLarge - For cakes up to 8\" in diameter \n\nIf you have any doubts, please get in touch and we will be more than happy to help you choose the right size for your needs."
+    };
 
+    const updatesToMake = [];
+    
     for (const product of cakeTopperProducts) {
       const existingTabs = product.tabs || [];
-      const hasCareTabs = existingTabs.some(t => t.title === "Care Instructions");
+      const hasCareTab = existingTabs.some(t => t.title === "Care Instructions");
+      const hasSizeTab = existingTabs.some(t => t.title === "Cake Topper Size Selection");
       
-      if (!hasCareTabs) {
-        const newTabs = [...existingTabs, careTab];
-        await base44.asServiceRole.entities.Product.update(product.id, { tabs: newTabs });
-        updated++;
+      let newTabs = existingTabs;
+      if (!hasCareTab) newTabs = [...newTabs, careTab];
+      if (!hasSizeTab) newTabs = [...newTabs, sizeTab];
+      
+      if (newTabs.length > existingTabs.length) {
+        updatesToMake.push({ id: product.id, tabs: newTabs });
+      }
+    }
+
+    let updated = 0;
+    // Process in batches of 5 with longer delays
+    for (let i = 0; i < updatesToMake.length; i += 5) {
+      const batch = updatesToMake.slice(i, i + 5);
+      await Promise.all(batch.map(u => 
+        base44.asServiceRole.entities.Product.update(u.id, { tabs: u.tabs })
+      ));
+      updated += batch.length;
+      // Delay between batches
+      if (i + 5 < updatesToMake.length) {
+        await new Promise(resolve => setTimeout(resolve, 500));
       }
     }
 
