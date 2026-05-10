@@ -188,10 +188,13 @@ export default function AdminProducts() {
   };
 
   const handleSave = async (data) => {
-    if (editProduct) {
-      await base44.entities.Product.update(editProduct.id, data);
-    } else {
-      await base44.entities.Product.create(data);
+    const response = await base44.functions.invoke("saveProduct", {
+      productId: editProduct?.id || null,
+      data,
+    });
+    if (!response.data?.success) {
+      alert("Save failed: " + (response.data?.error || "Unknown error"));
+      return;
     }
     setShowModal(false);
     setEditProduct(null);

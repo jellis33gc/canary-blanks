@@ -35,30 +35,7 @@
     "variants": {
       "type": "array",
       "items": {
-        "type": "object",
-        "properties": {
-          "name": {
-            "type": "string"
-          },
-          "options": {
-            "type": "array",
-            "items": {
-              "type": "object",
-              "properties": {
-                "label": {
-                  "type": "string"
-                },
-                "price_modifier": {
-                  "type": "number",
-                  "default": 0
-                }
-              },
-              "required": [
-                "label"
-              ]
-            }
-          }
-        }
+        "type": "object"
       }
     },
     "stock_quantity": {
