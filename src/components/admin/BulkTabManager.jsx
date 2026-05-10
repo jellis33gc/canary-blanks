@@ -4,7 +4,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { X, Plus, Save } from "lucide-react";
 
 export default function BulkTabManager({ products, onClose, onSaved }) {
@@ -14,7 +13,7 @@ export default function BulkTabManager({ products, onClose, onSaved }) {
   const [selectedProducts, setSelectedProducts] = useState(new Set());
   const [saving, setSaving] = useState(false);
   const [mode, setMode] = useState("add"); // "add" or "replace"
-  const [filterCategory, setFilterCategory] = useState("");
+  const [selectedCategories, setSelectedCategories] = useState(new Set());
 
   // Get unique categories
   const categories = Array.from(new Set(products.map(p => p.category_name).filter(Boolean))).sort();
@@ -134,27 +133,43 @@ export default function BulkTabManager({ products, onClose, onSaved }) {
 
           {/* Product selector */}
           <div className="space-y-2">
-            <p className="font-semibold text-sm">Select Products ({selectedProducts.size}/{filterCategory ? products.filter(p => p.category_name === filterCategory).length : products.length})</p>
+            <p className="font-semibold text-sm">Select Products ({selectedProducts.size}/{(() => {
+              const filteredProds = selectedCategories.size > 0
+                ? products.filter(p => selectedCategories.has(p.category_name))
+                : products;
+              return filteredProds.length;
+            })()})</p>
 
-            {/* Category filter */}
+            {/* Category filter - checkboxes for multiple selection */}
             {categories.length > 0 && (
-              <Select value={filterCategory} onValueChange={setFilterCategory}>
-                <SelectTrigger className="rounded-lg">
-                  <SelectValue placeholder="Filter by category..." />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value={null}>All Categories</SelectItem>
+              <div className="space-y-2">
+                <p className="text-xs font-semibold text-muted-foreground">Filter by categories:</p>
+                <div className="flex flex-wrap gap-2">
                   {categories.map(cat => (
-                    <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                    <label key={cat} className="flex items-center gap-2 cursor-pointer p-2 bg-white border border-border rounded-lg hover:border-primary transition-colors">
+                      <Checkbox
+                        checked={selectedCategories.has(cat)}
+                        onCheckedChange={() => {
+                          const newSet = new Set(selectedCategories);
+                          if (newSet.has(cat)) {
+                            newSet.delete(cat);
+                          } else {
+                            newSet.add(cat);
+                          }
+                          setSelectedCategories(newSet);
+                        }}
+                      />
+                      <span className="text-sm">{cat}</span>
+                    </label>
                   ))}
-                </SelectContent>
-              </Select>
+                </div>
+              </div>
             )}
 
             <div className="bg-muted/30 rounded-lg p-3 space-y-2">
               {(() => {
-                const filteredProds = filterCategory 
-                  ? products.filter(p => p.category_name === filterCategory)
+                const filteredProds = selectedCategories.size > 0
+                  ? products.filter(p => selectedCategories.has(p.category_name))
                   : products;
 
                 return (
