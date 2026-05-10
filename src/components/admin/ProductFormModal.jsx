@@ -375,7 +375,7 @@ export default function ProductFormModal({ product, categories, onSave, onClose 
                           <button
                             onClick={() => {
                               const a = [...attributes];
-                              a[ai].values = [...a[ai].values, { label: "", price: 0 }];
+                              a[ai].values = [...a[ai].values, ""];
                               setAttributes(a);
                             }}
                             className="text-xs text-primary hover:underline flex items-center gap-1 mt-1"
