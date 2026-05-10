@@ -198,8 +198,10 @@ export default function AdminProducts() {
       alert("Save failed: " + (response.data?.error || "Unknown error"));
       return;
     }
-    setShowModal(false);
-    setEditProduct(null);
+    // For new products, update editProduct so subsequent saves use the new ID
+    if (!editProduct && response.data?.product?.id) {
+      setEditProduct(response.data.product);
+    }
     await loadData();
   };
 

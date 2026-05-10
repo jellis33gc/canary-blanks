@@ -75,9 +75,20 @@ export default function ProductFormModal({ product, categories, onSave, onClose 
   );
 
   // ── saved attribute library ─────────────────────────────────────────────
+  const [tagInput, setTagInput] = useState("");
   const [savedAttrs, setSavedAttrs] = useState([]);
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [savedOk, setSavedOk] = useState(false);
+
+  const addTag = (val) => {
+    const tag = val.trim().toLowerCase();
+    if (!tag) return;
+    if (!form.tags?.includes(tag)) set("tags", [...(form.tags || []), tag]);
+    setTagInput("");
+  };
+
+  const removeTag = (tag) => set("tags", (form.tags || []).filter(t => t !== tag));
 
   useEffect(() => {
     base44.entities.ProductAttribute.list("name", 100).then(setSavedAttrs).catch(() => {});
@@ -175,6 +186,8 @@ export default function ProductFormModal({ product, categories, onSave, onClose 
     });
 
     setSaving(false);
+    setSavedOk(true);
+    setTimeout(() => setSavedOk(false), 2500);
   };
 
   // ── render ──────────────────────────────────────────────────────────────
@@ -247,6 +260,30 @@ export default function ProductFormModal({ product, categories, onSave, onClose 
                 <label className="flex items-center gap-2"><Checkbox checked={form.is_active}   onCheckedChange={v => set("is_active",   v)} /><span className="text-sm">Active</span></label>
                 <label className="flex items-center gap-2"><Checkbox checked={form.is_featured} onCheckedChange={v => set("is_featured", v)} /><span className="text-sm">Featured</span></label>
                 <label className="flex items-center gap-2"><Checkbox checked={form.is_on_sale}  onCheckedChange={v => set("is_on_sale",  v)} /><span className="text-sm">On Sale</span></label>
+              </div>
+              <div className="space-y-2">
+                <Label>Tags</Label>
+                <div className="flex flex-wrap gap-1.5 min-h-[2rem]">
+                  {(form.tags || []).map(tag => (
+                    <span key={tag} className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-primary/10 text-primary text-xs font-medium">
+                      {tag}
+                      <button type="button" onClick={() => removeTag(tag)} className="hover:text-red-500"><X className="w-3 h-3" /></button>
+                    </span>
+                  ))}
+                </div>
+                <div className="flex gap-2">
+                  <Input
+                    value={tagInput}
+                    onChange={e => setTagInput(e.target.value)}
+                    onKeyDown={e => { if (e.key === "Enter" || e.key === ",") { e.preventDefault(); addTag(tagInput); } }}
+                    placeholder="Type a tag and press Enter"
+                    className="rounded-xl"
+                  />
+                  <Button type="button" variant="outline" className="rounded-xl shrink-0" onClick={() => addTag(tagInput)}>
+                    <Plus className="w-4 h-4" />
+                  </Button>
+                </div>
+                <p className="text-xs text-muted-foreground">Press Enter or comma to add a tag</p>
               </div>
             </TabsContent>
 
@@ -462,11 +499,14 @@ export default function ProductFormModal({ product, categories, onSave, onClose 
           </Tabs>
         </div>
 
-        <div className="p-6 border-t border-border flex justify-end gap-3">
-          <Button variant="outline" onClick={onClose} className="rounded-full">Cancel</Button>
-          <Button onClick={handleSubmit} disabled={saving} className="bg-primary text-white rounded-full">
-            {saving ? "Saving..." : product ? "Update Product" : "Create Product"}
-          </Button>
+        <div className="p-6 border-t border-border flex items-center justify-between gap-3">
+          {savedOk && <span className="text-green-600 text-sm font-medium">✓ Saved successfully</span>}
+          <div className="flex gap-3 ml-auto">
+            <Button variant="outline" onClick={onClose} className="rounded-full">Close</Button>
+            <Button onClick={handleSubmit} disabled={saving} className="bg-primary text-white rounded-full">
+              {saving ? "Saving..." : savedOk ? "Saved ✓" : product ? "Update Product" : "Create Product"}
+            </Button>
+          </div>
         </div>
       </div>
     </div>
