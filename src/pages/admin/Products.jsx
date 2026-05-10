@@ -20,6 +20,7 @@ export default function AdminProducts() {
   const [editProduct, setEditProduct] = useState(null);
   const [importing, setImporting] = useState(false);
   const [importStatus, setImportStatus] = useState("");
+  const [importErrors, setImportErrors] = useState([]);
   const [showBulkEditor, setShowBulkEditor] = useState(false);
   const [debugProduct, setDebugProduct] = useState(null);
   const fileRef = useRef();
@@ -75,11 +76,11 @@ export default function AdminProducts() {
 
     if (response.data?.success) {
       setImportStatus(`✓ Done! Created: ${response.data.created}, Updated: ${response.data.updated}${response.data.errors?.length ? `, Errors: ${response.data.errors.length}` : ''}`);
+      setImportErrors(response.data.errors || []);
       await loadData();
-      setTimeout(() => { setImporting(false); setImportStatus(""); }, 4000);
     } else {
       setImportStatus("✗ Import failed: " + (response.data?.error || "Unknown error"));
-      setTimeout(() => { setImporting(false); setImportStatus(""); }, 5000);
+      setImportErrors([]);
     }
     e.target.value = "";
   };
@@ -212,12 +213,27 @@ export default function AdminProducts() {
       </div>
 
       {/* Import status banner */}
-      {importing && (
-        <div className={`flex items-center gap-3 px-4 py-3 rounded-2xl text-sm font-medium ${importStatus.startsWith("✓") ? "bg-green-50 text-green-700 border border-green-200" : importStatus.startsWith("✗") ? "bg-red-50 text-red-700 border border-red-200" : "bg-blue-50 text-blue-700 border border-blue-200"}`}>
-          {!importStatus.startsWith("✓") && !importStatus.startsWith("✗") && (
-            <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin shrink-0" />
+      {(importing || importStatus) && (
+        <div className="space-y-2">
+          <div className={`flex items-center gap-3 px-4 py-3 rounded-2xl text-sm font-medium ${importStatus.startsWith("✓") ? "bg-green-50 text-green-700 border border-green-200" : importStatus.startsWith("✗") ? "bg-red-50 text-red-700 border border-red-200" : "bg-blue-50 text-blue-700 border border-blue-200"}`}>
+            {importing && (
+              <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin shrink-0" />
+            )}
+            {importStatus}
+          </div>
+          {importErrors.length > 0 && (
+            <div className="bg-red-50 border border-red-200 rounded-2xl p-4 max-h-64 overflow-y-auto">
+              <p className="text-xs font-semibold text-red-700 mb-2">Errors ({importErrors.length}):</p>
+              <div className="space-y-1">
+                {importErrors.slice(0, 20).map((err, i) => (
+                  <p key={i} className="text-xs text-red-600">
+                    <span className="font-medium">{err.sku}:</span> {err.error}
+                  </p>
+                ))}
+                {importErrors.length > 20 && <p className="text-xs text-red-600">... and {importErrors.length - 20} more</p>}
+              </div>
+            </div>
           )}
-          {importStatus}
         </div>
       )}
 
