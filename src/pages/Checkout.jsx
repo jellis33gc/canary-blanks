@@ -16,6 +16,13 @@ export default function Checkout() {
   const navigate = useNavigate();
   const { items, getSubtotal, clearCart } = useCartStore();
   const summaryState = location.state || {};
+  const [shippingCost, setShippingCost] = useState(5.99);
+
+  useEffect(() => {
+    base44.entities.SiteSettings.filter({ key: "shipping_cost" }).then(settings => {
+      if (settings[0]) setShippingCost(parseFloat(settings[0].value));
+    }).catch(() => {});
+  }, []);
 
   const [user, setUser] = useState(null);
   const [profile, setProfile] = useState(null);
@@ -41,10 +48,11 @@ export default function Checkout() {
 
   const subtotal = summaryState.subtotal || getSubtotal();
   const discountAmount = summaryState.discountAmount || 0;
-  const shipping = summaryState.shipping ?? (subtotal >= 50 ? 0 : 3.99);
-  const maxPointsDiscount = profile ? Math.min(Math.floor(profile.loyalty_points / 100), subtotal * 0.2) : 0;
+  const amountAfterDiscount = subtotal - discountAmount;
+  const shipping = summaryState.shipping ?? (amountAfterDiscount >= 50 ? 0 : (amountAfterDiscount > 0 ? shippingCost : 0));
+  const maxPointsDiscount = profile ? Math.min(Math.floor(profile.loyalty_points / 100), amountAfterDiscount * 0.2) : 0;
   const pointsDiscount = usePoints ? pointsToUse : 0;
-  const total = subtotal - discountAmount - pointsDiscount + shipping;
+  const total = amountAfterDiscount - pointsDiscount + shipping;
   const pointsEarnable = Math.floor(total);
 
   const handleSubmit = async (e) => {

@@ -30,8 +30,9 @@ export default function Cart() {
       ? (subtotal * appliedDiscount.value) / 100
       : Math.min(appliedDiscount.value, subtotal)
     : 0;
-  const shipping = subtotal - discountAmount >= 50 ? 0 : shippingCost;
-  const total = subtotal - discountAmount + shipping;
+  const amountAfterDiscount = subtotal - discountAmount;
+  const shipping = amountAfterDiscount >= 50 ? 0 : (amountAfterDiscount > 0 ? shippingCost : 0);
+  const total = amountAfterDiscount + shipping;
 
   const handleApplyDiscount = async () => {
     setApplyingCode(true);
