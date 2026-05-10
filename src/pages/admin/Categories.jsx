@@ -27,7 +27,13 @@ export default function AdminCategories() {
 
   const handleSave = async () => {
     const slug = form.slug || autoSlug(form.name);
-    const data = { ...form, slug, parent_id: form.parent_id || null };
+    let sort_order = form.sort_order;
+    if (!editingId) {
+      // Place new category at the end of its sibling group
+      const siblings = categories.filter(c => (c.parent_id || "") === (form.parent_id || ""));
+      sort_order = siblings.length > 0 ? Math.max(...siblings.map(c => c.sort_order ?? 0)) + 1 : 0;
+    }
+    const data = { ...form, slug, sort_order, parent_id: form.parent_id || null };
     if (editingId) {
       await base44.entities.Category.update(editingId, data);
     } else {
