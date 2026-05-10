@@ -94,7 +94,7 @@ export default function HeroSlider() {
           )}
 
           {/* Overlay: darker when image, lighter when gradient */}
-          <div className={`absolute inset-0 pointer-events-none ${slide.bg_image ? "bg-black/45" : "bg-black/10"}`} />
+          <div className={`absolute inset-0 pointer-events-none ${slide.bg_image ? "bg-black/25" : "bg-black/10"}`} />
 
           {/* Floating emoji decorations (only shown when no image) */}
           {!slide.bg_image && (
