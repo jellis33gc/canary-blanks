@@ -48,8 +48,8 @@ export default function Checkout() {
     });
     setHasCakes(cakesInCart);
     
-    // Fetch shipping rates if no cakes and items exist
-    if (items.length > 0 && !cakesInCart) {
+    // Always fetch shipping rates if items exist
+    if (items.length > 0) {
       setLoadingShipping(true);
       const totalWeight = items.reduce((sum, item) => sum + (item.weight || 0.5), 0);
       base44.functions.invoke('getShippingRates', {
@@ -58,7 +58,7 @@ export default function Checkout() {
       }).then(res => {
         const rates = res.data?.rates || [];
         setShippingOptions(rates);
-        // Default to first available shipping option if cakes aren't in cart
+        // Default to first available shipping option
         if (rates.length > 0) {
           setShippingMethod(`sendcloud_${rates[0].id}`);
         } else {
@@ -72,7 +72,6 @@ export default function Checkout() {
       });
     } else {
       setShippingOptions([]);
-      // Default to local pickup only if cakes are in cart
       setShippingMethod('local_pickup');
     }
 
@@ -215,7 +214,7 @@ export default function Checkout() {
               {/* Shipping Method */}
               <div className="bg-card border border-border rounded-2xl p-6 space-y-4">
                 <h2 className="font-bold text-lg flex items-center gap-2"><Truck className="w-5 h-5" /> Shipping Method</h2>
-                {hasCakes && <p className="text-sm text-orange-600 bg-orange-50 rounded-lg p-2">⚠️ Your order contains cakes. Only local pickup is available.</p>}
+                {hasCakes && <p className="text-sm text-orange-600 bg-orange-50 rounded-lg p-2">⚠️ Your order contains cakes. Cake products are collection only and cannot be shipped.</p>}
 
                 <div className="space-y-3">
                   {/* Local Pickup Option */}
