@@ -103,6 +103,15 @@ export default function AdminProducts() {
 
     if (result.status === "success") {
       const rows = Array.isArray(result.output) ? result.output : result.output?.rows || [];
+      console.log("Extracted rows:", JSON.stringify(rows.slice(0, 3)));
+      console.log("Total rows extracted:", rows.length);
+      console.log("Raw output type:", Array.isArray(result.output) ? "array" : typeof result.output);
+      if (rows.length === 0) {
+        setImportStatus("✗ No rows could be extracted from file. Check file format matches sample CSV.");
+        setTimeout(() => { setImporting(false); setImportStatus(""); }, 6000);
+        e.target.value = "";
+        return;
+      }
       setImportStatus(`Importing ${rows.length} rows into database...`);
       const response = await base44.functions.invoke("importProducts", { rows, categories });
       if (response.data?.success) {
