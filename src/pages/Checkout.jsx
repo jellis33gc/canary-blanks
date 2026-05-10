@@ -41,10 +41,10 @@ export default function Checkout() {
   });
 
   useEffect(() => {
-    // Check if cart has cakes
+    // Check if cart has actual cakes (exclude toppers, decorations, etc.)
     const cakesInCart = items.some(item => {
       const itemName = item.product_name?.toLowerCase() || '';
-      return itemName.includes('cake');
+      return itemName.includes('cake') && !itemName.includes('topper') && !itemName.includes('decoration');
     });
     setHasCakes(cakesInCart);
     
