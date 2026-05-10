@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { X, Plus, Save } from "lucide-react";
 
 export default function BulkTabManager({ products, onClose, onSaved }) {
@@ -13,6 +14,10 @@ export default function BulkTabManager({ products, onClose, onSaved }) {
   const [selectedProducts, setSelectedProducts] = useState(new Set());
   const [saving, setSaving] = useState(false);
   const [mode, setMode] = useState("add"); // "add" or "replace"
+  const [filterCategory, setFilterCategory] = useState("");
+
+  // Get unique categories
+  const categories = Array.from(new Set(products.map(p => p.category_name).filter(Boolean))).sort();
 
   const addTab = () => {
     if (!newTabTitle.trim()) return;
@@ -129,23 +134,48 @@ export default function BulkTabManager({ products, onClose, onSaved }) {
 
           {/* Product selector */}
           <div className="space-y-2">
-            <p className="font-semibold text-sm">Select Products ({selectedProducts.size}/{products.length})</p>
+            <p className="font-semibold text-sm">Select Products ({selectedProducts.size}/{filterCategory ? products.filter(p => p.category_name === filterCategory).length : products.length})</p>
+
+            {/* Category filter */}
+            {categories.length > 0 && (
+              <Select value={filterCategory} onValueChange={setFilterCategory}>
+                <SelectTrigger className="rounded-lg">
+                  <SelectValue placeholder="Filter by category..." />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={null}>All Categories</SelectItem>
+                  {categories.map(cat => (
+                    <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+
             <div className="bg-muted/30 rounded-lg p-3 space-y-2">
-              <label className="flex items-center gap-2 cursor-pointer p-2 hover:bg-muted rounded border border-border">
-                <Checkbox
-                  checked={selectedProducts.size === products.length}
-                  onCheckedChange={() => {
-                    if (selectedProducts.size === products.length) {
-                      setSelectedProducts(new Set());
-                    } else {
-                      setSelectedProducts(new Set(products.map(p => p.id)));
-                    }
-                  }}
-                />
-                <span className="text-sm font-semibold flex-1">{selectedProducts.size === products.length ? 'Deselect All' : 'Select All'}</span>
-              </label>
-              <div className="max-h-40 overflow-y-auto space-y-2">
-                {products.map(p => (
+              {(() => {
+                const filteredProds = filterCategory 
+                  ? products.filter(p => p.category_name === filterCategory)
+                  : products;
+
+                return (
+                  <>
+                    <label className="flex items-center gap-2 cursor-pointer p-2 hover:bg-muted rounded border border-border">
+                      <Checkbox
+                        checked={filteredProds.length > 0 && filteredProds.every(p => selectedProducts.has(p.id))}
+                        onCheckedChange={() => {
+                          const newSet = new Set(selectedProducts);
+                          if (filteredProds.every(p => selectedProducts.has(p.id))) {
+                            filteredProds.forEach(p => newSet.delete(p.id));
+                          } else {
+                            filteredProds.forEach(p => newSet.add(p.id));
+                          }
+                          setSelectedProducts(newSet);
+                        }}
+                      />
+                      <span className="text-sm font-semibold flex-1">{filteredProds.every(p => selectedProducts.has(p.id)) ? 'Deselect All' : 'Select All'}</span>
+                    </label>
+                    <div className="max-h-40 overflow-y-auto space-y-2">
+                      {filteredProds.map(p => (
                 <label key={p.id} className="flex items-center gap-2 cursor-pointer p-2 hover:bg-muted rounded">
                   <Checkbox
                     checked={selectedProducts.has(p.id)}
@@ -155,9 +185,12 @@ export default function BulkTabManager({ products, onClose, onSaved }) {
                   <span className="text-xs text-muted-foreground">{p.sku || p.id.slice(0, 6)}</span>
                 </label>
                 ))}
-              </div>
-            </div>
-          </div>
+                </div>
+                </>
+                );
+                })()}
+                </div>
+                </div>
 
           {/* Actions */}
           <div className="flex gap-3 pt-4 border-t border-border">
