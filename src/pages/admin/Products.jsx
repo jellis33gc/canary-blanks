@@ -19,6 +19,7 @@ export default function AdminProducts() {
   const [showModal, setShowModal] = useState(false);
   const [editProduct, setEditProduct] = useState(null);
   const [importing, setImporting] = useState(false);
+  const [importStatus, setImportStatus] = useState("");
   const [showBulkEditor, setShowBulkEditor] = useState(false);
   const [debugProduct, setDebugProduct] = useState(null);
   const fileRef = useRef();
@@ -61,8 +62,10 @@ export default function AdminProducts() {
     const file = e.target.files[0];
     if (!file) return;
     setImporting(true);
+    setImportStatus("Uploading file...");
     const { file_url } = await base44.integrations.Core.UploadFile({ file });
 
+    setImportStatus("Reading rows from file...");
     // Extract all rows from the spreadsheet as flat objects
     const result = await base44.integrations.Core.ExtractDataFromUploadedFile({
       file_url,
@@ -111,17 +114,20 @@ export default function AdminProducts() {
 
     if (result.status === "success") {
       const rows = Array.isArray(result.output) ? result.output : result.output?.rows || [];
+      setImportStatus(`Importing ${rows.length} rows into database...`);
       const response = await base44.functions.invoke("importProducts", { rows, categories });
       if (response.data?.success) {
+        setImportStatus(`✓ Done! Created: ${response.data.created}, Updated: ${response.data.updated}${response.data.errors?.length ? `, Errors: ${response.data.errors.length}` : ''}`);
         await loadData();
-        alert(`Import complete! Created: ${response.data.created}, Updated: ${response.data.updated}${response.data.errors?.length ? `, Errors: ${response.data.errors.length}` : ''}`);
+        setTimeout(() => { setImporting(false); setImportStatus(""); }, 4000);
       } else {
-        alert("Import failed: " + (response.data?.error || "Unknown error"));
+        setImportStatus("✗ Import failed: " + (response.data?.error || "Unknown error"));
+        setTimeout(() => { setImporting(false); setImportStatus(""); }, 5000);
       }
     } else {
-      alert("Could not read file: " + result.details);
+      setImportStatus("✗ Could not read file: " + result.details);
+      setTimeout(() => { setImporting(false); setImportStatus(""); }, 5000);
     }
-    setImporting(false);
     e.target.value = "";
   };
 
@@ -251,6 +257,16 @@ export default function AdminProducts() {
           </Button>
         </div>
       </div>
+
+      {/* Import status banner */}
+      {importing && (
+        <div className={`flex items-center gap-3 px-4 py-3 rounded-2xl text-sm font-medium ${importStatus.startsWith("✓") ? "bg-green-50 text-green-700 border border-green-200" : importStatus.startsWith("✗") ? "bg-red-50 text-red-700 border border-red-200" : "bg-blue-50 text-blue-700 border border-blue-200"}`}>
+          {!importStatus.startsWith("✓") && !importStatus.startsWith("✗") && (
+            <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin shrink-0" />
+          )}
+          {importStatus}
+        </div>
+      )}
 
       {/* Filters */}
       <div className="flex flex-wrap gap-3">
