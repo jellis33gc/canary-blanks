@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Plus, Search, Upload, Download, Edit, Trash2, Eye, EyeOff, Star, Package, FileDown, Layers } from "lucide-react";
 import ProductFormModal from "@/components/admin/ProductFormModal";
 import BulkVariantEditor from "@/components/admin/BulkVariantEditor";
+import VariantDebugModal from "@/components/admin/VariantDebugModal";
 import { format } from "date-fns";
 
 export default function AdminProducts() {
@@ -19,6 +20,7 @@ export default function AdminProducts() {
   const [editProduct, setEditProduct] = useState(null);
   const [importing, setImporting] = useState(false);
   const [showBulkEditor, setShowBulkEditor] = useState(false);
+  const [debugProduct, setDebugProduct] = useState(null);
   const fileRef = useRef();
 
   const handlePreview = (product) => {
@@ -312,6 +314,7 @@ export default function AdminProducts() {
                   <td className="p-4">
                     <div className="flex items-center gap-1">
                       <button onClick={() => handlePreview(p)} title="Preview" className="p-1.5 rounded-lg hover:bg-blue-50 hover:text-blue-500 transition-colors"><Eye className="w-4 h-4" /></button>
+                      {p.variants?.length > 0 && <button onClick={() => setDebugProduct(p)} title="Inspect variants" className="p-1.5 rounded-lg hover:bg-purple-50 hover:text-purple-500 transition-colors text-xs font-bold">{p.variants.length}v</button>}
                       <button onClick={() => { setEditProduct(p); setShowModal(true); }} className="p-1.5 rounded-lg hover:bg-primary/10 hover:text-primary transition-colors"><Edit className="w-4 h-4" /></button>
                       <button onClick={() => handleToggleFeatured(p)} className={`p-1.5 rounded-lg transition-colors ${p.is_featured ? 'text-yellow-500' : 'hover:text-yellow-500'}`}><Star className="w-4 h-4" /></button>
                       <button onClick={() => handleToggleActive(p)} className="p-1.5 rounded-lg hover:bg-muted transition-colors">{p.is_active ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}</button>
@@ -330,6 +333,10 @@ export default function AdminProducts() {
           </div>
         )}
       </div>
+
+      {debugProduct && (
+        <VariantDebugModal product={debugProduct} onClose={() => setDebugProduct(null)} />
+      )}
 
       {showBulkEditor && (
         <BulkVariantEditor
