@@ -341,10 +341,12 @@ export default function ProductPage() {
             </div>
 
             {/* Stock */}
-            {product.stock_quantity !== undefined && (
+            {product.stock_quantity !== undefined && product.stock_quantity !== null ? (
               <p className="text-sm text-muted-foreground mb-4">
                 {product.stock_quantity > 10 ? '✅ In Stock' : product.stock_quantity > 0 ? `⚠️ Only ${product.stock_quantity} left!` : '❌ Out of Stock'}
               </p>
+            ) : (
+              <p className="text-sm text-muted-foreground mb-4">✅ In Stock</p>
             )}
 
             <p className="text-xs text-muted-foreground">🏆 Earn {Math.floor(displayPrice)} loyalty points with this purchase</p>
