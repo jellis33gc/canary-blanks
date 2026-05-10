@@ -29,7 +29,6 @@ export default function Checkout() {
   const [loading, setLoading] = useState(false);
   const [usePoints, setUsePoints] = useState(false);
   const [pointsToUse, setPointsToUse] = useState(0);
-  const [shippingMethod, setShippingMethod] = useState('local_pickup');
 
   const [form, setForm] = useState({
     name: "", email: "", phone: "",
@@ -53,7 +52,7 @@ export default function Checkout() {
   const isFreeShippingCode = summaryState.discountCode?.type === 'free_shipping';
   
   // Calculate shipping
-  const shipping = shippingMethod === 'local_pickup' ? 0 : (isFreeShippingCode || amountAfterDiscount >= 50 ? 0 : (amountAfterDiscount > 0 ? shippingCost : 0));
+  const shipping = isFreeShippingCode || amountAfterDiscount >= 50 ? 0 : (amountAfterDiscount > 0 ? shippingCost : 0);
   
   const maxPointsDiscount = profile ? Math.min(Math.floor(profile.loyalty_points / 100), amountAfterDiscount * 0.2) : 0;
   const pointsDiscount = usePoints ? pointsToUse : 0;
@@ -112,7 +111,7 @@ export default function Checkout() {
 
     // Add shipping method to order
     await base44.entities.Order.update(order.id, { 
-      shipping_method: shippingMethod === 'local_pickup' ? 'Local Pickup' : 'Standard Shipping'
+      shipping_method: 'Standard Shipping'
     });
 
     // Create SumUp checkout and redirect
@@ -163,19 +162,6 @@ export default function Checkout() {
                     <Input value={form.phone} onChange={e => setForm({...form, phone: e.target.value})} className="rounded-xl" />
                   </div>
                 </div>
-              </div>
-
-              {/* Shipping Method */}
-              <div className="bg-card border border-border rounded-2xl p-6 space-y-4">
-                <h2 className="font-bold text-lg flex items-center gap-2"><Truck className="w-5 h-5" /> Shipping</h2>
-                <label className="flex items-center gap-3 p-4 border rounded-xl cursor-pointer transition-all bg-primary/5 border-primary">
-                  <input type="radio" name="shipping" value="local_pickup" checked={shippingMethod === 'local_pickup'} onChange={e => setShippingMethod(e.target.value)} className="w-4 h-4" />
-                  <div className="flex-1">
-                    <p className="font-medium flex items-center gap-2"><MapPin className="w-4 h-4" /> Local Pickup</p>
-                    <p className="text-sm text-muted-foreground">Pick up from our store</p>
-                  </div>
-                  <p className="font-bold text-green-600">FREE</p>
-                </label>
               </div>
 
               {/* Shipping Address */}
