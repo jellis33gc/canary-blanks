@@ -10,18 +10,23 @@ Deno.serve(async (req) => {
 
     const { rows, categories } = await req.json();
 
-    // Group rows by SKU
+    // Group rows by SKU — the export format puts product info on the first row
+    // and subsequent rows only have combo/variant data with empty product fields.
+    // We need to carry forward the last seen SKU for rows without one.
     const skuMap = {};
+    let lastSku = null;
+
     for (const row of rows) {
-      const sku = row.sku || row.SKU;
+      const sku = row.sku || row.SKU || lastSku;
       if (!sku) continue;
+      lastSku = sku;
 
       if (!skuMap[sku]) {
         skuMap[sku] = {
           sku,
-          name: row.name || row.Name,
-          price: parseFloat(row.price || row.Price || 0),
-          compare_at_price: row.compare_at_price ? parseFloat(row.compare_at_price) : undefined,
+          name: row.name || row.Name || '',
+          price: row.price != null ? parseFloat(row.price) : undefined,
+          compare_at_price: row.compare_at_price != null ? parseFloat(row.compare_at_price) : undefined,
           description: row.description || row.Description || '',
           short_description: row.short_description || '',
           category_name: row.category_name || row.Category || '',
@@ -31,28 +36,36 @@ Deno.serve(async (req) => {
           is_on_sale: row.is_on_sale === true || row.is_on_sale === 'true' ? true : false,
           tags: row.tags ? row.tags.split(',').map(t => t.trim()).filter(Boolean) : [],
           images: row.images ? row.images.split(',').map(i => i.trim()).filter(Boolean) : [],
-          variantMap: {}
+          combinations: []
         };
+      } else if (row.name) {
+        // Update product-level fields if present on a subsequent row
+        const entry = skuMap[sku];
+        if (row.name) entry.name = row.name;
+        if (row.price != null) entry.price = parseFloat(row.price);
+        if (row.category_name) entry.category_name = row.category_name;
+        if (row.tags) entry.tags = row.tags.split(',').map(t => t.trim()).filter(Boolean);
+        if (row.images) entry.images = row.images.split(',').map(i => i.trim()).filter(Boolean);
       }
 
       const entry = skuMap[sku];
 
-      // Process up to 5 variant type columns
-      for (let i = 1; i <= 5; i++) {
-        const typKey = `variant_type_${i}`;
-        const optKey = `variant_option_${i}`;
-        const modKey = `variant_modifier_${i}`;
-
-        const variantType = row[typKey];
-        const variantOption = row[optKey];
-        const variantModifier = row[modKey] != null ? parseFloat(row[modKey]) : 0;
-
-        if (variantType && variantOption) {
-          if (!entry.variantMap[variantType]) {
-            entry.variantMap[variantType] = {};
-          }
-          entry.variantMap[variantType][variantOption] = variantModifier;
+      // Handle combo-style variants (new export format)
+      if (row.combo && row.combo_attributes) {
+        let attributes = {};
+        try {
+          attributes = typeof row.combo_attributes === 'string'
+            ? JSON.parse(row.combo_attributes)
+            : row.combo_attributes;
+        } catch (_) {
+          attributes = {};
         }
+        entry.combinations.push({
+          combo: row.combo,
+          attributes,
+          price: row.combo_price != null ? parseFloat(row.combo_price) : '',
+          sku: row.combo_sku || ''
+        });
       }
     }
 
@@ -61,17 +74,20 @@ Deno.serve(async (req) => {
 
     for (const [sku, entry] of Object.entries(skuMap)) {
       try {
-        // Build variants array from variantMap
-        const variants = Object.entries(entry.variantMap).map(([name, opts]) => ({
-          name,
-          options: Object.entries(opts).map(([label, price_modifier]) => ({ label, price_modifier }))
-        }));
+        if (!entry.name) {
+          results.errors.push({ sku, error: 'Missing product name' });
+          continue;
+        }
 
         // Match category
         const cat = categories.find(c => c.name.toLowerCase() === (entry.category_name || '').toLowerCase());
 
+        // Build slug from name
+        const slug = entry.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+
         const productData = {
           name: entry.name,
+          slug,
           sku: entry.sku,
           price: entry.price,
           description: entry.description,
@@ -84,10 +100,10 @@ Deno.serve(async (req) => {
           is_on_sale: entry.is_on_sale,
           tags: entry.tags,
           images: entry.images,
-          variants
+          variants: entry.combinations
         };
 
-        if (entry.compare_at_price) productData.compare_at_price = entry.compare_at_price;
+        if (entry.compare_at_price != null) productData.compare_at_price = entry.compare_at_price;
 
         // Check if product with this SKU already exists
         const existing = await base44.asServiceRole.entities.Product.filter({ sku });
