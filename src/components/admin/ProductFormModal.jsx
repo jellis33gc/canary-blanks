@@ -25,8 +25,8 @@ export default function ProductFormModal({ product, categories, onSave, onClose 
     is_featured: product?.is_featured ?? false,
     is_on_sale: product?.is_on_sale ?? false,
     tabs: product?.tabs || [],
-    variants: (product?.variants || []).filter(v => v.attributes),
-    is_variable: (product?.variants?.filter(v => v.attributes)?.length > 0) ?? false,
+    variants: [],
+    is_variable: (product?.variants?.some(v => v.attributes && Object.keys(v.attributes).length > 0)) ?? false,
   });
   // attributes = [{ name: "Colour", values: ["Red", "Blue"] }, { name: "Size", values: ["S", "M"] }]
   // combinations = [{ combo: "Red / S", attributes: { Colour: "Red", Size: "S" }, price: 0, sku: "" }]
