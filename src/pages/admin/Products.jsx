@@ -74,10 +74,11 @@ export default function AdminProducts() {
       categories
     });
 
+    setImporting(false);
     if (response.data?.success) {
       setImportStatus(`✓ Done! Created: ${response.data.created}, Updated: ${response.data.updated}${response.data.errors?.length ? `, Errors: ${response.data.errors.length}` : ''}`);
       setImportErrors(response.data.errors || []);
-      await loadData();
+      loadData(); // non-blocking
     } else {
       setImportStatus("✗ Import failed: " + (response.data?.error || "Unknown error"));
       setImportErrors([]);
