@@ -113,13 +113,10 @@ export default function ProductFormModal({ product, categories, onSave, onClose 
       return { combo: key, attributes: attrMap, price: "", sku: autoSku };
     });
     setCombinations(newCombinations);
-    set("variants", newCombinations);
   };
 
   const updateCombo = (i, field, val) => {
-    const updated = combinations.map((c, idx) => idx === i ? { ...c, [field]: val } : c);
-    setCombinations(updated);
-    set("variants", updated);
+    setCombinations(combinations.map((c, idx) => idx === i ? { ...c, [field]: val } : c));
   };
 
   const set = (key, val) => setForm(f => ({ ...f, [key]: val }));
@@ -148,8 +145,8 @@ export default function ProductFormModal({ product, categories, onSave, onClose 
     const { is_variable, ...rest } = form;
     const price = form.price ? parseFloat(form.price) : undefined;
     
-    // Only keep valid combination-based variants (must have attributes object)
-    const variants = (rest.variants || []).filter(v => v.attributes && Object.keys(v.attributes).length > 0);
+    // Use combinations as the single source of truth for variants — filter to only valid ones
+    const variants = combinations.filter(v => v.attributes && Object.keys(v.attributes).length > 0);
     
     await onSave({ ...rest, variants, slug, price, compare_at_price: parseFloat(form.compare_at_price) || 0, stock_quantity: form.stock_quantity !== "" ? parseInt(form.stock_quantity) : undefined });
     setSaving(false);
