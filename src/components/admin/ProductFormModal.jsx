@@ -25,13 +25,13 @@ export default function ProductFormModal({ product, categories, onSave, onClose 
     is_featured: product?.is_featured ?? false,
     is_on_sale: product?.is_on_sale ?? false,
     tabs: product?.tabs || [],
-    variants: product?.variants || [],
-    is_variable: (product?.variants?.length > 0) ?? false,
+    variants: (product?.variants || []).filter(v => v.attributes),
+    is_variable: (product?.variants?.filter(v => v.attributes)?.length > 0) ?? false,
   });
   // attributes = [{ name: "Colour", values: ["Red", "Blue"] }, { name: "Size", values: ["S", "M"] }]
   // combinations = [{ combo: "Red / S", attributes: { Colour: "Red", Size: "S" }, price: 0, sku: "" }]
   const initAttributes = () => {
-    if (product?.variants?.length > 0) {
+    if (product?.variants?.filter(v => v.attributes)?.length > 0) {
       // Reconstruct attributes from existing combinations stored in variants
       const attrs = {};
       product.variants.forEach(v => {
