@@ -55,8 +55,11 @@ export default function BulkTabManager({ products, onClose, onSaved }) {
       const newTabs = mode === "replace" ? tabs : [...(product.tabs || []), ...tabs];
 
       try {
-        await base44.entities.Product.update(productId, { tabs: newTabs });
-        updated++;
+        const response = await base44.functions.invoke("saveProduct", {
+          productId,
+          data: { tabs: newTabs }
+        });
+        if (response.data?.success) updated++;
       } catch (err) {
         console.error(`Failed to update product ${productId}:`, err);
       }
