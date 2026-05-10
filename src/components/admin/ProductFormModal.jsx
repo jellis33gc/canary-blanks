@@ -142,10 +142,10 @@ export default function ProductFormModal({ product, categories, onSave, onClose 
     if (!form.name.trim()) { alert("Product name is required"); return; }
     setSaving(true);
     const slug = form.slug || autoSlug(form.name);
-    const { is_variable, ...rest } = form;
+    const { is_variable, variants: _oldVariants, ...rest } = form;
     const price = form.price ? parseFloat(form.price) : undefined;
     
-    // Use combinations as the single source of truth for variants — filter to only valid ones
+    // combinations is the single source of truth — only keep valid attribute-based ones
     const variants = combinations.filter(v => v.attributes && Object.keys(v.attributes).length > 0);
     
     await onSave({ ...rest, variants, slug, price, compare_at_price: parseFloat(form.compare_at_price) || 0, stock_quantity: form.stock_quantity !== "" ? parseInt(form.stock_quantity) : undefined });
