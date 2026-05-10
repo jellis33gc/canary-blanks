@@ -48,10 +48,16 @@ export default function Checkout() {
     });
     setHasCakes(cakesInCart);
     
-    // Always fetch shipping rates if items exist
-    if (items.length > 0) {
+    // Filter non-cake items for shipping calculation
+    const nonCakeItems = items.filter(item => {
+      const category = item.category_name?.toLowerCase() || '';
+      return category !== 'cake' && category !== 'cakes';
+    });
+    
+    // Fetch shipping rates for non-cake items
+    if (nonCakeItems.length > 0) {
       setLoadingShipping(true);
-      const totalWeight = items.reduce((sum, item) => sum + (item.weight || 0.5), 0);
+      const totalWeight = nonCakeItems.reduce((sum, item) => sum + (item.weight || 0.5), 0);
       base44.functions.invoke('getShippingRates', {
         destination_country: 'GB',
         weight: Math.ceil(totalWeight * 1000), // grams
@@ -228,7 +234,7 @@ export default function Checkout() {
                   </label>
 
                   {/* Sendcloud Shipping Options */}
-                  {!hasCakes && shippingOptions.length > 0 && (
+                  {shippingOptions.length > 0 && (
                     <div className="space-y-2">
                       {shippingOptions.map(option => (
                         <label key={option.id} className={`flex items-center gap-3 p-4 border rounded-xl cursor-pointer transition-all ${shippingMethod === `sendcloud_${option.id}` ? 'bg-primary/5 border-primary' : 'border-border hover:border-muted-foreground'}`}>
