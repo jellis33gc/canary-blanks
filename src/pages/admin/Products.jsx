@@ -4,10 +4,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Search, Upload, Download, Edit, Trash2, Eye, EyeOff, Star, Package, FileDown, Layers } from "lucide-react";
+import { Plus, Search, Upload, Download, Edit, Trash2, Eye, EyeOff, Star, Package, FileDown, Layers, FileText } from "lucide-react";
 import ProductFormModal from "@/components/admin/ProductFormModal";
 import BulkVariantEditor from "@/components/admin/BulkVariantEditor";
 import VariantDebugModal from "@/components/admin/VariantDebugModal";
+import BulkTabManager from "@/components/admin/BulkTabManager";
 import { format } from "date-fns";
 
 export default function AdminProducts() {
@@ -22,6 +23,7 @@ export default function AdminProducts() {
   const [importStatus, setImportStatus] = useState("");
   const [importErrors, setImportErrors] = useState([]);
   const [showBulkEditor, setShowBulkEditor] = useState(false);
+  const [showBulkTabs, setShowBulkTabs] = useState(false);
   const [debugProduct, setDebugProduct] = useState(null);
   const fileRef = useRef();
 
@@ -207,6 +209,9 @@ export default function AdminProducts() {
           <Button variant="outline" className="rounded-full" onClick={() => setShowBulkEditor(true)}>
             <Layers className="w-4 h-4 mr-2" /> Bulk Edit Variants
           </Button>
+          <Button variant="outline" className="rounded-full" onClick={() => setShowBulkTabs(true)}>
+            <FileText className="w-4 h-4 mr-2" /> Bulk Add Tabs
+          </Button>
           <Button className="bg-primary text-white rounded-full" onClick={() => { setEditProduct(null); setShowModal(true); }}>
             <Plus className="w-4 h-4 mr-2" /> Add Product
           </Button>
@@ -330,6 +335,14 @@ export default function AdminProducts() {
         <BulkVariantEditor
           products={products}
           onClose={() => setShowBulkEditor(false)}
+          onSaved={loadData}
+        />
+      )}
+
+      {showBulkTabs && (
+        <BulkTabManager
+          products={products}
+          onClose={() => setShowBulkTabs(false)}
           onSaved={loadData}
         />
       )}
