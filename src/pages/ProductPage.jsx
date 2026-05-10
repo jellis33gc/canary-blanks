@@ -28,6 +28,7 @@ export default function ProductPage() {
   const [profile, setProfile] = useState(null);
   const [added, setAdded] = useState(false);
   const [oosMap, setOosMap] = useState({}); // { "Colour": ["Red", "Blue"] }
+  const [shippingContent, setShippingContent] = useState("🚚 Standard Delivery: 3-5 working days — FREE over £50\n⚡ Express Delivery: 1-2 working days — £5.99\n🎂 Custom Cakes: Please allow 7-14 days for custom orders");
   const { addItem } = useCartStore();
 
   useEffect(() => {
@@ -61,6 +62,10 @@ export default function ProductPage() {
           if (p[0]) { setProfile(p[0]); setWishlisted((p[0].wishlist || []).includes(product?.id)); }
         });
       }
+    }).catch(() => {});
+
+    base44.entities.SiteSettings.filter({ key: "shipping_tab_content" }).then(settings => {
+      if (settings[0]) setShippingContent(settings[0].value);
     }).catch(() => {});
   }, [slug, product?.id]);
 
@@ -379,10 +384,8 @@ export default function ProductPage() {
               </TabsContent>
             ))}
             <TabsContent value="shipping" className="mt-6">
-              <div className="bg-muted/50 rounded-2xl p-6 space-y-3">
-                <p>🚚 <strong>Standard Delivery:</strong> 3-5 working days — FREE over £50</p>
-                <p>⚡ <strong>Express Delivery:</strong> 1-2 working days — £5.99</p>
-                <p>🎂 <strong>Custom Cakes:</strong> Please allow 7-14 days for custom orders</p>
+              <div className="bg-muted/50 rounded-2xl p-6">
+                <div className="whitespace-pre-wrap text-sm leading-relaxed">{shippingContent}</div>
               </div>
             </TabsContent>
             <TabsContent value="reviews" className="mt-6">

@@ -12,6 +12,7 @@ const DEFAULT_SETTINGS = [
   { key: "contact_phone", label: "Contact Phone", group: "general", value: "" },
   { key: "free_shipping_threshold", label: "Free Shipping Over (£)", group: "shipping", value: "50" },
   { key: "standard_shipping_cost", label: "Standard Shipping Cost (£)", group: "shipping", value: "4.99" },
+  { key: "shipping_tab_content", label: "Shipping Tab Content", group: "shipping", value: "🚚 Standard Delivery: 3-5 working days — FREE over £50\n⚡ Express Delivery: 1-2 working days — £5.99\n🎂 Custom Cakes: Please allow 7-14 days for custom orders" },
   { key: "loyalty_points_per_pound", label: "Points Earned Per £1 Spent", group: "loyalty", value: "10" },
   { key: "loyalty_points_per_discount", label: "Points Needed for £1 Discount", group: "loyalty", value: "100" },
   { key: "announcement_bar", label: "Announcement Bar Text", group: "display", value: "🎂 Free shipping on orders over £50!" },
@@ -118,11 +119,19 @@ export default function AdminSettings() {
             {DEFAULT_SETTINGS.filter(s => s.group === group).map(s => (
               <div key={s.key} className="space-y-1">
                 <Label>{s.label}</Label>
-                <Input
-                  value={settings[s.key] ?? ""}
-                  onChange={e => setSettings(prev => ({ ...prev, [s.key]: e.target.value }))}
-                  className="rounded-xl"
-                />
+                {s.key === "shipping_tab_content" ? (
+                  <textarea
+                    value={settings[s.key] ?? ""}
+                    onChange={e => setSettings(prev => ({ ...prev, [s.key]: e.target.value }))}
+                    className="w-full rounded-xl border border-input p-3 text-sm h-24 resize-none"
+                  />
+                ) : (
+                  <Input
+                    value={settings[s.key] ?? ""}
+                    onChange={e => setSettings(prev => ({ ...prev, [s.key]: e.target.value }))}
+                    className="rounded-xl"
+                  />
+                )}
               </div>
             ))}
           </div>
