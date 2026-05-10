@@ -13,10 +13,10 @@ Deno.serve(async (req) => {
     const categories = await base44.asServiceRole.entities.Category.list('name', 500);
     
     // Find all cake topper categories (top level and subcategories)
-    const cakeTopperCats = categories.filter(c => 
-      c.name.toLowerCase().includes('cake topper') || 
-      c.name.toLowerCase().includes('topper')
-    );
+    const cakeTopperCats = categories.filter(c => {
+      const name = c.name.toLowerCase();
+      return name === 'cake toppers' || (c.parent_id && categories.find(p => p.id === c.parent_id)?.name.toLowerCase() === 'cake toppers');
+    });
 
     const cakeTopperCatIds = cakeTopperCats.map(c => c.id);
 
