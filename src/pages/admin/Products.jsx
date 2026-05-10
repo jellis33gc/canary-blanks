@@ -102,7 +102,21 @@ export default function AdminProducts() {
     });
 
     if (result.status === "success") {
-      const rows = Array.isArray(result.output) ? result.output : result.output?.rows || [];
+      // Handle various output shapes from the extractor:
+      // 1. Direct array of row objects: [{sku, name, ...}, ...]
+      // 2. Array of wrappers: [{rows: [{sku,...}]}, ...]
+      // 3. Single wrapper: {rows: [{sku,...}]}
+      let rows = [];
+      if (Array.isArray(result.output)) {
+        if (result.output.length > 0 && result.output[0]?.rows !== undefined) {
+          // It's an array of {rows:[...]} wrappers — flatten them
+          rows = result.output.flatMap(item => Array.isArray(item.rows) ? item.rows : []);
+        } else {
+          rows = result.output;
+        }
+      } else {
+        rows = result.output?.rows || [];
+      }
       console.log("Extracted rows:", JSON.stringify(rows.slice(0, 3)));
       console.log("Total rows extracted:", rows.length);
       console.log("Raw output type:", Array.isArray(result.output) ? "array" : typeof result.output);
