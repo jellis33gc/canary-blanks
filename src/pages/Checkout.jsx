@@ -48,10 +48,8 @@ export default function Checkout() {
     });
     setHasCakes(cakesInCart);
     
-    // If cakes in cart, lock to local pickup
-    if (cakesInCart) {
-      setShippingMethod('local_pickup');
-    }
+    // If cakes in cart, lock to local pickup; otherwise reset to local pickup as default
+    setShippingMethod('local_pickup');
 
     base44.auth.me().then(u => {
       setUser(u);
