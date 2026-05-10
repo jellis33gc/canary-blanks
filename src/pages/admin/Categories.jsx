@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Edit, Trash2, X, Save, Upload, ChevronRight } from "lucide-react";
+import { Plus, Edit, Trash2, X, Save, Upload, ChevronRight, ArrowUp, ArrowDown } from "lucide-react";
 
 export default function AdminCategories() {
   const [categories, setCategories] = useState([]);
@@ -62,10 +62,28 @@ export default function AdminCategories() {
     setUploading(false);
   };
 
-  const topLevel = categories.filter(c => !c.parent_id);
-  const getChildren = (parentId) => categories.filter(c => c.parent_id === parentId);
+  const topLevel = categories.filter(c => !c.parent_id).sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0));
+  const getChildren = (parentId) => categories.filter(c => c.parent_id === parentId).sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0));
 
-  const renderCategory = (cat, depth = 0) => {
+  const handleReorder = async (siblings, index, direction) => {
+    const swapIndex = index + direction;
+    if (swapIndex < 0 || swapIndex >= siblings.length) return;
+    const a = siblings[index];
+    const b = siblings[swapIndex];
+    const aOrder = a.sort_order ?? index;
+    const bOrder = b.sort_order ?? swapIndex;
+    await Promise.all([
+      base44.entities.Category.update(a.id, { sort_order: bOrder }),
+      base44.entities.Category.update(b.id, { sort_order: aOrder }),
+    ]);
+    setCategories(prev => prev.map(c => {
+      if (c.id === a.id) return { ...c, sort_order: bOrder };
+      if (c.id === b.id) return { ...c, sort_order: aOrder };
+      return c;
+    }));
+  };
+
+  const renderCategory = (cat, depth = 0, siblings = [], index = 0) => {
     const children = getChildren(cat.id);
     return (
       <div key={cat.id}>
@@ -83,6 +101,10 @@ export default function AdminCategories() {
             </div>
           </div>
           <div className="flex gap-1">
+            <div className="flex flex-col gap-0.5">
+              <button onClick={() => handleReorder(siblings, index, -1)} disabled={index === 0} className="p-1 rounded hover:bg-muted disabled:opacity-20 transition-colors" title="Move up"><ArrowUp className="w-3.5 h-3.5" /></button>
+              <button onClick={() => handleReorder(siblings, index, 1)} disabled={index === siblings.length - 1} className="p-1 rounded hover:bg-muted disabled:opacity-20 transition-colors" title="Move down"><ArrowDown className="w-3.5 h-3.5" /></button>
+            </div>
             <button onClick={() => { setForm({ name: "", slug: "", description: "", is_active: true, sort_order: 0, image: "", parent_id: cat.id }); setEditingId(null); setAddingNew(true); }} className="p-1.5 rounded-lg hover:bg-primary/10 hover:text-primary transition-colors" title="Add subcategory">
               <Plus className="w-4 h-4" />
             </button>
@@ -92,7 +114,7 @@ export default function AdminCategories() {
         </div>
         {children.length > 0 && (
           <div className="mt-2 space-y-2">
-            {children.map(child => renderCategory(child, depth + 1))}
+            {children.map((child, i) => renderCategory(child, depth + 1, children, i))}
           </div>
         )}
       </div>
@@ -176,7 +198,7 @@ export default function AdminCategories() {
 
       <div className="space-y-3">
         {loading ? Array(3).fill(0).map((_, i) => <div key={i} className="h-20 bg-muted rounded-2xl animate-pulse" />) :
-          topLevel.map(cat => renderCategory(cat, 0))}
+          topLevel.map((cat, i) => renderCategory(cat, 0, topLevel, i))}
       </div>
     </div>
   );
