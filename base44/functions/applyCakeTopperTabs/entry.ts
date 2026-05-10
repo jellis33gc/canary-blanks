@@ -12,13 +12,25 @@ Deno.serve(async (req) => {
     // Get all categories
     const categories = await base44.asServiceRole.entities.Category.list('name', 500);
     
-    // Find all cake topper categories (top level and subcategories)
-    const cakeTopperCats = categories.filter(c => {
-      const name = c.name.toLowerCase();
-      return name === 'cake toppers' || (c.parent_id && categories.find(p => p.id === c.parent_id)?.name.toLowerCase() === 'cake toppers');
-    });
-
-    const cakeTopperCatIds = cakeTopperCats.map(c => c.id);
+    // Recursively find all descendants of a category
+    const getDescendants = (catId) => {
+      const children = categories.filter(c => c.parent_id === catId);
+      const allDesc = [...children];
+      children.forEach(child => {
+        allDesc.push(...getDescendants(child.id));
+      });
+      return allDesc;
+    };
+    
+    // Find Cake Toppers category and all its descendants
+    const cakeToppersCat = categories.find(c => c.name.toLowerCase() === 'cake toppers');
+    if (!cakeToppersCat) {
+      return Response.json({ error: 'Cake Toppers category not found' }, { status: 404 });
+    }
+    
+    const allDescendants = getDescendants(cakeToppersCat.id);
+    const cakeTopperCatIds = [cakeToppersCat.id, ...allDescendants.map(c => c.id)];
+    const cakeTopperCats = [cakeToppersCat, ...allDescendants];
 
     // Get all products in those categories
     const allProducts = await base44.asServiceRole.entities.Product.list('name', 1000);
