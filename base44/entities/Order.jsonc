@@ -84,6 +84,10 @@
     "shipping_cost": {
       "type": "number"
     },
+    "shipping_method": {
+      "type": "string",
+      "description": "Shipping method selected (Local Pickup or courier service name)"
+    },
     "total": {
       "type": "number"
     },
