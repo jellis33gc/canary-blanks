@@ -90,21 +90,10 @@ export default function AdminProducts() {
                 is_on_sale: { type: "boolean" },
                 tags: { type: "string" },
                 images: { type: "string" },
-                variant_type_1: { type: "string" },
-                variant_option_1: { type: "string" },
-                variant_modifier_1: { type: "number" },
-                variant_type_2: { type: "string" },
-                variant_option_2: { type: "string" },
-                variant_modifier_2: { type: "number" },
-                variant_type_3: { type: "string" },
-                variant_option_3: { type: "string" },
-                variant_modifier_3: { type: "number" },
-                variant_type_4: { type: "string" },
-                variant_option_4: { type: "string" },
-                variant_modifier_4: { type: "number" },
-                variant_type_5: { type: "string" },
-                variant_option_5: { type: "string" },
-                variant_modifier_5: { type: "number" }
+                combo: { type: "string" },
+                combo_price: { type: "number" },
+                combo_sku: { type: "string" },
+                combo_attributes: { type: "string" }
               }
             }
           }
