@@ -10,8 +10,25 @@ export default function ProductCard({ product, wishlist = [], onWishlistToggle }
   const { addItem } = useCartStore();
   const [added, setAdded] = useState(false);
   const isWishlisted = wishlist.includes(product.id);
-  const discount = product.compare_at_price && product.compare_at_price > product.price
-    ? Math.round((1 - product.price / product.compare_at_price) * 100) : 0;
+  
+  // Check if product has variants with attributes
+  const hasVariants = product.variants?.some(v => v && v.attributes && Object.keys(v.attributes).length > 0);
+  
+  // Calculate lowest variant price if product has variants
+  let displayPrice = product.price;
+  let priceLabel = "";
+  if (hasVariants) {
+    const variantPrices = product.variants
+      .filter(v => v && v.attributes && v.price)
+      .map(v => parseFloat(v.price));
+    if (variantPrices.length > 0) {
+      displayPrice = Math.min(...variantPrices);
+      priceLabel = "From ";
+    }
+  }
+  
+  const discount = product.compare_at_price && product.compare_at_price > displayPrice
+    ? Math.round((1 - displayPrice / product.compare_at_price) * 100) : 0;
 
   const handleAddToCart = (e) => {
     e.preventDefault();
@@ -58,8 +75,8 @@ export default function ProductCard({ product, wishlist = [], onWishlistToggle }
         )}
         <div className="flex items-center justify-between">
           <div className="flex items-baseline gap-2">
-            <span className="font-bold text-lg text-primary">£{product.price?.toFixed(2)}</span>
-            {product.compare_at_price > product.price && (
+            <span className="font-bold text-lg text-primary">{priceLabel}£{displayPrice?.toFixed(2)}</span>
+            {product.compare_at_price > displayPrice && (
               <span className="text-sm text-muted-foreground line-through">£{product.compare_at_price?.toFixed(2)}</span>
             )}
           </div>
