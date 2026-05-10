@@ -39,7 +39,7 @@ export default function Navbar() {
     <nav className="sticky top-0 z-50 bg-white/95 backdrop-blur-sm border-b border-border shadow-sm">
       {/* Top bar */}
       <div className="bg-primary text-primary-foreground text-center text-sm py-2 px-4">
-        🎂 Free shipping on orders over £50 · Use code SWEETDEAL for 10% off!
+        🎂 Free shipping on orders over €50 · Use code SWEETDEAL for 10% off!
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

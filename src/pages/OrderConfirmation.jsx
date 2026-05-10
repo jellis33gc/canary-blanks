@@ -33,7 +33,7 @@ export default function OrderConfirmation() {
             <div className="bg-card border border-border rounded-2xl p-6 mb-8 text-left space-y-3">
               <p className="font-semibold text-lg text-center mb-4">{order.order_number}</p>
               <p><strong>Confirmation sent to:</strong> {order.customer_email}</p>
-              <p><strong>Total:</strong> £{order.total?.toFixed(2)}</p>
+              <p><strong>Total:</strong> €{order.total?.toFixed(2)}</p>
               {order.points_earned > 0 && (
                 <div className="bg-primary/10 rounded-xl p-3 text-center">
                   <p className="text-primary font-bold">🏆 You earned {order.points_earned} loyalty points!</p>
@@ -42,7 +42,7 @@ export default function OrderConfirmation() {
               <div>
                 <p className="font-semibold mb-2">Items:</p>
                 {order.items?.map((item, i) => (
-                  <p key={i} className="text-sm text-muted-foreground">• {item.product_name} x{item.quantity} — £{(item.price * item.quantity).toFixed(2)}</p>
+                  <p key={i} className="text-sm text-muted-foreground">• {item.product_name} x{item.quantity} — €{(item.price * item.quantity).toFixed(2)}</p>
                 ))}
               </div>
             </div>

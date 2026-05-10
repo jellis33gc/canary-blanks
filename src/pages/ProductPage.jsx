@@ -29,7 +29,7 @@ export default function ProductPage() {
   const [profile, setProfile] = useState(null);
   const [added, setAdded] = useState(false);
   const [oosMap, setOosMap] = useState({}); // { "Colour": ["Red", "Blue"] }
-  const [shippingContent, setShippingContent] = useState("🚚 Standard Delivery: 3-5 working days — FREE over £50\n⚡ Express Delivery: 1-2 working days — £5.99\n🎂 Custom Cakes: Please allow 7-14 days for custom orders");
+  const [shippingContent, setShippingContent] = useState("🚚 Standard Delivery: 3-5 working days — FREE over €50\n⚡ Express Delivery: 1-2 working days — €5.99\n🎂 Custom Cakes: Please allow 7-14 days for custom orders");
   const { addItem } = useCartStore();
 
   useEffect(() => {
@@ -215,9 +215,9 @@ export default function ProductPage() {
 
             <div>
               <div className="flex items-baseline gap-3 mb-2">
-                <span className="text-3xl font-bold text-primary">£{displayPrice.toFixed(2)}</span>
+                <span className="text-3xl font-bold text-primary">€{displayPrice.toFixed(2)}</span>
                 {product.compare_at_price > product.price && (
-                  <span className="text-lg text-muted-foreground line-through">£{product.compare_at_price?.toFixed(2)}</span>
+                  <span className="text-lg text-muted-foreground line-through">€{product.compare_at_price?.toFixed(2)}</span>
                 )}
                 {discount > 0 && <Badge className="bg-primary text-white">Save {discount}%</Badge>}
               </div>
@@ -307,7 +307,7 @@ export default function ProductPage() {
                                 : 'border-border hover:border-primary'
                           }`}
                         >
-                          {label}{modifier !== 0 ? ` (${modifier > 0 ? '+' : ''}£${modifier.toFixed(2)})` : ''}
+                          {label}{modifier !== 0 ? ` (${modifier > 0 ? '+' : ''}€${modifier.toFixed(2)})` : ''}
                           {isOOS && <span className="block text-[10px] not-italic leading-tight">Out of stock</span>}
                         </button>
                       );

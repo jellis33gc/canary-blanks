@@ -94,7 +94,7 @@ export default function Cart() {
                     {item.custom_options && Object.entries(item.custom_options).map(([k, v]) => (
                       <p key={k} className="text-xs text-muted-foreground">{k}: {v}</p>
                     ))}
-                    <p className="font-bold text-primary mt-1">£{item.price?.toFixed(2)}</p>
+                    <p className="font-bold text-primary mt-1">€{item.price?.toFixed(2)}</p>
                   </div>
                   <div className="flex items-center gap-2">
                     <div className="flex items-center border rounded-full">
@@ -107,7 +107,7 @@ export default function Cart() {
                     </button>
                   </div>
                   <div className="text-right shrink-0">
-                    <p className="font-bold">£{(item.price * item.quantity).toFixed(2)}</p>
+                    <p className="font-bold">€{(item.price * item.quantity).toFixed(2)}</p>
                   </div>
                 </motion.div>
               ))}
@@ -118,12 +118,12 @@ export default function Cart() {
           <div className="bg-card border border-border rounded-2xl p-6 h-fit sticky top-24 space-y-4">
             <h2 className="font-bold text-xl">Order Summary</h2>
             <div className="space-y-2 text-sm">
-              <div className="flex justify-between"><span>Subtotal</span><span>£{subtotal.toFixed(2)}</span></div>
-              {appliedDiscount && <div className="flex justify-between text-green-600 font-medium"><span>Discount ({appliedDiscount.code})</span><span>-£{discountAmount.toFixed(2)}</span></div>}
-              <div className="flex justify-between"><span>Shipping</span><span>{shipping === 0 ? <span className="text-green-600 font-medium">FREE</span> : `£${shipping.toFixed(2)}`}</span></div>
-              {shipping > 0 && <p className="text-xs text-muted-foreground">Add £{(50 - (subtotal - discountAmount)).toFixed(2)} more for free shipping</p>}
+              <div className="flex justify-between"><span>Subtotal</span><span>€{subtotal.toFixed(2)}</span></div>
+              {appliedDiscount && <div className="flex justify-between text-green-600 font-medium"><span>Discount ({appliedDiscount.code})</span><span>-€{discountAmount.toFixed(2)}</span></div>}
+              <div className="flex justify-between"><span>Shipping</span><span>{shipping === 0 ? <span className="text-green-600 font-medium">FREE</span> : `€${shipping.toFixed(2)}`}</span></div>
+              {shipping > 0 && <p className="text-xs text-muted-foreground">Add €{(50 - (subtotal - discountAmount)).toFixed(2)} more for free shipping</p>}
               <div className="border-t pt-2 flex justify-between font-bold text-lg">
-                <span>Total</span><span className="text-primary">£{total.toFixed(2)}</span>
+                <span>Total</span><span className="text-primary">€{total.toFixed(2)}</span>
               </div>
             </div>
 
