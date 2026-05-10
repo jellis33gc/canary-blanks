@@ -62,82 +62,19 @@ export default function AdminProducts() {
     const file = e.target.files[0];
     if (!file) return;
     setImporting(true);
-    setImportStatus("Uploading file...");
-    const { file_url } = await base44.integrations.Core.UploadFile({ file });
+    setImportStatus("Uploading and parsing file...");
 
-    setImportStatus("Reading rows from file...");
-    // Extract all rows from the spreadsheet as flat objects
-    const result = await base44.integrations.Core.ExtractDataFromUploadedFile({
-      file_url,
-      json_schema: {
-        type: "object",
-        properties: {
-          rows: {
-            type: "array",
-            items: {
-              type: "object",
-              properties: {
-                sku: { type: "string" },
-                name: { type: "string" },
-                price: { type: "number" },
-                compare_at_price: { type: "number" },
-                description: { type: "string" },
-                short_description: { type: "string" },
-                category_name: { type: "string" },
-                stock_quantity: { type: "number" },
-                is_active: { type: "boolean" },
-                is_featured: { type: "boolean" },
-                is_on_sale: { type: "boolean" },
-                tags: { type: "string" },
-                images: { type: "string" },
-                combo: { type: "string" },
-                combo_price: { type: "number" },
-                combo_sku: { type: "string" },
-                combo_attributes: { type: "string" }
-              }
-            }
-          }
-        }
-      }
-    });
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("categories", JSON.stringify(categories));
 
-    if (result.status === "success") {
-      // Handle various output shapes from the extractor:
-      // 1. Direct array of row objects: [{sku, name, ...}, ...]
-      // 2. Array of wrappers: [{rows: [{sku,...}]}, ...]
-      // 3. Single wrapper: {rows: [{sku,...}]}
-      let rows = [];
-      if (Array.isArray(result.output)) {
-        if (result.output.length > 0 && result.output[0]?.rows !== undefined) {
-          // It's an array of {rows:[...]} wrappers — flatten them
-          rows = result.output.flatMap(item => Array.isArray(item.rows) ? item.rows : []);
-        } else {
-          rows = result.output;
-        }
-      } else {
-        rows = result.output?.rows || [];
-      }
-      console.log("Extracted rows:", JSON.stringify(rows.slice(0, 3)));
-      console.log("Total rows extracted:", rows.length);
-      console.log("Raw output type:", Array.isArray(result.output) ? "array" : typeof result.output);
-      if (rows.length === 0) {
-        setImportStatus("✗ No rows could be extracted from file. Check file format matches sample CSV.");
-        setTimeout(() => { setImporting(false); setImportStatus(""); }, 6000);
-        e.target.value = "";
-        return;
-      }
-      setImportStatus(`Importing ${rows.length} rows into database...`);
-      const response = await base44.functions.invoke("importProducts", { rows, categories });
-      if (response.data?.success) {
-        setImportStatus(`✓ Done! Created: ${response.data.created}, Updated: ${response.data.updated}${response.data.errors?.length ? `, Errors: ${response.data.errors.length}` : ''}`);
-        await loadData();
-        setTimeout(() => { setImporting(false); setImportStatus(""); }, 4000);
-      } else {
-        setImportStatus("✗ Import failed: " + (response.data?.error || "Unknown error"));
-        setTimeout(() => { setImporting(false); setImportStatus(""); }, 5000);
-      }
+    const response = await base44.functions.invoke("importProducts", formData);
+    if (response.data?.success) {
+      setImportStatus(`✓ Done! Created: ${response.data.created}, Updated: ${response.data.updated}${response.data.errors?.length ? `, Errors: ${response.data.errors.length}` : ''}`);
+      await loadData();
+      setTimeout(() => { setImporting(false); setImportStatus(""); }, 4000);
     } else {
-      setImportStatus("✗ Could not read file: " + result.details);
+      setImportStatus("✗ Import failed: " + (response.data?.error || "Unknown error"));
       setTimeout(() => { setImporting(false); setImportStatus(""); }, 5000);
     }
     e.target.value = "";

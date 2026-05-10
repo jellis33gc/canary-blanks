@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
+import * as XLSX from 'npm:xlsx@0.18.5';
 
 Deno.serve(async (req) => {
   try {
@@ -8,49 +9,68 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Forbidden' }, { status: 403 });
     }
 
-    const { rows, categories } = await req.json();
+    const contentType = req.headers.get('content-type') || '';
+
+    let rows = [];
+    let categories = [];
+
+    if (contentType.includes('multipart/form-data')) {
+      // Direct file upload — parse the file server-side
+      const formData = await req.formData();
+      const file = formData.get('file');
+      const catsJson = formData.get('categories');
+      categories = catsJson ? JSON.parse(catsJson) : [];
+
+      const arrayBuffer = await file.arrayBuffer();
+      const workbook = XLSX.read(new Uint8Array(arrayBuffer), { type: 'array' });
+      const sheetName = workbook.SheetNames[0];
+      const sheet = workbook.Sheets[sheetName];
+      rows = XLSX.utils.sheet_to_json(sheet, { defval: '' });
+    } else {
+      // Legacy JSON payload (rows already extracted by frontend)
+      const body = await req.json();
+      rows = body.rows || [];
+      categories = body.categories || [];
+    }
 
     // Group rows by SKU — the export format puts product info on the first row
     // and subsequent rows only have combo/variant data with empty product fields.
-    // We need to carry forward the last seen SKU for rows without one.
     const skuMap = {};
     let lastSku = null;
 
     for (const row of rows) {
-      const sku = row.sku || row.SKU || lastSku;
+      const sku = String(row.sku || row.SKU || '').trim() || lastSku;
       if (!sku) continue;
       lastSku = sku;
 
       if (!skuMap[sku]) {
         skuMap[sku] = {
           sku,
-          name: row.name || row.Name || '',
-          price: row.price != null ? parseFloat(row.price) : undefined,
-          compare_at_price: row.compare_at_price != null ? parseFloat(row.compare_at_price) : undefined,
-          description: row.description || row.Description || '',
-          short_description: row.short_description || '',
-          category_name: row.category_name || row.Category || '',
-          stock_quantity: row.stock_quantity != null ? parseInt(row.stock_quantity) : undefined,
-          is_active: row.is_active === false || row.is_active === 'false' ? false : true,
-          is_featured: row.is_featured === true || row.is_featured === 'true' ? true : false,
-          is_on_sale: row.is_on_sale === true || row.is_on_sale === 'true' ? true : false,
-          tags: row.tags ? row.tags.split(',').map(t => t.trim()).filter(Boolean) : [],
-          images: row.images ? row.images.split(',').map(i => i.trim()).filter(Boolean) : [],
+          name: String(row.name || row.Name || '').trim(),
+          price: row.price !== '' && row.price != null ? parseFloat(row.price) : undefined,
+          compare_at_price: row.compare_at_price !== '' && row.compare_at_price != null ? parseFloat(row.compare_at_price) : undefined,
+          description: String(row.description || row.Description || '').trim(),
+          short_description: String(row.short_description || '').trim(),
+          category_name: String(row.category_name || row.Category || '').trim(),
+          stock_quantity: row.stock_quantity !== '' && row.stock_quantity != null ? parseInt(row.stock_quantity) : undefined,
+          is_active: row.is_active === false || String(row.is_active).toLowerCase() === 'false' ? false : true,
+          is_featured: row.is_featured === true || String(row.is_featured).toLowerCase() === 'true' ? true : false,
+          is_on_sale: row.is_on_sale === true || String(row.is_on_sale).toLowerCase() === 'true' ? true : false,
+          tags: row.tags ? String(row.tags).split(',').map(t => t.trim()).filter(Boolean) : [],
+          images: row.images ? String(row.images).split(',').map(i => i.trim()).filter(Boolean) : [],
           combinations: []
         };
       } else if (row.name) {
-        // Update product-level fields if present on a subsequent row
         const entry = skuMap[sku];
-        if (row.name) entry.name = row.name;
-        if (row.price != null) entry.price = parseFloat(row.price);
-        if (row.category_name) entry.category_name = row.category_name;
-        if (row.tags) entry.tags = row.tags.split(',').map(t => t.trim()).filter(Boolean);
-        if (row.images) entry.images = row.images.split(',').map(i => i.trim()).filter(Boolean);
+        if (row.name) entry.name = String(row.name).trim();
+        if (row.price !== '' && row.price != null) entry.price = parseFloat(row.price);
+        if (row.category_name) entry.category_name = String(row.category_name).trim();
+        if (row.tags) entry.tags = String(row.tags).split(',').map(t => t.trim()).filter(Boolean);
+        if (row.images) entry.images = String(row.images).split(',').map(i => i.trim()).filter(Boolean);
       }
 
       const entry = skuMap[sku];
 
-      // Handle combo-style variants (new export format)
       if (row.combo && row.combo_attributes) {
         let attributes = {};
         try {
@@ -61,15 +81,14 @@ Deno.serve(async (req) => {
           attributes = {};
         }
         entry.combinations.push({
-          combo: row.combo,
+          combo: String(row.combo).trim(),
           attributes,
-          price: row.combo_price != null ? parseFloat(row.combo_price) : '',
-          sku: row.combo_sku || ''
+          price: row.combo_price !== '' && row.combo_price != null ? parseFloat(row.combo_price) : '',
+          sku: String(row.combo_sku || '').trim()
         });
       }
     }
 
-    // Build final product records and upsert
     const results = { created: 0, updated: 0, errors: [] };
 
     for (const [sku, entry] of Object.entries(skuMap)) {
@@ -79,10 +98,7 @@ Deno.serve(async (req) => {
           continue;
         }
 
-        // Match category
         const cat = categories.find(c => c.name.toLowerCase() === (entry.category_name || '').toLowerCase());
-
-        // Build slug from name
         const slug = entry.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 
         const productData = {
@@ -105,7 +121,6 @@ Deno.serve(async (req) => {
 
         if (entry.compare_at_price != null) productData.compare_at_price = entry.compare_at_price;
 
-        // Check if product with this SKU already exists
         const existing = await base44.asServiceRole.entities.Product.filter({ sku });
         if (existing.length > 0) {
           await base44.asServiceRole.entities.Product.update(existing[0].id, productData);
