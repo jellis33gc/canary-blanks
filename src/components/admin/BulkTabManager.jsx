@@ -130,8 +130,22 @@ export default function BulkTabManager({ products, onClose, onSaved }) {
           {/* Product selector */}
           <div className="space-y-2">
             <p className="font-semibold text-sm">Select Products ({selectedProducts.size}/{products.length})</p>
-            <div className="bg-muted/30 rounded-lg p-3 max-h-48 overflow-y-auto space-y-2">
-              {products.map(p => (
+            <div className="bg-muted/30 rounded-lg p-3 space-y-2">
+              <label className="flex items-center gap-2 cursor-pointer p-2 hover:bg-muted rounded border border-border">
+                <Checkbox
+                  checked={selectedProducts.size === products.length}
+                  onCheckedChange={() => {
+                    if (selectedProducts.size === products.length) {
+                      setSelectedProducts(new Set());
+                    } else {
+                      setSelectedProducts(new Set(products.map(p => p.id)));
+                    }
+                  }}
+                />
+                <span className="text-sm font-semibold flex-1">{selectedProducts.size === products.length ? 'Deselect All' : 'Select All'}</span>
+              </label>
+              <div className="max-h-40 overflow-y-auto space-y-2">
+                {products.map(p => (
                 <label key={p.id} className="flex items-center gap-2 cursor-pointer p-2 hover:bg-muted rounded">
                   <Checkbox
                     checked={selectedProducts.has(p.id)}
@@ -140,7 +154,8 @@ export default function BulkTabManager({ products, onClose, onSaved }) {
                   <span className="text-sm flex-1">{p.name}</span>
                   <span className="text-xs text-muted-foreground">{p.sku || p.id.slice(0, 6)}</span>
                 </label>
-              ))}
+                ))}
+              </div>
             </div>
           </div>
 
