@@ -369,7 +369,13 @@ export default function ProductPage() {
             </TabsContent>
             {product.tabs?.map(tab => (
               <TabsContent key={tab.title} value={tab.title} className="mt-6">
-                <div className="bg-muted/50 rounded-2xl p-6" dangerouslySetInnerHTML={{ __html: tab.content }} />
+                <div className="bg-muted/50 rounded-2xl p-6 prose prose-sm max-w-none">
+                  {tab.content?.includes('<') ? (
+                    <div dangerouslySetInnerHTML={{ __html: tab.content }} />
+                  ) : (
+                    <div className="whitespace-pre-wrap text-sm leading-relaxed">{tab.content}</div>
+                  )}
+                </div>
               </TabsContent>
             ))}
             <TabsContent value="shipping" className="mt-6">
