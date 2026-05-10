@@ -2,17 +2,11 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
 Deno.serve(async (req) => {
   try {
-    const base44 = createClientFromRequest(req);
-    const user = await base44.auth.me();
+    const { destination_country, to_country, to_postcode, weight, width, height, length } = await req.json();
+    const country = destination_country || to_country;
 
-    if (!user) {
-      return Response.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    const { to_country, to_postcode, weight, width, height, length } = await req.json();
-
-    if (!to_country || !weight) {
-      return Response.json({ error: 'Missing required fields: to_country, weight' }, { status: 400 });
+    if (!country || !weight) {
+      return Response.json({ error: 'Missing required fields: destination_country/to_country, weight' }, { status: 400 });
     }
 
     const apiKey = Deno.env.get('SENDCLOUD_API_KEY');
@@ -23,7 +17,7 @@ Deno.serve(async (req) => {
     // Build request body for Sendcloud API
     const body = {
       from_country: 'GB',
-      to_country: to_country.toUpperCase(),
+      to_country: country.toUpperCase(),
       to_postcode: to_postcode || '',
       weight: weight,
     };
@@ -65,10 +59,10 @@ Deno.serve(async (req) => {
 
     return Response.json({
       success: true,
-      shipping_options: shippingOptions,
+      rates: shippingOptions,
       request_details: {
         from_country: 'GB',
-        to_country: to_country.toUpperCase(),
+        to_country: country.toUpperCase(),
         weight: weight,
       },
     });
