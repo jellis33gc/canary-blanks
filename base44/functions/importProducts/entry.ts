@@ -85,52 +85,67 @@ Deno.serve(async (req) => {
       }
     }
 
-    const results = { created: 0, updated: 0, errors: [], skipped: [] };
+    const results = { created: 0, updated: 0, errors: [] };
 
-    console.log("Total SKUs to process:", Object.keys(skuMap).length);
-    console.log("SKUs:", Object.keys(skuMap).slice(0, 20));
+    // Separate into new and existing
+    const existingSkus = {};
+    const allProducts = await base44.asServiceRole.entities.Product.list("", 1000);
+    allProducts.forEach(p => {
+      if (p.sku) existingSkus[p.sku] = p.id;
+    });
+
+    const toCreate = [];
+    const toUpdate = [];
 
     for (const [sku, entry] of Object.entries(skuMap)) {
+      if (!entry.name) {
+        results.errors.push({ sku, error: 'Missing product name' });
+        continue;
+      }
+
+      const cat = categories.find(c => c.name.toLowerCase() === (entry.category_name || '').toLowerCase());
+      const slug = entry.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+
+      const productData = {
+        name: entry.name,
+        slug,
+        sku: entry.sku,
+        price: entry.price,
+        description: entry.description,
+        short_description: entry.short_description,
+        category_id: cat?.id,
+        category_name: cat?.name || entry.category_name,
+        stock_quantity: entry.stock_quantity,
+        is_active: entry.is_active,
+        is_featured: entry.is_featured,
+        is_on_sale: entry.is_on_sale,
+        tags: entry.tags,
+        images: entry.images,
+        variants: entry.combinations
+      };
+
+      if (entry.compare_at_price != null) productData.compare_at_price = entry.compare_at_price;
+
+      if (existingSkus[sku]) {
+        toUpdate.push({ id: existingSkus[sku], data: productData });
+      } else {
+        toCreate.push(productData);
+      }
+    }
+
+    // Batch create
+    if (toCreate.length > 0) {
+      await base44.asServiceRole.entities.Product.bulkCreate(toCreate);
+      results.created = toCreate.length;
+    }
+
+    // Batch update
+    for (const { id, data } of toUpdate) {
       try {
-        if (!entry.name) {
-          results.errors.push({ sku, error: 'Missing product name' });
-          results.skipped.push(sku);
-          continue;
-        }
-
-        const cat = categories.find(c => c.name.toLowerCase() === (entry.category_name || '').toLowerCase());
-        const slug = entry.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
-
-        const productData = {
-          name: entry.name,
-          slug,
-          sku: entry.sku,
-          price: entry.price,
-          description: entry.description,
-          short_description: entry.short_description,
-          category_id: cat?.id,
-          category_name: cat?.name || entry.category_name,
-          stock_quantity: entry.stock_quantity,
-          is_active: entry.is_active,
-          is_featured: entry.is_featured,
-          is_on_sale: entry.is_on_sale,
-          tags: entry.tags,
-          images: entry.images,
-          variants: entry.combinations
-        };
-
-        if (entry.compare_at_price != null) productData.compare_at_price = entry.compare_at_price;
-
-        const existing = await base44.asServiceRole.entities.Product.filter({ sku });
-        if (existing.length > 0) {
-          await base44.asServiceRole.entities.Product.update(existing[0].id, productData);
-          results.updated++;
-        } else {
-          await base44.asServiceRole.entities.Product.create(productData);
-          results.created++;
-        }
+        await base44.asServiceRole.entities.Product.update(id, data);
+        results.updated++;
       } catch (err) {
-        results.errors.push({ sku, error: err.message });
+        results.errors.push({ sku: data.sku, error: err.message });
       }
     }
 
