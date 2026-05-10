@@ -70,15 +70,16 @@ export default function AdminCategories() {
     if (swapIndex < 0 || swapIndex >= siblings.length) return;
     const a = siblings[index];
     const b = siblings[swapIndex];
-    const aOrder = a.sort_order ?? index;
-    const bOrder = b.sort_order ?? swapIndex;
+    // Use positional indices as sort_order to guarantee distinct values
+    const aNewOrder = swapIndex;
+    const bNewOrder = index;
     await Promise.all([
-      base44.entities.Category.update(a.id, { sort_order: bOrder }),
-      base44.entities.Category.update(b.id, { sort_order: aOrder }),
+      base44.entities.Category.update(a.id, { sort_order: aNewOrder }),
+      base44.entities.Category.update(b.id, { sort_order: bNewOrder }),
     ]);
     setCategories(prev => prev.map(c => {
-      if (c.id === a.id) return { ...c, sort_order: bOrder };
-      if (c.id === b.id) return { ...c, sort_order: aOrder };
+      if (c.id === a.id) return { ...c, sort_order: aNewOrder };
+      if (c.id === b.id) return { ...c, sort_order: bNewOrder };
       return c;
     }));
   };
