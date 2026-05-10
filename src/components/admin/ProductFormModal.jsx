@@ -8,63 +8,113 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { X, Plus, Upload, Trash2, RefreshCw, BookmarkPlus, Library } from "lucide-react";
 
-export default function ProductFormModal({ product, categories, onSave, onClose }) {
-  const [form, setForm] = useState({
-    name: product?.name || "",
-    slug: product?.slug || "",
-    description: product?.description || "",
-    short_description: product?.short_description || "",
-    price: product?.price || 0,
-    compare_at_price: product?.compare_at_price || 0,
-    category_id: product?.category_id || "",
-    category_name: product?.category_name || "",
-    images: product?.images || [],
-    sku: product?.sku || "",
-    stock_quantity: product?.stock_quantity ?? "",
-    is_active: product?.is_active ?? true,
-    is_featured: product?.is_featured ?? false,
-    is_on_sale: product?.is_on_sale ?? false,
-    tabs: product?.tabs || [],
-    variants: [],
-    is_variable: (product?.variants?.some(v => v.attributes && Object.keys(v.attributes).length > 0)) ?? false,
-  });
-  // attributes = [{ name: "Colour", values: ["Red", "Blue"] }, { name: "Size", values: ["S", "M"] }]
-  // combinations = [{ combo: "Red / S", attributes: { Colour: "Red", Size: "S" }, price: 0, sku: "" }]
-  const initAttributes = () => {
-    if (product?.variants?.filter(v => v.attributes)?.length > 0) {
-      // Reconstruct attributes from existing combinations stored in variants
-      const attrs = {};
-      product.variants.forEach(v => {
-        if (v.attributes) {
-          Object.entries(v.attributes).forEach(([k, val]) => {
-            if (!attrs[k]) attrs[k] = new Set();
-            // Always store as plain string
-            const strVal = typeof val === 'object' && val !== null ? (val.label || val.value || String(val)) : String(val);
-            attrs[k].add(strVal);
-          });
-        }
-      });
-      return Object.entries(attrs).map(([name, vals]) => ({ name, values: [...vals] }));
-    }
-    return [];
-  };
-  const initCombinations = () => product?.variants?.filter(v => v.attributes)?.map(v => ({
-    combo: v.combo || Object.values(v.attributes || {}).join(" / "),
-    attributes: v.attributes || {},
-    price: v.price ?? "",
-    sku: v.sku || "",
-  })) || [];
+// ─── helpers ────────────────────────────────────────────────────────────────
 
-  const [attributes, setAttributes] = useState(initAttributes);
-  const [combinations, setCombinations] = useState(initCombinations);
+function cartesian(arrays) {
+  return arrays.reduce(
+    (acc, arr) => acc.flatMap(x => arr.map(y => [...x, y])),
+    [[]]
+  );
+}
+
+function autoSlug(name) {
+  return name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+}
+
+// ─── component ──────────────────────────────────────────────────────────────
+
+export default function ProductFormModal({ product, categories, onSave, onClose }) {
+  // ── basic form fields (never stores variants) ──────────────────────────
+  const [form, setForm] = useState({
+    name:              product?.name || "",
+    slug:              product?.slug || "",
+    description:       product?.description || "",
+    short_description: product?.short_description || "",
+    price:             product?.price ?? "",
+    compare_at_price:  product?.compare_at_price ?? "",
+    category_id:       product?.category_id || "",
+    category_name:     product?.category_name || "",
+    images:            product?.images || [],
+    sku:               product?.sku || "",
+    stock_quantity:    product?.stock_quantity ?? "",
+    is_active:         product?.is_active ?? true,
+    is_featured:       product?.is_featured ?? false,
+    is_on_sale:        product?.is_on_sale ?? false,
+    tabs:              product?.tabs || [],
+  });
+
+  const set = (key, val) => setForm(f => ({ ...f, [key]: val }));
+
+  // ── variable product toggle ─────────────────────────────────────────────
+  const existingCombos = (product?.variants || []).filter(
+    v => v && v.attributes && Object.keys(v.attributes).length > 0
+  );
+  const [isVariable, setIsVariable] = useState(existingCombos.length > 0);
+
+  // ── attributes: [{ name, values: [string] }] ───────────────────────────
+  const [attributes, setAttributes] = useState(() => {
+    if (existingCombos.length === 0) return [];
+    const map = {};
+    existingCombos.forEach(v => {
+      Object.entries(v.attributes).forEach(([k, val]) => {
+        if (!map[k]) map[k] = new Set();
+        map[k].add(String(val));
+      });
+    });
+    return Object.entries(map).map(([name, vals]) => ({ name, values: [...vals] }));
+  });
+
+  // ── combinations: [{ combo, attributes, price, sku }] ──────────────────
+  const [combinations, setCombinations] = useState(() =>
+    existingCombos.map(v => ({
+      combo:      v.combo || Object.values(v.attributes).join(" / "),
+      attributes: v.attributes,
+      price:      v.price ?? "",
+      sku:        v.sku || "",
+    }))
+  );
+
+  // ── saved attribute library ─────────────────────────────────────────────
+  const [savedAttrs, setSavedAttrs] = useState([]);
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [savedAttrs, setSavedAttrs] = useState([]);
 
   useEffect(() => {
     base44.entities.ProductAttribute.list("name", 100).then(setSavedAttrs).catch(() => {});
   }, []);
 
+  // ── generate combinations from attributes ──────────────────────────────
+  const generateCombinations = () => {
+    const filled = attributes.filter(
+      a => a.name.trim() && a.values.filter(v => v.trim()).length > 0
+    );
+    if (filled.length === 0) return;
+
+    const valueArrays = filled.map(a => a.values.filter(v => v.trim()));
+    const combos = cartesian(valueArrays);
+
+    // Build a lookup of existing combos by key so we preserve prices/SKUs
+    const existing = {};
+    combinations.forEach(c => { existing[c.combo] = c; });
+
+    const baseSku = form.sku.trim();
+    const newCombinations = combos.map(vals => {
+      const attrMap = {};
+      filled.forEach((a, i) => { attrMap[a.name] = vals[i]; });
+      const key = vals.join(" / ");
+      if (existing[key]) return existing[key];
+      const suffix = vals.map(v => v.trim().split(/\s+/).map(w => w[0]?.toUpperCase() || "").join("")).join("");
+      return { combo: key, attributes: attrMap, price: "", sku: baseSku ? `${baseSku}-${suffix}` : suffix };
+    });
+
+    setCombinations(newCombinations);
+  };
+
+  const updateCombo = (i, field, val) => {
+    setCombinations(prev => prev.map((c, idx) => idx === i ? { ...c, [field]: val } : c));
+  };
+
+  // ── attribute library helpers ───────────────────────────────────────────
   const handleSaveAttribute = async (attr) => {
     if (!attr.name.trim()) return;
     const exists = savedAttrs.find(a => a.name.toLowerCase() === attr.name.toLowerCase());
@@ -78,55 +128,19 @@ export default function ProductFormModal({ product, categories, onSave, onClose 
   };
 
   const handleLoadAttribute = (saved) => {
-    const alreadyAdded = attributes.find(a => a.name.toLowerCase() === saved.name.toLowerCase());
-    if (!alreadyAdded) {
-      const vals = (saved.values || []).map(v => typeof v === 'string' ? v : v.label || v);
-      setAttributes(prev => [...prev, { name: saved.name, values: vals }]);
-    }
+    if (attributes.find(a => a.name.toLowerCase() === saved.name.toLowerCase())) return;
+    const vals = (saved.values || []).map(v => typeof v === "string" ? v : (v.label || String(v)));
+    setAttributes(prev => [...prev, { name: saved.name, values: vals }]);
   };
 
-  const generateCombinations = () => {
-    const filled = attributes.filter(a => a.name.trim() && a.values.filter(v => (typeof v === 'string' ? v.trim() : v.trim?.())).length > 0);
-    if (filled.length === 0) return;
-    // Extract just the labels for cartesian product
-    const filledValues = filled.map(a =>
-      a.values
-        .filter(v => (typeof v === 'string' ? v.trim() : v.trim?.()))
-        .map(v => typeof v === 'string' ? v : v)
-    );
-    const cartesian = (arrs) => arrs.reduce((acc, arr) => acc.flatMap(x => arr.map(y => [...x, y])), [[]]);
-    const combos = cartesian(filledValues);
-    const existing = {};
-    combinations.forEach(c => { existing[c.combo] = c; });
-    const baseSku = form.sku?.trim();
-    const newCombinations = combos.map(vals => {
-      const attrMap = {};
-      filled.forEach((a, i) => {
-        // Always store as plain string, never as object
-        const label = typeof vals[i] === 'object' && vals[i] !== null ? (vals[i].label || vals[i].value || String(vals[i])) : String(vals[i]);
-        attrMap[a.name] = label;
-      });
-      const key = vals.join(" / ");
-      if (existing[key]) return existing[key];
-      const suffix = vals.map(v => v.trim().split(/\s+/).map(w => w[0]?.toUpperCase() || "").join("")).join("");
-      const autoSku = baseSku ? `${baseSku}-${suffix}` : suffix;
-      return { combo: key, attributes: attrMap, price: "", sku: autoSku };
-    });
-    setCombinations(newCombinations);
-  };
-
-  const updateCombo = (i, field, val) => {
-    setCombinations(combinations.map((c, idx) => idx === i ? { ...c, [field]: val } : c));
-  };
-
-  const set = (key, val) => setForm(f => ({ ...f, [key]: val }));
-
+  // ── category change ─────────────────────────────────────────────────────
   const handleCategoryChange = (catId) => {
     const cat = categories.find(c => c.id === catId);
     set("category_id", catId);
     set("category_name", cat?.name || "");
   };
 
+  // ── image upload ────────────────────────────────────────────────────────
   const handleImageUpload = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -136,22 +150,34 @@ export default function ProductFormModal({ product, categories, onSave, onClose 
     setUploading(false);
   };
 
-  const autoSlug = (name) => name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
-
+  // ── SAVE ────────────────────────────────────────────────────────────────
   const handleSubmit = async () => {
     if (!form.name.trim()) { alert("Product name is required"); return; }
     setSaving(true);
+
     const slug = form.slug || autoSlug(form.name);
-    const { is_variable, variants: _oldVariants, ...rest } = form;
-    const price = form.price ? parseFloat(form.price) : undefined;
-    
-    // combinations is the single source of truth — only keep valid attribute-based ones
-    const variants = combinations.filter(v => v.attributes && Object.keys(v.attributes).length > 0);
-    
-    await onSave({ ...rest, variants, slug, price, compare_at_price: parseFloat(form.compare_at_price) || 0, stock_quantity: form.stock_quantity !== "" ? parseInt(form.stock_quantity) : undefined });
+    const price = form.price !== "" ? parseFloat(form.price) : undefined;
+    const compare_at_price = form.compare_at_price !== "" ? parseFloat(form.compare_at_price) : 0;
+    const stock_quantity = form.stock_quantity !== "" ? parseInt(form.stock_quantity) : undefined;
+
+    // variants = only valid attribute combos from combinations state
+    const variants = isVariable
+      ? combinations.filter(c => c.attributes && Object.keys(c.attributes).length > 0)
+      : [];
+
+    await onSave({
+      ...form,
+      slug,
+      price,
+      compare_at_price,
+      stock_quantity,
+      variants,
+    });
+
     setSaving(false);
   };
 
+  // ── render ──────────────────────────────────────────────────────────────
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl">
@@ -163,17 +189,22 @@ export default function ProductFormModal({ product, categories, onSave, onClose 
         <div className="p-6">
           <Tabs defaultValue="basic">
             <TabsList className="rounded-full bg-muted mb-6 flex-wrap h-auto gap-1">
-              <TabsTrigger value="basic" className="rounded-full">Basic Info</TabsTrigger>
-              <TabsTrigger value="media" className="rounded-full">Images</TabsTrigger>
-              <TabsTrigger value="pricing" className="rounded-full">Pricing & Stock</TabsTrigger>
+              <TabsTrigger value="basic"    className="rounded-full">Basic Info</TabsTrigger>
+              <TabsTrigger value="media"    className="rounded-full">Images</TabsTrigger>
+              <TabsTrigger value="pricing"  className="rounded-full">Pricing & Stock</TabsTrigger>
               <TabsTrigger value="variants" className="rounded-full">Variants</TabsTrigger>
-              <TabsTrigger value="content" className="rounded-full">Content</TabsTrigger>
+              <TabsTrigger value="content"  className="rounded-full">Content</TabsTrigger>
             </TabsList>
 
+            {/* ── BASIC ── */}
             <TabsContent value="basic" className="space-y-4">
               <div className="space-y-1">
                 <Label>Product Name *</Label>
-                <Input value={form.name} onChange={e => { set("name", e.target.value); if (!product) set("slug", autoSlug(e.target.value)); }} className="rounded-xl" />
+                <Input
+                  value={form.name}
+                  onChange={e => { set("name", e.target.value); if (!product) set("slug", autoSlug(e.target.value)); }}
+                  className="rounded-xl"
+                />
               </div>
               <div className="space-y-1">
                 <Label>URL Slug</Label>
@@ -190,61 +221,66 @@ export default function ProductFormModal({ product, categories, onSave, onClose 
                   <SelectContent>
                     {(() => {
                       const items = [];
+                      const rendered = new Set();
                       const topLevel = categories.filter(c => !c.parent_id);
-                      const renderedIds = new Set();
                       topLevel.forEach(parent => {
                         items.push(<SelectItem key={parent.id} value={parent.id}>{parent.name}</SelectItem>);
-                        renderedIds.add(parent.id);
-                        const children = categories.filter(c => c.parent_id === parent.id);
-                        children.forEach(child => {
+                        rendered.add(parent.id);
+                        categories.filter(c => c.parent_id === parent.id).forEach(child => {
                           items.push(<SelectItem key={child.id} value={child.id}>↳ {child.name}</SelectItem>);
-                          renderedIds.add(child.id);
-                          const grandchildren = categories.filter(c => c.parent_id === child.id);
-                          grandchildren.forEach(gc => {
+                          rendered.add(child.id);
+                          categories.filter(c => c.parent_id === child.id).forEach(gc => {
                             items.push(<SelectItem key={gc.id} value={gc.id}>　↳ {gc.name}</SelectItem>);
-                            renderedIds.add(gc.id);
+                            rendered.add(gc.id);
                           });
                         });
                       });
-                      // Fallback: show any categories not already rendered
-                      categories.filter(c => !renderedIds.has(c.id)).forEach(c => {
-                        items.push(<SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>);
-                      });
+                      categories.filter(c => !rendered.has(c.id)).forEach(c =>
+                        items.push(<SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)
+                      );
                       return items;
                     })()}
                   </SelectContent>
                 </Select>
               </div>
               <div className="flex gap-4">
-                <label className="flex items-center gap-2"><Checkbox checked={form.is_active} onCheckedChange={v => set("is_active", v)} /><span className="text-sm">Active</span></label>
+                <label className="flex items-center gap-2"><Checkbox checked={form.is_active}   onCheckedChange={v => set("is_active",   v)} /><span className="text-sm">Active</span></label>
                 <label className="flex items-center gap-2"><Checkbox checked={form.is_featured} onCheckedChange={v => set("is_featured", v)} /><span className="text-sm">Featured</span></label>
-                <label className="flex items-center gap-2"><Checkbox checked={form.is_on_sale} onCheckedChange={v => set("is_on_sale", v)} /><span className="text-sm">On Sale</span></label>
+                <label className="flex items-center gap-2"><Checkbox checked={form.is_on_sale}  onCheckedChange={v => set("is_on_sale",  v)} /><span className="text-sm">On Sale</span></label>
               </div>
             </TabsContent>
 
+            {/* ── MEDIA ── */}
             <TabsContent value="media" className="space-y-4">
               <div className="grid grid-cols-3 gap-3">
                 {form.images.map((img, i) => (
                   <div key={i} className="relative aspect-square rounded-xl overflow-hidden border border-border group">
                     <img src={img} alt="" className="w-full h-full object-cover" />
-                    <button onClick={() => set("images", form.images.filter((_, idx) => idx !== i))} className="absolute top-1 right-1 p-1 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button
+                      onClick={() => set("images", form.images.filter((_, idx) => idx !== i))}
+                      className="absolute top-1 right-1 p-1 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                    >
                       <X className="w-3 h-3" />
                     </button>
                   </div>
                 ))}
                 <label className="aspect-square rounded-xl border-2 border-dashed border-border flex flex-col items-center justify-center cursor-pointer hover:border-primary transition-colors text-muted-foreground hover:text-primary">
-                  {uploading ? <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" /> : <><Upload className="w-6 h-6 mb-1" /><span className="text-xs">Upload</span></>}
+                  {uploading
+                    ? <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                    : <><Upload className="w-6 h-6 mb-1" /><span className="text-xs">Upload</span></>
+                  }
                   <input type="file" className="hidden" accept="image/*" onChange={handleImageUpload} disabled={uploading} />
                 </label>
               </div>
             </TabsContent>
 
+            {/* ── PRICING ── */}
             <TabsContent value="pricing" className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1">
-                  <Label>Price (£) {combinations.length === 0 && "*"}</Label>
+                  <Label>Price (£)</Label>
                   <Input type="number" step="0.01" value={form.price} onChange={e => set("price", e.target.value)} className="rounded-xl" placeholder={combinations.length > 0 ? "Optional if variants set prices" : "Required"} />
-                  {combinations.length > 0 && <p className="text-xs text-muted-foreground">Optional — variants will use their individual prices</p>}
+                  {combinations.length > 0 && <p className="text-xs text-muted-foreground">Optional — variants use their individual prices</p>}
                 </div>
                 <div className="space-y-1">
                   <Label>Compare At Price (£)</Label>
@@ -261,34 +297,34 @@ export default function ProductFormModal({ product, categories, onSave, onClose 
               </div>
             </TabsContent>
 
+            {/* ── VARIANTS ── */}
             <TabsContent value="variants" className="space-y-4">
-              {/* Toggle */}
               <div className="flex items-center gap-3 p-3 bg-muted rounded-xl">
                 <Checkbox
-                  checked={form.is_variable}
+                  checked={isVariable}
                   onCheckedChange={v => {
-                    set("is_variable", v);
-                    if (!v) { set("variants", []); setAttributes([]); setCombinations([]); }
+                    setIsVariable(v);
+                    if (!v) { setAttributes([]); setCombinations([]); }
                   }}
                 />
                 <div>
                   <p className="font-semibold text-sm">Variable Product</p>
-                  <p className="text-xs text-muted-foreground">Define attributes (e.g. Colour, Size) then generate all combinations to price individually</p>
+                  <p className="text-xs text-muted-foreground">Define attributes then generate all combinations to price individually</p>
                 </div>
               </div>
 
-              {form.is_variable && (
+              {isVariable && (
                 <div className="space-y-5">
-                  {/* Step 1: Define Attributes */}
+                  {/* Step 1: attributes */}
                   <div>
                     <div className="flex items-center justify-between mb-3">
-                      <p className="font-semibold text-sm">Step 1 — Define Attributes &amp; Values</p>
-                      <Button variant="outline" size="sm" className="rounded-full" onClick={() => setAttributes([...attributes, { name: "", values: [""] }])}>
+                      <p className="font-semibold text-sm">Step 1 — Attributes &amp; Values</p>
+                      <Button variant="outline" size="sm" className="rounded-full" onClick={() => setAttributes(prev => [...prev, { name: "", values: [""] }])}>
                         <Plus className="w-3 h-3 mr-1" /> Add Attribute
                       </Button>
                     </div>
 
-                    {/* Saved attribute library */}
+                    {/* saved library */}
                     {savedAttrs.length > 0 && (
                       <div className="mb-3 p-3 bg-muted/50 rounded-xl">
                         <p className="text-xs font-semibold text-muted-foreground mb-2 flex items-center gap-1"><Library className="w-3 h-3" /> Saved Attributes — click to add</p>
@@ -318,56 +354,37 @@ export default function ProductFormModal({ product, categories, onSave, onClose 
                         <div className="flex items-center gap-2">
                           <Input
                             value={attr.name}
-                            onChange={e => {
-                              const a = [...attributes];
-                              a[ai].name = e.target.value;
-                              setAttributes(a);
-                            }}
+                            onChange={e => setAttributes(prev => prev.map((a, i) => i === ai ? { ...a, name: e.target.value } : a))}
                             placeholder="Attribute name (e.g. Colour, Size)"
                             className="rounded-lg font-medium"
                           />
-                          <button
-                            onClick={() => handleSaveAttribute(attr)}
-                            title="Save to library"
-                            className="p-1.5 hover:text-primary shrink-0"
-                          >
+                          <button onClick={() => handleSaveAttribute(attr)} title="Save to library" className="p-1.5 hover:text-primary shrink-0">
                             <BookmarkPlus className="w-4 h-4" />
                           </button>
-                          <button onClick={() => setAttributes(attributes.filter((_, i) => i !== ai))} className="p-1.5 hover:text-red-500 shrink-0">
+                          <button onClick={() => setAttributes(prev => prev.filter((_, i) => i !== ai))} className="p-1.5 hover:text-red-500 shrink-0">
                             <Trash2 className="w-4 h-4" />
                           </button>
                         </div>
                         <div className="pl-2 space-y-1.5">
-                          {attr.values.map((val, vi) => {
-                            const label = typeof val === 'string' ? val : val.label;
-                            return (
-                              <div key={vi} className="flex items-center gap-2">
-                                <Input
-                                  value={label}
-                                  onChange={e => {
-                                    const a = [...attributes];
-                                    a[ai].values[vi] = e.target.value;
-                                    setAttributes(a);
-                                  }}
-                                  placeholder={`Value (e.g. ${ai === 0 ? "Red, Blue" : "S, M, L"})`}
-                                  className="rounded-lg h-8 text-sm"
-                                />
-                                <button onClick={() => {
-                                  const a = [...attributes];
-                                  a[ai].values = a[ai].values.filter((_, i) => i !== vi);
-                                  setAttributes(a);
-                                }} className="p-1 hover:text-red-500 shrink-0">
-                                  <X className="w-3.5 h-3.5" />
-                                </button>
-                              </div>
-                            );
-                          })}
+                          {attr.values.map((val, vi) => (
+                            <div key={vi} className="flex items-center gap-2">
+                              <Input
+                                value={val}
+                                onChange={e => setAttributes(prev => prev.map((a, i) =>
+                                  i === ai ? { ...a, values: a.values.map((v, j) => j === vi ? e.target.value : v) } : a
+                                ))}
+                                placeholder={`Value (e.g. ${ai === 0 ? "Red, Blue" : "S, M, L"})`}
+                                className="rounded-lg h-8 text-sm"
+                              />
+                              <button onClick={() => setAttributes(prev => prev.map((a, i) =>
+                                i === ai ? { ...a, values: a.values.filter((_, j) => j !== vi) } : a
+                              ))} className="p-1 hover:text-red-500 shrink-0">
+                                <X className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                          ))}
                           <button
-                            onClick={() => {
-                              const a = [...attributes];
-                              a[ai].values = [...a[ai].values, ""];
-                              setAttributes(a);
-                            }}
+                            onClick={() => setAttributes(prev => prev.map((a, i) => i === ai ? { ...a, values: [...a.values, ""] } : a))}
                             className="text-xs text-primary hover:underline flex items-center gap-1 mt-1"
                           >
                             <Plus className="w-3 h-3" /> Add value
@@ -383,18 +400,16 @@ export default function ProductFormModal({ product, categories, onSave, onClose 
                       </Button>
                     )}
                     {combinations.length > 0 && (
-                      <p className="text-xs text-muted-foreground text-center">
-                        ✅ Adding new values and clicking Update will add new combinations without affecting existing prices.
+                      <p className="text-xs text-muted-foreground text-center mt-1">
+                        ✅ Updating preserves existing prices for unchanged combinations.
                       </p>
                     )}
                   </div>
 
-                  {/* Step 2: Price Combinations */}
+                  {/* Step 2: price combos */}
                   {combinations.length > 0 && (
                     <div>
-                      <p className="font-semibold text-sm mb-3">
-                        {attributes.length > 0 ? "Step 2 — " : ""}Price Each Combination
-                      </p>
+                      <p className="font-semibold text-sm mb-3">Step 2 — Price Each Combination</p>
                       <div className="border border-border rounded-xl overflow-hidden">
                         <div className="grid grid-cols-12 bg-muted px-3 py-2 text-xs font-semibold text-muted-foreground">
                           <span className="col-span-5">Combination</span>
@@ -405,22 +420,10 @@ export default function ProductFormModal({ product, categories, onSave, onClose 
                           <div key={i} className="grid grid-cols-12 items-center px-3 py-2 border-t border-border gap-2">
                             <span className="col-span-5 text-sm font-medium">{combo.combo}</span>
                             <div className="col-span-4">
-                              <Input
-                                type="number"
-                                step="0.01"
-                                value={combo.price}
-                                onChange={e => updateCombo(i, "price", e.target.value)}
-                                placeholder="0.00"
-                                className="rounded-lg h-8 text-sm"
-                              />
+                              <Input type="number" step="0.01" value={combo.price} onChange={e => updateCombo(i, "price", e.target.value)} placeholder="0.00" className="rounded-lg h-8 text-sm" />
                             </div>
                             <div className="col-span-3">
-                              <Input
-                                value={combo.sku}
-                                onChange={e => updateCombo(i, "sku", e.target.value)}
-                                placeholder="SKU"
-                                className="rounded-lg h-8 text-sm"
-                              />
+                              <Input value={combo.sku} onChange={e => updateCombo(i, "sku", e.target.value)} placeholder="SKU" className="rounded-lg h-8 text-sm" />
                             </div>
                           </div>
                         ))}
@@ -432,6 +435,7 @@ export default function ProductFormModal({ product, categories, onSave, onClose 
               )}
             </TabsContent>
 
+            {/* ── CONTENT ── */}
             <TabsContent value="content" className="space-y-4">
               <div className="space-y-1">
                 <Label>Full Description (HTML supported)</Label>

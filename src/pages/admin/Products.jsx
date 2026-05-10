@@ -189,8 +189,6 @@ export default function AdminProducts() {
 
   const handleSave = async (data) => {
     if (editProduct) {
-      // First wipe variants so the DB doesn't merge old corrupted ones, then write the real data
-      await base44.entities.Product.update(editProduct.id, { variants: [] });
       await base44.entities.Product.update(editProduct.id, data);
     } else {
       await base44.entities.Product.create(data);
