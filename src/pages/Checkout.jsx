@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Slider } from "@/components/ui/slider";
-import { CreditCard, Lock, Gift, ExternalLink, Truck, MapPin } from "lucide-react";
+import { CreditCard, Lock, Gift, Truck, MapPin } from "lucide-react";
 
 export default function Checkout() {
   const location = useLocation();
@@ -30,9 +30,6 @@ export default function Checkout() {
   const [usePoints, setUsePoints] = useState(false);
   const [pointsToUse, setPointsToUse] = useState(0);
   const [shippingMethod, setShippingMethod] = useState('local_pickup');
-  const [shippingOptions, setShippingOptions] = useState([]);
-  const [loadingShipping, setLoadingShipping] = useState(false);
-  const [hasCakes, setHasCakes] = useState(false);
 
   const [form, setForm] = useState({
     name: "", email: "", phone: "",
@@ -41,46 +38,6 @@ export default function Checkout() {
   });
 
   useEffect(() => {
-    // Check if cart has items in the Cake category
-    const cakesInCart = items.some(item => {
-      const category = item.category_name?.toLowerCase() || '';
-      return category === 'cake' || category === 'cakes';
-    });
-    setHasCakes(cakesInCart);
-    
-    // Filter non-cake items for shipping calculation
-    const nonCakeItems = items.filter(item => {
-      const category = item.category_name?.toLowerCase() || '';
-      return category !== 'cake' && category !== 'cakes';
-    });
-    
-    // Fetch shipping rates for non-cake items
-    if (nonCakeItems.length > 0) {
-      setLoadingShipping(true);
-      const totalWeight = nonCakeItems.reduce((sum, item) => sum + (item.weight || 0.5), 0);
-      base44.functions.invoke('getShippingRates', {
-        destination_country: 'GB',
-        weight: Math.ceil(totalWeight * 1000), // grams
-      }).then(res => {
-        const rates = res.data?.rates || [];
-        setShippingOptions(rates);
-        // Default to first available shipping option
-        if (rates.length > 0) {
-          setShippingMethod(`sendcloud_${rates[0].id}`);
-        } else {
-          setShippingMethod('local_pickup');
-        }
-        setLoadingShipping(false);
-      }).catch(() => {
-        setShippingOptions([]);
-        setShippingMethod('local_pickup');
-        setLoadingShipping(false);
-      });
-    } else {
-      setShippingOptions([]);
-      setShippingMethod('local_pickup');
-    }
-
     base44.auth.me().then(u => {
       setUser(u);
       setForm(f => ({ ...f, name: u.full_name || "", email: u.email || "" }));
@@ -95,16 +52,8 @@ export default function Checkout() {
   const amountAfterDiscount = subtotal - discountAmount;
   const isFreeShippingCode = summaryState.discountCode?.type === 'free_shipping';
   
-  // Calculate shipping based on method
-  let shipping = 0;
-  if (shippingMethod === 'local_pickup') {
-    shipping = 0;
-  } else if (shippingMethod && shippingMethod.startsWith('sendcloud_')) {
-    const selectedOption = shippingOptions.find(opt => `sendcloud_${opt.id}` === shippingMethod);
-    shipping = selectedOption ? parseFloat(selectedOption.price) : 0;
-  } else {
-    shipping = summaryState.shipping ?? (isFreeShippingCode || amountAfterDiscount >= 50 ? 0 : (amountAfterDiscount > 0 ? shippingCost : 0));
-  }
+  // Calculate shipping
+  const shipping = shippingMethod === 'local_pickup' ? 0 : (isFreeShippingCode || amountAfterDiscount >= 50 ? 0 : (amountAfterDiscount > 0 ? shippingCost : 0));
   
   const maxPointsDiscount = profile ? Math.min(Math.floor(profile.loyalty_points / 100), amountAfterDiscount * 0.2) : 0;
   const pointsDiscount = usePoints ? pointsToUse : 0;
@@ -162,9 +111,8 @@ export default function Checkout() {
     }
 
     // Add shipping method to order
-    const shippingMethodLabel = shippingMethod === 'local_pickup' ? 'Local Pickup' : shippingOptions.find(opt => `sendcloud_${opt.id}` === shippingMethod)?.name || 'Standard Shipping';
     await base44.entities.Order.update(order.id, { 
-      shipping_method: shippingMethodLabel 
+      shipping_method: shippingMethod === 'local_pickup' ? 'Local Pickup' : 'Standard Shipping'
     });
 
     // Create SumUp checkout and redirect
@@ -219,62 +167,39 @@ export default function Checkout() {
 
               {/* Shipping Method */}
               <div className="bg-card border border-border rounded-2xl p-6 space-y-4">
-                <h2 className="font-bold text-lg flex items-center gap-2"><Truck className="w-5 h-5" /> Shipping Method</h2>
-                {hasCakes && <p className="text-sm text-orange-600 bg-orange-50 rounded-lg p-2">⚠️ Your order contains cakes. Cake products are collection only and cannot be shipped.</p>}
-
-                <div className="space-y-3">
-                  {/* Local Pickup Option */}
-                  <label className={`flex items-center gap-3 p-4 border rounded-xl cursor-pointer transition-all ${shippingMethod === 'local_pickup' ? 'bg-primary/5 border-primary' : 'border-border hover:border-muted-foreground'}`}>
-                    <input type="radio" name="shipping" value="local_pickup" checked={shippingMethod === 'local_pickup'} onChange={e => setShippingMethod(e.target.value)} className="w-4 h-4" />
-                    <div className="flex-1">
-                      <p className="font-medium flex items-center gap-2"><MapPin className="w-4 h-4" /> Local Pickup</p>
-                      <p className="text-sm text-muted-foreground">Pick up from our store</p>
-                    </div>
-                    <p className="font-bold text-green-600">FREE</p>
-                  </label>
-
-                  {/* Sendcloud Shipping Options */}
-                  {shippingOptions.length > 0 && (
-                    <div className="space-y-2">
-                      {shippingOptions.map(option => (
-                        <label key={option.id} className={`flex items-center gap-3 p-4 border rounded-xl cursor-pointer transition-all ${shippingMethod === `sendcloud_${option.id}` ? 'bg-primary/5 border-primary' : 'border-border hover:border-muted-foreground'}`}>
-                          <input type="radio" name="shipping" value={`sendcloud_${option.id}`} checked={shippingMethod === `sendcloud_${option.id}`} onChange={e => setShippingMethod(e.target.value)} className="w-4 h-4" />
-                          <div className="flex-1">
-                            <p className="font-medium">{option.name}</p>
-                            <p className="text-sm text-muted-foreground">{option.delivery_days ? `${option.delivery_days} days` : 'Delivery time varies'}</p>
-                          </div>
-                          <p className="font-bold">£{parseFloat(option.price).toFixed(2)}</p>
-                        </label>
-                      ))}
-                    </div>
-                  )}
-                </div>
+                <h2 className="font-bold text-lg flex items-center gap-2"><Truck className="w-5 h-5" /> Shipping</h2>
+                <label className="flex items-center gap-3 p-4 border rounded-xl cursor-pointer transition-all bg-primary/5 border-primary">
+                  <input type="radio" name="shipping" value="local_pickup" checked={shippingMethod === 'local_pickup'} onChange={e => setShippingMethod(e.target.value)} className="w-4 h-4" />
+                  <div className="flex-1">
+                    <p className="font-medium flex items-center gap-2"><MapPin className="w-4 h-4" /> Local Pickup</p>
+                    <p className="text-sm text-muted-foreground">Pick up from our store</p>
+                  </div>
+                  <p className="font-bold text-green-600">FREE</p>
+                </label>
               </div>
 
               {/* Shipping Address */}
-              {shippingMethod !== 'local_pickup' && shippingOptions.length > 0 && (
-                <div className="bg-card border border-border rounded-2xl p-6 space-y-4">
-                  <h2 className="font-bold text-lg">Shipping Address</h2>
+              <div className="bg-card border border-border rounded-2xl p-6 space-y-4">
+                <h2 className="font-bold text-lg">Delivery Address</h2>
+                <div className="space-y-1">
+                  <Label>Address Line 1 *</Label>
+                  <Input required value={form.line1} onChange={e => setForm({...form, line1: e.target.value})} className="rounded-xl" />
+                </div>
+                <div className="space-y-1">
+                  <Label>Address Line 2</Label>
+                  <Input value={form.line2} onChange={e => setForm({...form, line2: e.target.value})} className="rounded-xl" />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-1">
-                    <Label>Address Line 1 *</Label>
-                    <Input required value={form.line1} onChange={e => setForm({...form, line1: e.target.value})} className="rounded-xl" />
+                    <Label>City *</Label>
+                    <Input required value={form.city} onChange={e => setForm({...form, city: e.target.value})} className="rounded-xl" />
                   </div>
                   <div className="space-y-1">
-                    <Label>Address Line 2</Label>
-                    <Input value={form.line2} onChange={e => setForm({...form, line2: e.target.value})} className="rounded-xl" />
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-1">
-                      <Label>City *</Label>
-                      <Input required value={form.city} onChange={e => setForm({...form, city: e.target.value})} className="rounded-xl" />
-                    </div>
-                    <div className="space-y-1">
-                      <Label>Postcode *</Label>
-                      <Input required value={form.postcode} onChange={e => setForm({...form, postcode: e.target.value})} className="rounded-xl" />
-                    </div>
+                    <Label>Postcode *</Label>
+                    <Input required value={form.postcode} onChange={e => setForm({...form, postcode: e.target.value})} className="rounded-xl" />
                   </div>
                 </div>
-              )}
+              </div>
 
               {/* Loyalty Points */}
               {profile && profile.loyalty_points > 100 && (
@@ -327,7 +252,7 @@ export default function Checkout() {
                 <div className="flex justify-between"><span>Subtotal</span><span>£{subtotal.toFixed(2)}</span></div>
                 {discountAmount > 0 && <div className="flex justify-between text-green-600"><span>Discount</span><span>-£{discountAmount.toFixed(2)}</span></div>}
                 {pointsDiscount > 0 && <div className="flex justify-between text-primary"><span>Points Discount</span><span>-£{pointsDiscount.toFixed(2)}</span></div>}
-                <div className="flex justify-between"><span>Shipping ({shippingMethod === 'local_pickup' ? 'Local Pickup' : 'Courier'})</span><span>{shipping === 0 ? <span className="text-green-600">FREE</span> : `£${shipping.toFixed(2)}`}</span></div>
+                <div className="flex justify-between"><span>Shipping</span><span>{shipping === 0 ? <span className="text-green-600">FREE</span> : `£${shipping.toFixed(2)}`}</span></div>
                 <div className="flex justify-between font-bold text-lg border-t pt-2"><span>Total</span><span className="text-primary">£{total.toFixed(2)}</span></div>
               </div>
               <div className="bg-muted/50 rounded-xl p-3 text-xs text-center text-muted-foreground">
