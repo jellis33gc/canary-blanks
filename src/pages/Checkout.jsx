@@ -49,7 +49,8 @@ export default function Checkout() {
   const subtotal = summaryState.subtotal || getSubtotal();
   const discountAmount = summaryState.discountAmount || 0;
   const amountAfterDiscount = subtotal - discountAmount;
-  const shipping = summaryState.shipping ?? (amountAfterDiscount >= 50 ? 0 : (amountAfterDiscount > 0 ? shippingCost : 0));
+  const isFreeShippingCode = summaryState.discountCode?.type === 'free_shipping';
+  const shipping = summaryState.shipping ?? (isFreeShippingCode || amountAfterDiscount >= 50 ? 0 : (amountAfterDiscount > 0 ? shippingCost : 0));
   const maxPointsDiscount = profile ? Math.min(Math.floor(profile.loyalty_points / 100), amountAfterDiscount * 0.2) : 0;
   const pointsDiscount = usePoints ? pointsToUse : 0;
   const total = amountAfterDiscount - pointsDiscount + shipping;

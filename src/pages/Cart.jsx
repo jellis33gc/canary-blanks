@@ -28,10 +28,13 @@ export default function Cart() {
   const discountAmount = appliedDiscount
     ? appliedDiscount.type === 'percentage'
       ? (subtotal * appliedDiscount.value) / 100
+      : appliedDiscount.type === 'free_shipping'
+      ? 0
       : Math.min(appliedDiscount.value, subtotal)
     : 0;
   const amountAfterDiscount = subtotal - discountAmount;
-  const shipping = amountAfterDiscount >= 50 ? 0 : (amountAfterDiscount > 0 ? shippingCost : 0);
+  const isFreeShippingCode = appliedDiscount?.type === 'free_shipping';
+  const shipping = isFreeShippingCode || amountAfterDiscount >= 50 ? 0 : (amountAfterDiscount > 0 ? shippingCost : 0);
   const total = amountAfterDiscount + shipping;
 
   const handleApplyDiscount = async () => {
