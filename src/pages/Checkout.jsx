@@ -164,7 +164,7 @@ export default function Checkout() {
                 </div>
               </div>
 
-              {/* Shipping Address */}
+              {/* Delivery Address */}
               <div className="bg-card border border-border rounded-2xl p-6 space-y-4">
                 <h2 className="font-bold text-lg">Delivery Address</h2>
                 <div className="space-y-1">
