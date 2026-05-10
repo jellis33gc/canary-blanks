@@ -48,9 +48,6 @@ export default function Checkout() {
     });
     setHasCakes(cakesInCart);
     
-    // If cakes in cart, lock to local pickup; otherwise reset to local pickup as default
-    setShippingMethod('local_pickup');
-    
     // Fetch shipping rates if no cakes and items exist
     if (items.length > 0 && !cakesInCart) {
       setLoadingShipping(true);
@@ -59,14 +56,24 @@ export default function Checkout() {
         destination_country: 'GB',
         weight: Math.ceil(totalWeight * 1000), // grams
       }).then(res => {
-        setShippingOptions(res.data?.rates || []);
+        const rates = res.data?.rates || [];
+        setShippingOptions(rates);
+        // Default to first available shipping option if cakes aren't in cart
+        if (rates.length > 0) {
+          setShippingMethod(`sendcloud_${rates[0].id}`);
+        } else {
+          setShippingMethod('local_pickup');
+        }
         setLoadingShipping(false);
       }).catch(() => {
         setShippingOptions([]);
+        setShippingMethod('local_pickup');
         setLoadingShipping(false);
       });
     } else {
       setShippingOptions([]);
+      // Default to local pickup only if cakes are in cart
+      setShippingMethod('local_pickup');
     }
 
     base44.auth.me().then(u => {
