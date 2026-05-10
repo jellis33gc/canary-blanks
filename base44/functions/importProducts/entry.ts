@@ -85,12 +85,16 @@ Deno.serve(async (req) => {
       }
     }
 
-    const results = { created: 0, updated: 0, errors: [] };
+    const results = { created: 0, updated: 0, errors: [], skipped: [] };
+
+    console.log("Total SKUs to process:", Object.keys(skuMap).length);
+    console.log("SKUs:", Object.keys(skuMap).slice(0, 20));
 
     for (const [sku, entry] of Object.entries(skuMap)) {
       try {
         if (!entry.name) {
           results.errors.push({ sku, error: 'Missing product name' });
+          results.skipped.push(sku);
           continue;
         }
 
