@@ -3,16 +3,37 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
-
-    const { amount, currency, description, orderId, returnUrl } = await req.json();
-
-    if (!amount || !orderId) {
-      return Response.json({ error: 'Missing required fields: amount, orderId' }, { status: 400 });
-    }
+    const body = await req.json();
 
     const apiKey = Deno.env.get('SUMUP_API_KEY');
     if (!apiKey) {
       return Response.json({ error: 'SUMUP_API_KEY not configured' }, { status: 500 });
+    }
+
+    // ---- CHECK PAYMENT STATUS mode ----
+    if (body.action === 'checkStatus') {
+      const { orderId, checkoutId } = body;
+      const response = await fetch(`https://api.sumup.com/v0.1/checkouts/${checkoutId}`, {
+        headers: { 'Authorization': `Bearer ${apiKey}` }
+      });
+      const data = await response.json();
+      console.log('SumUp checkout status:', data.status);
+
+      if (data.status === 'PAID') {
+        await base44.asServiceRole.entities.Order.update(orderId, {
+          payment_status: 'paid',
+          status: 'confirmed',
+          sumup_transaction_id: data.transactions?.[0]?.transaction_code || ''
+        });
+      }
+      return Response.json({ status: data.status });
+    }
+
+    // ---- CREATE CHECKOUT mode ----
+    const { amount, currency, description, orderId, returnUrl } = body;
+
+    if (!amount || !orderId) {
+      return Response.json({ error: 'Missing required fields: amount, orderId' }, { status: 400 });
     }
 
     const checkoutRef = `LTC-${orderId}-${Date.now()}`;
@@ -46,7 +67,10 @@ Deno.serve(async (req) => {
       return Response.json({ error: data.message || 'SumUp API error', details: data }, { status: response.status });
     }
 
-    const checkoutUrl = data.hosted_checkout_url || `https://pay.sumup.com/b2c/${data.id}` || `https://checkout.sumup.com/pay/${data.id}`;
+    const checkoutUrl = data.hosted_checkout_url
+      || `https://pay.sumup.com/b2c/${data.id}`
+      || `https://checkout.sumup.com/pay/${data.id}`;
+
     console.log('Checkout URL:', checkoutUrl);
 
     return Response.json({
