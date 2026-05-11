@@ -20,7 +20,7 @@ export default function Payment() {
         checkoutId: checkoutId,
         onResponse: function (type, body) {
           if (type === "sent") {
-            window.location.href = `/order-confirmation/${orderId}?status=paid`;
+            window.location.href = `/order-confirmation/${orderId}?checkoutId=${checkoutId}`;
           } else if (type === "error") {
             window.location.href = `/order-confirmation/${orderId}?status=failed`;
           }
