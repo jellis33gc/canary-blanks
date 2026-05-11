@@ -22,12 +22,18 @@ Deno.serve(async (req) => {
 
     const checkoutRef = `LTC-${orderId}-${Date.now()}`;
 
+    const merchantCode = Deno.env.get('SUMUP_MERCHANT_CODE');
+    const merchantEmail = Deno.env.get('SUMUP_MERCHANT_EMAIL');
+
+    console.log('merchant_code present:', !!merchantCode, '| merchant_email present:', !!merchantEmail);
+
     const payload = {
       checkout_reference: checkoutRef,
       amount: parseFloat(amount.toFixed(2)),
       currency: currency || 'EUR',
       description: description || `Order ${orderId}`,
       return_url: returnUrl,
+      ...(merchantCode ? { merchant_code: merchantCode } : { pay_to_email: merchantEmail }),
     };
 
     const response = await fetch('https://api.sumup.com/v0.1/checkouts', {
