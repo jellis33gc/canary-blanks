@@ -118,7 +118,7 @@ export default function Checkout() {
     const returnUrl = `${window.location.origin}/order-confirmation/${order.id}`;
     const sumupRes = await base44.functions.invoke('sumupCheckout', {
       amount: total,
-      currency: 'EUR',
+      currency: 'GBP',
       description: `Love the Cake — ${orderNum}`,
       orderId: order.id,
       returnUrl,
@@ -194,17 +194,17 @@ export default function Checkout() {
                     <Gift className="w-6 h-6 text-primary" />
                     <div>
                       <h2 className="font-bold">Loyalty Points</h2>
-                      <p className="text-sm text-muted-foreground">You have {profile.loyalty_points} points (worth €{(profile.loyalty_points / 100).toFixed(2)})</p>
+                      <p className="text-sm text-muted-foreground">You have {profile.loyalty_points} points (worth £{(profile.loyalty_points / 100).toFixed(2)})</p>
                     </div>
                   </div>
                   <label className="flex items-center gap-2 cursor-pointer">
                     <Checkbox checked={usePoints} onCheckedChange={setUsePoints} />
-                    <span className="text-sm font-medium">Redeem points for discount (max €{maxPointsDiscount.toFixed(2)})</span>
+                    <span className="text-sm font-medium">Redeem points for discount (max £{maxPointsDiscount.toFixed(2)})</span>
                   </label>
                   {usePoints && (
                     <div className="space-y-2">
                       <Slider value={[pointsToUse]} onValueChange={v => setPointsToUse(v[0])} max={maxPointsDiscount} step={0.01} />
-                      <p className="text-sm font-semibold text-primary">Using €{pointsToUse.toFixed(2)} from points</p>
+                      <p className="text-sm font-semibold text-primary">Using £{pointsToUse.toFixed(2)} from points</p>
                     </div>
                   )}
                 </div>
@@ -235,17 +235,17 @@ export default function Checkout() {
                 ))}
               </div>
               <div className="border-t pt-3 space-y-2 text-sm">
-                <div className="flex justify-between"><span>Subtotal</span><span>€{subtotal.toFixed(2)}</span></div>
-                {discountAmount > 0 && <div className="flex justify-between text-green-600"><span>Discount</span><span>-€{discountAmount.toFixed(2)}</span></div>}
-                {pointsDiscount > 0 && <div className="flex justify-between text-primary"><span>Points Discount</span><span>-€{pointsDiscount.toFixed(2)}</span></div>}
-                <div className="flex justify-between"><span>Shipping</span><span>{shipping === 0 ? <span className="text-green-600">FREE</span> : `€${shipping.toFixed(2)}`}</span></div>
-                <div className="flex justify-between font-bold text-lg border-t pt-2"><span>Total</span><span className="text-primary">€{total.toFixed(2)}</span></div>
+                <div className="flex justify-between"><span>Subtotal</span><span>£{subtotal.toFixed(2)}</span></div>
+                {discountAmount > 0 && <div className="flex justify-between text-green-600"><span>Discount</span><span>-£{discountAmount.toFixed(2)}</span></div>}
+                {pointsDiscount > 0 && <div className="flex justify-between text-primary"><span>Points Discount</span><span>-£{pointsDiscount.toFixed(2)}</span></div>}
+                <div className="flex justify-between"><span>Shipping</span><span>{shipping === 0 ? <span className="text-green-600">FREE</span> : `£${shipping.toFixed(2)}`}</span></div>
+                <div className="flex justify-between font-bold text-lg border-t pt-2"><span>Total</span><span className="text-primary">£{total.toFixed(2)}</span></div>
               </div>
               <div className="bg-muted/50 rounded-xl p-3 text-xs text-center text-muted-foreground">
                 🏆 You'll earn <strong>{pointsEarnable} points</strong> from this order!
               </div>
               <Button type="submit" size="lg" disabled={loading || items.length === 0} className="w-full bg-primary text-white rounded-full font-bold">
-                {loading ? "Redirecting to payment..." : <><CreditCard className="w-4 h-4 mr-2" />Pay €{total.toFixed(2)} with SumUp</>}
+                {loading ? "Redirecting to payment..." : <><CreditCard className="w-4 h-4 mr-2" />Pay £{total.toFixed(2)} with SumUp</>}
               </Button>
               <p className="text-xs text-center text-muted-foreground flex items-center justify-center gap-1">
                 <Lock className="w-3 h-3" /> Secure payment via SumUp

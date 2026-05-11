@@ -17,16 +17,16 @@ Deno.serve(async (req) => {
 
     const checkoutRef = `LTC-${orderId}-${Date.now()}`;
 
-    const merchantEmail = Deno.env.get('SUMUP_MERCHANT_EMAIL');
-
     const payload = {
       checkout_reference: checkoutRef,
       amount: parseFloat(parseFloat(amount).toFixed(2)),
-      currency: currency || 'EUR',
+      currency: currency || 'GBP',
       description: description || `Order ${orderId}`,
       return_url: returnUrl,
-      pay_to_email: merchantEmail,
+      merchant_code: 'MDF7FZCR',
     };
+
+    console.log('SumUp payload:', JSON.stringify(payload));
 
     const response = await fetch('https://api.sumup.com/v0.1/checkouts', {
       method: 'POST',
@@ -38,6 +38,8 @@ Deno.serve(async (req) => {
     });
 
     const data = await response.json();
+    console.log('SumUp response status:', response.status);
+    console.log('SumUp response body:', JSON.stringify(data));
 
     if (!response.ok) {
       console.error('SumUp error:', JSON.stringify(data));
