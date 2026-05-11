@@ -62,6 +62,7 @@ export default function Checkout() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
+    try {
 
     const orderNum = `LTC-${Date.now()}`;
     const order = await base44.entities.Order.create({
@@ -124,16 +125,20 @@ export default function Checkout() {
       returnUrl,
     });
 
-    clearCart();
-    setLoading(false);
-
     if (sumupRes.data?.checkoutUrl) {
       await base44.entities.Order.update(order.id, { sumup_checkout_id: sumupRes.data.checkoutId });
+      clearCart();
       window.location.href = sumupRes.data.checkoutUrl;
     } else {
-      // Fallback: go to confirmation if SumUp fails
+      clearCart();
       navigate(`/order-confirmation/${order.id}`);
     }
+    setLoading(false);
+  } catch (error) {
+    console.error('Checkout error:', error);
+    setLoading(false);
+    alert('Something went wrong. Please try again.');
+  }
   };
 
   return (
