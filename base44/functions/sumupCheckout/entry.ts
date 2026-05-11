@@ -3,11 +3,6 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
-    const user = await base44.auth.me();
-
-    if (!user) {
-      return Response.json({ error: 'Unauthorized' }, { status: 401 });
-    }
 
     const { amount, currency, description, orderId, returnUrl } = await req.json();
 
@@ -48,6 +43,7 @@ Deno.serve(async (req) => {
     const data = await response.json();
 
     if (!response.ok) {
+      console.error('SumUp error:', JSON.stringify(data));
       return Response.json({ error: data.message || 'SumUp API error', details: data }, { status: response.status });
     }
 

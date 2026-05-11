@@ -118,7 +118,7 @@ export default function Checkout() {
     const returnUrl = `${window.location.origin}/order-confirmation/${order.id}`;
     const sumupRes = await base44.functions.invoke('sumupCheckout', {
       amount: total,
-      currency: 'GBP',
+      currency: 'EUR',
       description: `Love the Cake — ${orderNum}`,
       orderId: order.id,
       returnUrl,
