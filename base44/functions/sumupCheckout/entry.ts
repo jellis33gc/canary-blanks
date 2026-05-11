@@ -46,7 +46,8 @@ Deno.serve(async (req) => {
       return Response.json({ error: data.message || 'SumUp API error', details: data }, { status: response.status });
     }
 
-    const checkoutUrl = `https://checkout.sumup.com/pay/${data.id}`;
+    const checkoutUrl = data.hosted_checkout_url || `https://pay.sumup.com/b2c/${data.id}` || `https://checkout.sumup.com/pay/${data.id}`;
+    console.log('Checkout URL:', checkoutUrl);
 
     return Response.json({
       checkoutId: data.id,
