@@ -14,6 +14,7 @@ import ProductPage from './pages/ProductPage';
 import Cart from './pages/Cart';
 import Checkout from './pages/Checkout';
 import OrderConfirmation from './pages/OrderConfirmation';
+import Payment from './pages/Payment';
 import Account from './pages/Account';
 import Wishlist from './pages/Wishlist';
 
@@ -60,6 +61,7 @@ const AuthenticatedApp = () => {
       <Route path="/cart" element={<Cart />} />
       <Route path="/checkout" element={<Checkout />} />
       <Route path="/order-confirmation/:orderId" element={<OrderConfirmation />} />
+      <Route path="/payment" element={<Payment />} />
       <Route path="/account" element={<Account />} />
       <Route path="/wishlist" element={<Wishlist />} />
 

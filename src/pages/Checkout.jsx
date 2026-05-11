@@ -128,7 +128,7 @@ export default function Checkout() {
     if (sumupRes.data?.checkoutUrl) {
       await base44.entities.Order.update(order.id, { sumup_checkout_id: sumupRes.data.checkoutId });
       clearCart();
-      window.location.href = sumupRes.data.checkoutUrl;
+      navigate(`/payment?orderId=${order.id}&checkoutId=${sumupRes.data.checkoutId}`);
     } else {
       clearCart();
       navigate(`/order-confirmation/${order.id}`);
