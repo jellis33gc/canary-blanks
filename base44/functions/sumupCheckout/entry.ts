@@ -29,7 +29,7 @@ Deno.serve(async (req) => {
 
     const payload = {
       checkout_reference: checkoutRef,
-      amount: parseFloat(amount.toFixed(2)),
+      amount: parseFloat(parseFloat(amount).toFixed(2)),
       currency: currency || 'EUR',
       description: description || `Order ${orderId}`,
       return_url: returnUrl,
