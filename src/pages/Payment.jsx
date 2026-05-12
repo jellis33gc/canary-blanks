@@ -14,14 +14,6 @@ export default function Payment() {
     if (mountedRef.current) return;
     mountedRef.current = true;
 
-    // Block ALL navigation and form submissions
-    const preventAll = (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      return false;
-    };
-    document.addEventListener('submit', preventAll, true);
-
     // Listen for postMessage from SumUp iframe
     const messageHandler = (event) => {
       if (event.origin !== 'https://gateway.sumup.com') return;
@@ -29,25 +21,29 @@ export default function Payment() {
       const data = event.data;
       console.log("SumUp postMessage:", JSON.stringify(data));
 
-      // Check for success response
       if (data && data.type === 'SumUpCard' && data.action === 'message') {
         const msg = data.message;
-        console.log("SumUp message:", msg);
-        
-        if (msg === 'card-form--response' || msg === 'submit--response') {
-          console.log("SumUp response value:", JSON.stringify(data.value));
-          if (data.value && (data.value.status === 'success' || data.value.status === 'PAID' || data.value.type === 'success')) {
+        console.log("SumUp message:", msg, "value:", JSON.stringify(data.value));
+
+        // These are the success/failure message types SumUp sends
+        if (
+          msg === 'card-form--response' ||
+          msg === 'submit--response' ||
+          msg === 'submit--success' ||
+          msg === 'card-form--success'
+        ) {
+          const val = data.value;
+          if (val && (val.status === 'success' || val.status === 'PAID' || val.type === 'success')) {
             console.log("Payment successful! Redirecting...");
             window.location.replace(`/order-confirmation/${orderId}?checkoutId=${checkoutId}`);
-          } else if (data.value && (data.value.status === 'error' || data.value.status === 'failed' || data.value.status === 'FAILED')) {
-            console.log("Payment failed! Redirecting...");
+          } else if (val && (val.status === 'error' || val.status === 'failed' || val.status === 'FAILED')) {
+            console.log("Payment failed!");
             window.location.replace(`/order-confirmation/${orderId}?status=failed`);
           }
         }
 
-        // Also catch the 'sent' action which SumUp fires on success
         if (msg === 'submit--success' || msg === 'card-form--success') {
-          console.log("Payment success message received!");
+          console.log("Success message received!");
           window.location.replace(`/order-confirmation/${orderId}?checkoutId=${checkoutId}`);
         }
       }
@@ -80,10 +76,13 @@ export default function Payment() {
       }
     };
 
+    script.onerror = (e) => {
+      console.error("Failed to load SumUp SDK:", e);
+    };
+
     document.body.appendChild(script);
 
     return () => {
-      document.removeEventListener('submit', preventAll, true);
       window.removeEventListener('message', messageHandler, true);
       mountedRef.current = false;
       if (window.SumUpCard && window.SumUpCard.unmount) {
