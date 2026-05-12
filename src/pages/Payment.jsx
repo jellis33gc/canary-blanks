@@ -11,29 +11,54 @@ export default function Payment() {
   useEffect(() => {
     if (!checkoutId || !orderId) return;
 
+    // Set up the callback BEFORE loading the script
+    window.sumupCardResponseHandler = function(type, body) {
+      console.log("SumUp response type:", type);
+      console.log("SumUp response body:", JSON.stringify(body));
+      if (type === "success" || type === "sent") {
+        window.location.href = `/order-confirmation/${orderId}?checkoutId=${checkoutId}`;
+      } else if (type === "error" || type === "failure") {
+        window.location.href = `/order-confirmation/${orderId}?status=failed`;
+      }
+    };
+
     const script = document.createElement("script");
     script.src = "https://gateway.sumup.com/gateway/ecom/card/v2/sdk.js";
     script.async = true;
     script.onload = () => {
-      window.SumUpCard.mount({
-        checkoutId: checkoutId,
-        mountId: "sumup-card",
-        onResponse: function (type, body) {
-          console.log("SumUp response type:", type, "body:", body);
-          if (type === "success") {
-            window.location.href = `/order-confirmation/${orderId}?checkoutId=${checkoutId}`;
-          } else if (type === "error" || type === "failure") {
-            window.location.href = `/order-confirmation/${orderId}?status=failed`;
-          }
-        },
-      });
+      console.log("SumUp SDK loaded, mounting card...");
+      try {
+        window.SumUpCard.mount({
+          checkoutId: checkoutId,
+          mountId: "sumup-card",
+          showSubmitButton: true,
+          onResponse: window.sumupCardResponseHandler,
+        });
+        console.log("SumUp card mounted successfully");
+      } catch(e) {
+        console.error("SumUp mount error:", e);
+      }
     };
+
+    script.onerror = (e) => {
+      console.error("Failed to load SumUp SDK:", e);
+    };
+
     document.body.appendChild(script);
 
+    // Also listen for postMessage events from SumUp iframe
+    const messageHandler = (event) => {
+      console.log("postMessage received:", event.origin, JSON.stringify(event.data));
+      if (event.data && (event.data.type === "success" || event.data.status === "success")) {
+        window.location.href = `/order-confirmation/${orderId}?checkoutId=${checkoutId}`;
+      }
+    };
+    window.addEventListener("message", messageHandler);
+
     return () => {
-      // Clean up mounted widget if possible
+      window.removeEventListener("message", messageHandler);
       if (window.SumUpCard && window.SumUpCard.unmount) {
-        window.SumUpCard.unmount();
+        try { window.SumUpCard.unmount(); } catch(e) {}
       }
       document.body.removeChild(script);
     };
