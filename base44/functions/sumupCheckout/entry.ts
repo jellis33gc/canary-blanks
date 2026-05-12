@@ -11,23 +11,19 @@ Deno.serve(async (req) => {
     }
 
     // ---- CHECK PAYMENT STATUS mode ----
-    if (body.action === 'checkStatus') {
-      const { orderId, checkoutId } = body;
-      const response = await fetch(`https://api.sumup.com/v0.1/checkouts/${checkoutId}`, {
-        headers: { 'Authorization': `Bearer ${apiKey}` }
-      });
-      const data = await response.json();
-      console.log('SumUp checkout status:', data.status);
-
-      if (data.status === 'PAID') {
-        await base44.asServiceRole.entities.Order.update(orderId, {
-          payment_status: 'paid',
-          status: 'confirmed',
-          sumup_transaction_id: data.transactions?.[0]?.transaction_code || ''
-        });
-      }
-      return Response.json({ status: data.status });
-    }
+    if (data.status === 'PAID') {
+  await base44.asServiceRole.entities.Order.update(orderId, {
+    payment_status: 'paid',
+    status: 'confirmed',
+    sumup_transaction_id: data.transactions?.[0]?.transaction_code || ''
+  });
+} else if (data.status === 'FAILED') {
+  await base44.asServiceRole.entities.Order.update(orderId, {
+    payment_status: 'failed',
+    status: 'cancelled'
+  });
+}
+return Response.json({ status: data.status });
 
     // ---- CREATE CHECKOUT mode ----
     const { amount, currency, description, orderId, returnUrl } = body;
