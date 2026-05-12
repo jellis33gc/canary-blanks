@@ -15,13 +15,14 @@ export default function Payment() {
     script.src = "https://gateway.sumup.com/gateway/ecom/card/v2/sdk.js";
     script.async = true;
     script.onload = () => {
-      // eslint-disable-next-line no-undef
       window.SumUpCard.mount({
         checkoutId: checkoutId,
+        mountId: "sumup-card",
         onResponse: function (type, body) {
-          if (type === "sent") {
+          console.log("SumUp response type:", type, "body:", body);
+          if (type === "success") {
             window.location.href = `/order-confirmation/${orderId}?checkoutId=${checkoutId}`;
-          } else if (type === "error") {
+          } else if (type === "error" || type === "failure") {
             window.location.href = `/order-confirmation/${orderId}?status=failed`;
           }
         },
@@ -30,6 +31,10 @@ export default function Payment() {
     document.body.appendChild(script);
 
     return () => {
+      // Clean up mounted widget if possible
+      if (window.SumUpCard && window.SumUpCard.unmount) {
+        window.SumUpCard.unmount();
+      }
       document.body.removeChild(script);
     };
   }, [checkoutId, orderId]);
