@@ -61,7 +61,6 @@ const AuthenticatedApp = () => {
       <Route path="/cart" element={<Cart />} />
       <Route path="/checkout" element={<Checkout />} />
       <Route path="/order-confirmation/:orderId" element={<OrderConfirmation />} />
-      <Route path="/payment" element={<Payment />} />
       <Route path="/account" element={<Account />} />
       <Route path="/wishlist" element={<Wishlist />} />
 
@@ -87,16 +86,24 @@ const AuthenticatedApp = () => {
 
 function App() {
   return (
-    <AuthProvider>
-      <CartProvider>
-        <QueryClientProvider client={queryClientInstance}>
-          <Router>
-            <AuthenticatedApp />
-          </Router>
-          <Toaster />
-        </QueryClientProvider>
-      </CartProvider>
-    </AuthProvider>
+    <QueryClientProvider client={queryClientInstance}>
+      <Router>
+        <Routes>
+          {/* Payment page rendered completely standalone - outside Auth/Cart context */}
+          <Route path="/payment" element={<Payment />} />
+
+          {/* All other routes go through normal auth/cart flow */}
+          <Route path="/*" element={
+            <AuthProvider>
+              <CartProvider>
+                <AuthenticatedApp />
+              </CartProvider>
+            </AuthProvider>
+          } />
+        </Routes>
+        <Toaster />
+      </Router>
+    </QueryClientProvider>
   )
 }
 
