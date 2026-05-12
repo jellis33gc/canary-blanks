@@ -11,6 +11,10 @@ export default function Payment() {
   useEffect(() => {
     if (!checkoutId || !orderId) return;
 
+    // Prevent any form submissions from reloading the page
+    const preventSubmit = (e) => e.preventDefault();
+    document.addEventListener('submit', preventSubmit);
+
     // Set up the callback BEFORE loading the script
     window.sumupCardResponseHandler = function(type, body) {
       console.log("SumUp response type:", type);
@@ -56,11 +60,14 @@ export default function Payment() {
     window.addEventListener("message", messageHandler);
 
     return () => {
+      document.removeEventListener('submit', preventSubmit);
       window.removeEventListener("message", messageHandler);
       if (window.SumUpCard && window.SumUpCard.unmount) {
         try { window.SumUpCard.unmount(); } catch(e) {}
       }
-      document.body.removeChild(script);
+      if (document.body.contains(script)) {
+        document.body.removeChild(script);
+      }
     };
   }, [checkoutId, orderId]);
 
@@ -68,9 +75,20 @@ export default function Payment() {
     <div className="min-h-screen bg-background">
       <Navbar />
       <div className="max-w-lg mx-auto px-4 py-16">
-        <div className="bg-card border border-border rounded-2xl p-8 shadow-sm">
+        <div
+          className="bg-card border border-border rounded-2xl p-8 shadow-sm"
+          onSubmit={(e) => e.preventDefault()}
+          onClick={(e) => {
+            if (e.target.tagName === 'BUTTON' || e.target.closest('button')) {
+              e.stopPropagation();
+            }
+          }}
+        >
           <h1 className="font-brand text-2xl text-center mb-6">Complete Your Payment 💳</h1>
-          <div id="sumup-card"></div>
+          <div
+            id="sumup-card"
+            onSubmit={(e) => e.preventDefault()}
+          ></div>
         </div>
       </div>
       <Footer />
