@@ -1,7 +1,5 @@
 import { useEffect, useRef } from "react";
 import { useSearchParams } from "react-router-dom";
-import Navbar from "@/components/layout/Navbar";
-import Footer from "@/components/layout/Footer";
 
 export default function Payment() {
   const [searchParams] = useSearchParams();
@@ -14,10 +12,8 @@ export default function Payment() {
     if (mountedRef.current) return;
     mountedRef.current = true;
 
-    // Listen for postMessage from SumUp iframe
     const messageHandler = (event) => {
       if (event.origin !== 'https://gateway.sumup.com') return;
-      
       const data = event.data;
       console.log("SumUp postMessage:", JSON.stringify(data));
 
@@ -25,26 +21,17 @@ export default function Payment() {
         const msg = data.message;
         console.log("SumUp message:", msg, "value:", JSON.stringify(data.value));
 
-        // These are the success/failure message types SumUp sends
-        if (
-          msg === 'card-form--response' ||
-          msg === 'submit--response' ||
-          msg === 'submit--success' ||
-          msg === 'card-form--success'
-        ) {
-          const val = data.value;
-          if (val && (val.status === 'success' || val.status === 'PAID' || val.type === 'success')) {
-            console.log("Payment successful! Redirecting...");
-            window.location.replace(`/order-confirmation/${orderId}?checkoutId=${checkoutId}`);
-          } else if (val && (val.status === 'error' || val.status === 'failed' || val.status === 'FAILED')) {
-            console.log("Payment failed!");
-            window.location.replace(`/order-confirmation/${orderId}?status=failed`);
-          }
+        if (msg === 'submit--success' || msg === 'card-form--success') {
+          window.location.replace(`/order-confirmation/${orderId}?checkoutId=${checkoutId}`);
         }
 
-        if (msg === 'submit--success' || msg === 'card-form--success') {
-          console.log("Success message received!");
-          window.location.replace(`/order-confirmation/${orderId}?checkoutId=${checkoutId}`);
+        if (msg === 'card-form--response' || msg === 'submit--response') {
+          const val = data.value;
+          if (val && (val.status === 'success' || val.status === 'PAID')) {
+            window.location.replace(`/order-confirmation/${orderId}?checkoutId=${checkoutId}`);
+          } else if (val && (val.status === 'error' || val.status === 'failed' || val.status === 'FAILED')) {
+            window.location.replace(`/order-confirmation/${orderId}?status=failed`);
+          }
         }
       }
     };
@@ -76,10 +63,6 @@ export default function Payment() {
       }
     };
 
-    script.onerror = (e) => {
-      console.error("Failed to load SumUp SDK:", e);
-    };
-
     document.body.appendChild(script);
 
     return () => {
@@ -95,15 +78,34 @@ export default function Payment() {
   }, [checkoutId, orderId]);
 
   return (
-    <div className="min-h-screen bg-background">
-      <Navbar />
-      <div className="max-w-lg mx-auto px-4 py-16">
-        <div className="bg-card border border-border rounded-2xl p-8 shadow-sm">
-          <h1 className="font-brand text-2xl text-center mb-6">Complete Your Payment 💳</h1>
-          <div id="sumup-card"></div>
-        </div>
+    <div style={{
+      minHeight: '100vh',
+      background: '#fdf8f4',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      fontFamily: 'sans-serif'
+    }}>
+      <div style={{
+        background: 'white',
+        borderRadius: '16px',
+        padding: '40px',
+        boxShadow: '0 4px 24px rgba(0,0,0,0.08)',
+        width: '100%',
+        maxWidth: '480px',
+        margin: '0 20px'
+      }}>
+        <h1 style={{
+          textAlign: 'center',
+          marginBottom: '24px',
+          fontSize: '22px',
+          fontWeight: 'bold',
+          color: '#333'
+        }}>
+          Complete Your Payment 💳
+        </h1>
+        <div id="sumup-card"></div>
       </div>
-      <Footer />
     </div>
   );
 }
