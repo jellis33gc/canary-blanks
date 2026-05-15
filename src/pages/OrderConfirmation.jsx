@@ -13,10 +13,15 @@ export default function OrderConfirmation() {
   const paymentIntentId = searchParams.get('paymentIntentId') || searchParams.get('payment_intent');
   const redirectStatus = searchParams.get('redirect_status');
   const [order, setOrder] = useState(null);
+  const [user, setUser] = useState(null);
 
-  // Determine status DIRECTLY from URL — no waiting, no polling
   const isPaid = redirectStatus === 'succeeded';
   const isFailed = redirectStatus === 'failed';
+
+  useEffect(() => {
+    // Check if user is logged in
+    base44.auth.me().then(setUser).catch(() => {});
+  }, []);
 
   useEffect(() => {
     if (!id) return;
@@ -27,7 +32,7 @@ export default function OrderConfirmation() {
       setOrder(found);
     }).catch(e => console.error('Fetch error:', e));
 
-    // Update order in background — don't block UI on this
+    // Update order in background
     if (isPaid && paymentIntentId) {
       base44.functions.invoke('sumupCheckout', {
         action: 'updateOrder',
@@ -95,9 +100,15 @@ export default function OrderConfirmation() {
               </div>
             )}
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
-              <Button asChild className="bg-primary text-white rounded-full px-8 font-bold">
-                <Link to="/account/orders">View My Orders <Package className="ml-2 w-4 h-4" /></Link>
-              </Button>
+              {user ? (
+                <Button asChild className="bg-primary text-white rounded-full px-8 font-bold">
+                  <Link to="/account/orders">View My Orders <Package className="ml-2 w-4 h-4" /></Link>
+                </Button>
+              ) : (
+                <Button asChild className="bg-primary text-white rounded-full px-8 font-bold">
+                  <Link to="/register">Create Account to Track Orders <Package className="ml-2 w-4 h-4" /></Link>
+                </Button>
+              )}
               <Button asChild variant="outline" className="rounded-full px-8">
                 <Link to="/shop">Continue Shopping <ArrowRight className="ml-2 w-4 h-4" /></Link>
               </Button>
@@ -120,9 +131,15 @@ export default function OrderConfirmation() {
               </div>
             )}
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
-              <Button asChild className="bg-primary text-white rounded-full px-8 font-bold">
-                <Link to="/account/orders">View My Orders <Package className="ml-2 w-4 h-4" /></Link>
-              </Button>
+              {user ? (
+                <Button asChild className="bg-primary text-white rounded-full px-8 font-bold">
+                  <Link to="/account/orders">View My Orders <Package className="ml-2 w-4 h-4" /></Link>
+                </Button>
+              ) : (
+                <Button asChild className="bg-primary text-white rounded-full px-8 font-bold">
+                  <Link to="/register">Create Account to Track Orders <Package className="ml-2 w-4 h-4" /></Link>
+                </Button>
+              )}
               <Button asChild variant="outline" className="rounded-full px-8">
                 <Link to="/shop">Continue Shopping <ArrowRight className="ml-2 w-4 h-4" /></Link>
               </Button>
