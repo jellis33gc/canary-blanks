@@ -20,46 +20,38 @@ export default function OrderConfirmation() {
     if (!id) return;
 
     const run = async () => {
-      // Fetch order
-      const orders = await base44.entities.Order.filter({});
-      const found = orders.find(o => o.id === id);
-      setOrder(found);
-
-      // If Stripe says succeeded, update order immediately
-      if (redirectStatus === 'succeeded' && paymentIntentId && found?.payment_status !== 'paid') {
-        setUpdating(true);
-        try {
+      try {
+        // Update order FIRST based on Stripe redirect status
+        if (redirectStatus === 'succeeded' && paymentIntentId) {
+          setUpdating(true);
           await base44.entities.Order.update(id, {
             payment_status: 'paid',
             status: 'confirmed',
             sumup_transaction_id: paymentIntentId,
           });
-          // Re-fetch updated order
-          const orders2 = await base44.entities.Order.filter({});
-          const updated = orders2.find(o => o.id === id);
-          setOrder(updated);
-        } catch(e) {
-          console.error('Error updating order:', e);
+          setUpdating(false);
         }
-        setUpdating(false);
-      }
 
-      // If Stripe says failed
-      if (redirectStatus === 'failed' && found?.payment_status !== 'failed') {
-        await base44.entities.Order.update(id, {
-          payment_status: 'failed',
-          status: 'cancelled',
-        });
-        const orders2 = await base44.entities.Order.filter({});
-        const updated = orders2.find(o => o.id === id);
-        setOrder(updated);
-      }
+        if (redirectStatus === 'failed') {
+          await base44.entities.Order.update(id, {
+            payment_status: 'failed',
+            status: 'cancelled',
+          });
+        }
 
+        // Then fetch the updated order
+        const orders = await base44.entities.Order.filter({});
+        const found = orders.find(o => o.id === id);
+        setOrder(found);
+
+      } catch(e) {
+        console.error('Error:', e);
+      }
       setDone(true);
     };
 
     run();
-  }, [id]);
+  }, [id, redirectStatus, paymentIntentId]);
 
   const isPaid = order?.payment_status === 'paid' || redirectStatus === 'succeeded';
   const isFailed = order?.payment_status === 'failed' || redirectStatus === 'failed';
