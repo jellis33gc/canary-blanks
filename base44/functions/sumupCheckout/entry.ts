@@ -5,27 +5,30 @@ Deno.serve(async (req) => {
     const base44 = createClientFromRequest(req);
     const body = await req.json();
 
-    const apiKey = Deno.env.get('SUMUP_API_KEY');
-    if (!apiKey) {
-      return Response.json({ error: 'SUMUP_API_KEY not configured' }, { status: 500 });
+    const secretKey = Deno.env.get('STRIPE_SECRET_KEY');
+    if (!secretKey) {
+      return Response.json({ error: 'STRIPE_SECRET_KEY not configured' }, { status: 500 });
     }
 
     // ---- CHECK PAYMENT STATUS mode ----
     if (body.action === 'checkStatus') {
-      const { orderId, checkoutId } = body;
-      const response = await fetch(`https://api.sumup.com/v0.1/checkouts/${checkoutId}`, {
-        headers: { 'Authorization': `Bearer ${apiKey}` }
+      const { orderId, paymentIntentId } = body;
+
+      const response = await fetch(`https://api.stripe.com/v1/payment_intents/${paymentIntentId}`, {
+        headers: {
+          'Authorization': `Bearer ${secretKey}`,
+        }
       });
       const data = await response.json();
-      console.log('SumUp checkout status:', data.status);
+      console.log('Stripe payment intent status:', data.status);
 
-      if (data.status === 'PAID') {
+      if (data.status === 'succeeded') {
         await base44.asServiceRole.entities.Order.update(orderId, {
           payment_status: 'paid',
           status: 'confirmed',
-          sumup_transaction_id: data.transactions?.[0]?.transaction_code || ''
+          sumup_transaction_id: paymentIntentId,
         });
-      } else if (data.status === 'FAILED') {
+      } else if (data.status === 'payment_failed') {
         await base44.asServiceRole.entities.Order.update(orderId, {
           payment_status: 'failed',
           status: 'cancelled'
@@ -34,54 +37,42 @@ Deno.serve(async (req) => {
       return Response.json({ status: data.status });
     }
 
-    // ---- CREATE CHECKOUT mode ----
-    const { amount, currency, description, orderId, returnUrl } = body;
+    // ---- CREATE PAYMENT INTENT mode ----
+    const { amount, currency, orderId, orderNumber } = body;
 
     if (!amount || !orderId) {
       return Response.json({ error: 'Missing required fields: amount, orderId' }, { status: 400 });
     }
 
-    const checkoutRef = `LTC-${orderId}-${Date.now()}`;
+    const amountInCents = Math.round(parseFloat(amount) * 100);
 
-    const payload = {
-      checkout_reference: checkoutRef,
-      amount: parseFloat(parseFloat(amount).toFixed(2)),
-      currency: currency || 'EUR',
-      description: description || `Order ${orderId}`,
-      return_url: returnUrl,
-      merchant_code: 'MDF7FZCR',
-    };
+    const params = new URLSearchParams({
+      amount: amountInCents.toString(),
+      currency: currency || 'eur',
+      'metadata[orderId]': orderId,
+      'metadata[orderNumber]': orderNumber || '',
+      'automatic_payment_methods[enabled]': 'true',
+    });
 
-    console.log('SumUp payload:', JSON.stringify(payload));
-
-    const response = await fetch('https://api.sumup.com/v0.1/checkouts', {
+    const response = await fetch('https://api.stripe.com/v1/payment_intents', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${secretKey}`,
+        'Content-Type': 'application/x-www-form-urlencoded',
       },
-      body: JSON.stringify(payload),
+      body: params.toString(),
     });
 
     const data = await response.json();
-    console.log('SumUp response status:', response.status);
-    console.log('SumUp response body:', JSON.stringify(data));
+    console.log('Stripe response:', JSON.stringify(data));
 
     if (!response.ok) {
-      console.error('SumUp error:', JSON.stringify(data));
-      return Response.json({ error: data.message || 'SumUp API error', details: data }, { status: response.status });
+      return Response.json({ error: data.error?.message || 'Stripe API error' }, { status: response.status });
     }
 
-    const checkoutUrl = data.hosted_checkout_url
-      || `https://pay.sumup.com/b2c/${data.id}`
-      || `https://checkout.sumup.com/pay/${data.id}`;
-
-    console.log('Checkout URL:', checkoutUrl);
-
     return Response.json({
-      checkoutId: data.id,
-      checkoutUrl,
-      checkoutReference: checkoutRef,
+      clientSecret: data.client_secret,
+      paymentIntentId: data.id,
     });
 
   } catch (error) {
