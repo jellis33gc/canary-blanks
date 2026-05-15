@@ -1,81 +1,85 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useSearchParams } from "react-router-dom";
+
+const STRIPE_PUBLISHABLE_KEY = "pk_test_51TXFVlLLvq2lU5kggNxW3qUwDd1qOXb5kvR5sOzmx6ytmxxbmcnRgVSNZ6BVD7vqRvXSkJhPGeCOLPnLWvwMAkUA00rZbsVIbk";
 
 export default function Payment() {
   const [searchParams] = useSearchParams();
   const orderId = searchParams.get("orderId");
-  const checkoutId = searchParams.get("checkoutId");
+  const clientSecret = searchParams.get("clientSecret");
+  const paymentIntentId = searchParams.get("paymentIntentId");
+  const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [stripeReady, setStripeReady] = useState(false);
+  const stripeRef = useRef(null);
+  const elementsRef = useRef(null);
   const mountedRef = useRef(false);
 
   useEffect(() => {
-    if (!checkoutId || !orderId) return;
+    if (!clientSecret || !orderId) return;
     if (mountedRef.current) return;
     mountedRef.current = true;
 
-    const messageHandler = (event) => {
-      if (event.origin !== 'https://gateway.sumup.com') return;
-      const data = event.data;
-      console.log("SumUp postMessage:", JSON.stringify(data));
-
-      if (data && data.type === 'SumUpCard' && data.action === 'message') {
-        const msg = data.message;
-        console.log("SumUp message:", msg, "value:", JSON.stringify(data.value));
-
-        if (msg === 'submit--success' || msg === 'card-form--success') {
-          window.location.replace(`/order-confirmation/${orderId}?checkoutId=${checkoutId}`);
-        }
-
-        if (msg === 'card-form--response' || msg === 'submit--response') {
-          const val = data.value;
-          if (val && (val.status === 'success' || val.status === 'PAID')) {
-            window.location.replace(`/order-confirmation/${orderId}?checkoutId=${checkoutId}`);
-          } else if (val && (val.status === 'error' || val.status === 'failed' || val.status === 'FAILED')) {
-            window.location.replace(`/order-confirmation/${orderId}?status=failed`);
-          }
-        }
-      }
-    };
-
-    window.addEventListener('message', messageHandler, true);
-
     const script = document.createElement("script");
-    script.src = "https://gateway.sumup.com/gateway/ecom/card/v2/sdk.js";
+    script.src = "https://js.stripe.com/v3/";
     script.async = true;
     script.onload = () => {
-      console.log("SumUp SDK loaded");
-      try {
-        window.SumUpCard.mount({
-          checkoutId: checkoutId,
-          mountId: "sumup-card",
-          showSubmitButton: true,
-          onResponse: (type, body) => {
-            console.log("onResponse fired! type:", type, "body:", JSON.stringify(body));
-            if (type === "success" || type === "sent") {
-              window.location.replace(`/order-confirmation/${orderId}?checkoutId=${checkoutId}`);
-            } else if (type === "error" || type === "failure") {
-              window.location.replace(`/order-confirmation/${orderId}?status=failed`);
-            }
-          },
-        });
-        console.log("SumUp card mounted");
-      } catch(e) {
-        console.error("Mount error:", e);
-      }
+      console.log("Stripe JS loaded");
+      const stripe = window.Stripe(STRIPE_PUBLISHABLE_KEY);
+      stripeRef.current = stripe;
+
+      const elements = stripe.elements({
+        clientSecret,
+        appearance: {
+          theme: 'stripe',
+          variables: {
+            colorPrimary: '#e91e8c',
+            colorBackground: '#ffffff',
+            colorText: '#333333',
+            borderRadius: '12px',
+            fontFamily: 'sans-serif',
+          }
+        }
+      });
+      elementsRef.current = elements;
+
+      const paymentElement = elements.create('payment');
+      paymentElement.mount('#stripe-payment-element');
+      paymentElement.on('ready', () => {
+        console.log("Stripe payment element ready");
+        setStripeReady(true);
+      });
     };
 
     document.body.appendChild(script);
 
     return () => {
-      window.removeEventListener('message', messageHandler, true);
-      mountedRef.current = false;
-      if (window.SumUpCard && window.SumUpCard.unmount) {
-        try { window.SumUpCard.unmount(); } catch(e) {}
-      }
       if (document.body.contains(script)) {
         document.body.removeChild(script);
       }
     };
-  }, [checkoutId, orderId]);
+  }, [clientSecret, orderId]);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!stripeRef.current || !elementsRef.current) return;
+    setLoading(true);
+    setError(null);
+
+    const { error: stripeError } = await stripeRef.current.confirmPayment({
+      elements: elementsRef.current,
+      confirmParams: {
+        return_url: `${window.location.origin}/order-confirmation/${orderId}?paymentIntentId=${paymentIntentId}`,
+      },
+    });
+
+    if (stripeError) {
+      console.error("Stripe error:", stripeError);
+      setError(stripeError.message);
+      setLoading(false);
+    }
+    // If no error, Stripe redirects automatically
+  };
 
   return (
     <div style={{
@@ -84,7 +88,8 @@ export default function Payment() {
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
-      fontFamily: 'sans-serif'
+      fontFamily: 'sans-serif',
+      padding: '20px'
     }}>
       <div style={{
         background: 'white',
@@ -93,18 +98,61 @@ export default function Payment() {
         boxShadow: '0 4px 24px rgba(0,0,0,0.08)',
         width: '100%',
         maxWidth: '480px',
-        margin: '0 20px'
       }}>
         <h1 style={{
           textAlign: 'center',
-          marginBottom: '24px',
+          marginBottom: '8px',
           fontSize: '22px',
           fontWeight: 'bold',
           color: '#333'
         }}>
           Complete Your Payment 💳
         </h1>
-        <div id="sumup-card"></div>
+        <p style={{
+          textAlign: 'center',
+          color: '#888',
+          fontSize: '14px',
+          marginBottom: '28px'
+        }}>
+          Secured by Stripe
+        </p>
+
+        <form onSubmit={handleSubmit}>
+          <div id="stripe-payment-element" style={{ marginBottom: '24px' }}></div>
+
+          {error && (
+            <div style={{
+              background: '#fff0f0',
+              border: '1px solid #ffcccc',
+              borderRadius: '8px',
+              padding: '12px',
+              color: '#cc0000',
+              fontSize: '14px',
+              marginBottom: '16px'
+            }}>
+              {error}
+            </div>
+          )}
+
+          <button
+            type="submit"
+            disabled={!stripeReady || loading}
+            style={{
+              width: '100%',
+              padding: '14px',
+              background: stripeReady && !loading ? '#e91e8c' : '#ccc',
+              color: 'white',
+              border: 'none',
+              borderRadius: '50px',
+              fontSize: '16px',
+              fontWeight: 'bold',
+              cursor: stripeReady && !loading ? 'pointer' : 'not-allowed',
+              transition: 'background 0.2s'
+            }}
+          >
+            {loading ? 'Processing...' : !stripeReady ? 'Loading...' : 'Pay Now'}
+          </button>
+        </form>
       </div>
     </div>
   );
