@@ -4,7 +4,7 @@ import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
-import { CheckCircle, XCircle, Package, ArrowRight, Clock } from "lucide-react";
+import { CheckCircle, XCircle, Package, ArrowRight } from "lucide-react";
 import { motion } from "framer-motion";
 
 export default function OrderConfirmation() {
@@ -13,65 +13,49 @@ export default function OrderConfirmation() {
   const paymentIntentId = searchParams.get('paymentIntentId') || searchParams.get('payment_intent');
   const redirectStatus = searchParams.get('redirect_status');
   const [order, setOrder] = useState(null);
-  const [updating, setUpdating] = useState(false);
-  const [done, setDone] = useState(false);
+
+  // Determine status DIRECTLY from URL — no waiting, no polling
+  const isPaid = redirectStatus === 'succeeded';
+  const isFailed = redirectStatus === 'failed';
 
   useEffect(() => {
     if (!id) return;
 
-    const run = async () => {
-      try {
-        // Update order FIRST based on Stripe redirect status
-        if (redirectStatus === 'succeeded' && paymentIntentId) {
-          setUpdating(true);
-          await base44.entities.Order.update(id, {
-            payment_status: 'paid',
-            status: 'confirmed',
-            sumup_transaction_id: paymentIntentId,
-          });
-          setUpdating(false);
-        }
+    // Fetch order for display purposes
+    base44.entities.Order.filter({}).then(orders => {
+      const found = orders.find(o => o.id === id);
+      setOrder(found);
+    }).catch(e => console.error('Fetch error:', e));
 
-        if (redirectStatus === 'failed') {
-          await base44.entities.Order.update(id, {
-            payment_status: 'failed',
-            status: 'cancelled',
-          });
-        }
+    // Update order in background — don't block UI on this
+    if (isPaid && paymentIntentId) {
+      base44.functions.invoke('sumupCheckout', {
+        action: 'updateOrder',
+        orderId: id,
+        paymentStatus: 'paid',
+        orderStatus: 'confirmed',
+        transactionId: paymentIntentId,
+      }).catch(e => console.error('Update error:', e));
+    }
 
-        // Then fetch the updated order
-        const orders = await base44.entities.Order.filter({});
-        const found = orders.find(o => o.id === id);
-        setOrder(found);
+    if (isFailed) {
+      base44.functions.invoke('sumupCheckout', {
+        action: 'updateOrder',
+        orderId: id,
+        paymentStatus: 'failed',
+        orderStatus: 'cancelled',
+        transactionId: '',
+      }).catch(e => console.error('Update error:', e));
+    }
 
-      } catch(e) {
-        console.error('Error:', e);
-      }
-      setDone(true);
-    };
-
-    run();
-  }, [id, redirectStatus, paymentIntentId]);
-
-  const isPaid = order?.payment_status === 'paid' || redirectStatus === 'succeeded';
-  const isFailed = order?.payment_status === 'failed' || redirectStatus === 'failed';
+  }, [id]);
 
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
       <div className="max-w-2xl mx-auto px-4 py-16 text-center">
 
-        {!done && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-            <div className="w-24 h-24 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-6">
-              <Clock className="w-14 h-14 text-yellow-500 animate-pulse" />
-            </div>
-            <h1 className="font-brand text-4xl text-primary mb-3">Confirming Payment... ⏳</h1>
-            <p className="text-muted-foreground">Please wait while we confirm your payment.</p>
-          </motion.div>
-        )}
-
-        {done && isFailed && (
+        {isFailed && (
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
             <div className="w-24 h-24 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-6">
               <XCircle className="w-14 h-14 text-red-500" />
@@ -84,7 +68,7 @@ export default function OrderConfirmation() {
           </motion.div>
         )}
 
-        {done && isPaid && (
+        {isPaid && (
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
             <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: "spring", duration: 0.6 }}>
               <div className="w-24 h-24 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
@@ -121,13 +105,13 @@ export default function OrderConfirmation() {
           </motion.div>
         )}
 
-        {done && !isPaid && !isFailed && (
+        {!isPaid && !isFailed && (
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
             <div className="w-24 h-24 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-6">
-              <Clock className="w-14 h-14 text-yellow-500" />
+              <CheckCircle className="w-14 h-14 text-yellow-400" />
             </div>
             <h1 className="font-brand text-4xl text-primary mb-3">Order Received! 🎂</h1>
-            <p className="text-muted-foreground mb-4">We've received your order and are awaiting payment confirmation.</p>
+            <p className="text-muted-foreground mb-4">We've received your order and are processing your payment.</p>
             {order && (
               <div className="bg-card border border-border rounded-2xl p-6 mb-8 text-left space-y-3">
                 <p className="font-semibold text-lg text-center mb-4">{order.order_number}</p>
