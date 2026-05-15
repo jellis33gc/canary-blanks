@@ -10,7 +10,7 @@ import { motion } from "framer-motion";
 export default function OrderConfirmation() {
   const { id } = useParams();
   const [searchParams] = useSearchParams();
-  const checkoutId = searchParams.get('checkoutId');
+  const paymentIntentId = searchParams.get('paymentIntentId');
   const [order, setOrder] = useState(null);
   const [polling, setPolling] = useState(true);
 
@@ -26,7 +26,7 @@ export default function OrderConfirmation() {
 
     fetchOrder();
 
-    if (checkoutId) {
+    if (paymentIntentId) {
       let attempts = 0;
       const interval = setInterval(async () => {
         attempts++;
@@ -34,9 +34,14 @@ export default function OrderConfirmation() {
           const res = await base44.functions.invoke('sumupCheckout', {
             action: 'checkStatus',
             orderId: id,
-            checkoutId
+            paymentIntentId,
           });
-          if (res.data?.status === 'PAID') {
+          console.log('Payment status:', res.data?.status);
+          if (res.data?.status === 'succeeded') {
+            clearInterval(interval);
+            setPolling(false);
+            fetchOrder();
+          } else if (res.data?.status === 'payment_failed') {
             clearInterval(interval);
             setPolling(false);
             fetchOrder();
@@ -54,7 +59,7 @@ export default function OrderConfirmation() {
     } else {
       setPolling(false);
     }
-  }, [id, checkoutId]);
+  }, [id, paymentIntentId]);
 
   const isPaid = order?.payment_status === 'paid';
   const isFailed = order?.payment_status === 'failed';
@@ -70,7 +75,7 @@ export default function OrderConfirmation() {
               <Clock className="w-14 h-14 text-yellow-500 animate-pulse" />
             </div>
             <h1 className="font-brand text-4xl text-primary mb-3">Confirming Payment... ⏳</h1>
-            <p className="text-muted-foreground">Please wait while we confirm your payment with SumUp.</p>
+            <p className="text-muted-foreground">Please wait while we confirm your payment with Stripe.</p>
           </motion.div>
         )}
 
