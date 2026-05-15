@@ -32,7 +32,7 @@ export default function Checkout() {
 
   const [form, setForm] = useState({
     name: "", email: "", phone: "",
-    line1: "", line2: "", city: "", postcode: "", country: "United Kingdom",
+    line1: "", line2: "", city: "", postcode: "", country: "Spain",
     notes: ""
   });
 
@@ -50,10 +50,7 @@ export default function Checkout() {
   const discountAmount = summaryState.discountAmount || 0;
   const amountAfterDiscount = subtotal - discountAmount;
   const isFreeShippingCode = summaryState.discountCode?.type === 'free_shipping';
-  
-  // Calculate shipping
   const shipping = isFreeShippingCode || amountAfterDiscount >= 50 ? 0 : (amountAfterDiscount > 0 ? shippingCost : 0);
-  
   const maxPointsDiscount = profile ? Math.min(Math.floor(profile.loyalty_points / 100), amountAfterDiscount * 0.2) : 0;
   const pointsDiscount = usePoints ? pointsToUse : 0;
   const total = amountAfterDiscount - pointsDiscount + shipping;
@@ -63,82 +60,76 @@ export default function Checkout() {
     e.preventDefault();
     setLoading(true);
     try {
-
-    const orderNum = `LTC-${Date.now()}`;
-    const order = await base44.entities.Order.create({
-      order_number: orderNum,
-      customer_email: form.email,
-      customer_name: form.name,
-      customer_id: user?.id,
-      status: "pending",
-      payment_status: "pending",
-      items,
-      subtotal,
-      discount_amount: discountAmount,
-      discount_code: summaryState.discountCode?.code || "",
-      points_redeemed: usePoints ? pointsToUse * 100 : 0,
-      points_discount: pointsDiscount,
-      shipping_cost: shipping,
-      total,
-      shipping_address: { name: form.name, line1: form.line1, line2: form.line2, city: form.city, postcode: form.postcode, country: form.country },
-      notes: form.notes,
-      points_earned: pointsEarnable,
-    });
-
-    if (summaryState.discountCode) {
-      await base44.entities.DiscountCode.update(summaryState.discountCode.id, { used_count: (summaryState.discountCode.used_count || 0) + 1 });
-    }
-
-    if (user && profile) {
-      const newPoints = Math.max(0, (profile.loyalty_points || 0) - (usePoints ? pointsToUse * 100 : 0)) + pointsEarnable;
-      await base44.entities.CustomerProfile.update(profile.id, {
-        loyalty_points: newPoints,
-        total_spent: (profile.total_spent || 0) + total,
-        total_orders: (profile.total_orders || 0) + 1
+      const orderNum = `LTC-${Date.now()}`;
+      const order = await base44.entities.Order.create({
+        order_number: orderNum,
+        customer_email: form.email,
+        customer_name: form.name,
+        customer_id: user?.id,
+        status: "pending",
+        payment_status: "pending",
+        items,
+        subtotal,
+        discount_amount: discountAmount,
+        discount_code: summaryState.discountCode?.code || "",
+        points_redeemed: usePoints ? pointsToUse * 100 : 0,
+        points_discount: pointsDiscount,
+        shipping_cost: shipping,
+        total,
+        shipping_address: { name: form.name, line1: form.line1, line2: form.line2, city: form.city, postcode: form.postcode, country: form.country },
+        notes: form.notes,
+        points_earned: pointsEarnable,
       });
-      await base44.entities.LoyaltyTransaction.create({
-        customer_id: user.id, customer_email: form.email,
-        type: "earn", points: pointsEarnable,
-        order_id: order.id, description: `Earned for order ${orderNum}`
-      });
-      if (usePoints && pointsToUse > 0) {
+
+      if (summaryState.discountCode) {
+        await base44.entities.DiscountCode.update(summaryState.discountCode.id, { used_count: (summaryState.discountCode.used_count || 0) + 1 });
+      }
+
+      if (user && profile) {
+        const newPoints = Math.max(0, (profile.loyalty_points || 0) - (usePoints ? pointsToUse * 100 : 0)) + pointsEarnable;
+        await base44.entities.CustomerProfile.update(profile.id, {
+          loyalty_points: newPoints,
+          total_spent: (profile.total_spent || 0) + total,
+          total_orders: (profile.total_orders || 0) + 1
+        });
         await base44.entities.LoyaltyTransaction.create({
           customer_id: user.id, customer_email: form.email,
-          type: "redeem", points: -pointsToUse * 100,
-          order_id: order.id, description: `Redeemed for order ${orderNum}`
+          type: "earn", points: pointsEarnable,
+          order_id: order.id, description: `Earned for order ${orderNum}`
         });
+        if (usePoints && pointsToUse > 0) {
+          await base44.entities.LoyaltyTransaction.create({
+            customer_id: user.id, customer_email: form.email,
+            type: "redeem", points: -pointsToUse * 100,
+            order_id: order.id, description: `Redeemed for order ${orderNum}`
+          });
+        }
       }
+
+      await base44.entities.Order.update(order.id, {
+        shipping_method: 'Standard Shipping'
+      });
+
+      // Create Stripe Payment Intent
+      const stripeRes = await base44.functions.invoke('sumupCheckout', {
+        amount: total,
+        currency: 'eur',
+        orderId: order.id,
+        orderNumber: orderNum,
+      });
+
+      if (stripeRes.data?.clientSecret) {
+        clearCart();
+        navigate(`/payment?orderId=${order.id}&clientSecret=${stripeRes.data.clientSecret}&paymentIntentId=${stripeRes.data.paymentIntentId}`);
+      } else {
+        throw new Error('Failed to create payment intent');
+      }
+      setLoading(false);
+    } catch (error) {
+      console.error('Checkout error:', error);
+      setLoading(false);
+      alert('Something went wrong. Please try again.');
     }
-
-    // Add shipping method to order
-    await base44.entities.Order.update(order.id, { 
-      shipping_method: 'Standard Shipping'
-    });
-
-    // Create SumUp checkout and redirect
-    const returnUrl = `${window.location.origin}/order-confirmation/${order.id}`;
-    const sumupRes = await base44.functions.invoke('sumupCheckout', {
-      amount: total,
-      currency: 'EUR',
-      description: `Love the Cake — ${orderNum}`,
-      orderId: order.id,
-      returnUrl,
-    });
-
-    if (sumupRes.data?.checkoutUrl) {
-      await base44.entities.Order.update(order.id, { sumup_checkout_id: sumupRes.data.checkoutId });
-      clearCart();
-      navigate(`/payment?orderId=${order.id}&checkoutId=${sumupRes.data.checkoutId}`);
-    } else {
-      clearCart();
-      navigate(`/order-confirmation/${order.id}`);
-    }
-    setLoading(false);
-  } catch (error) {
-    console.error('Checkout error:', error);
-    setLoading(false);
-    alert('Something went wrong. Please try again.');
-  }
   };
 
   return (
@@ -148,9 +139,7 @@ export default function Checkout() {
         <h1 className="font-brand text-3xl mb-8">Checkout 🎂</h1>
         <form onSubmit={handleSubmit}>
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* Left: Details */}
             <div className="lg:col-span-2 space-y-6">
-              {/* Contact */}
               <div className="bg-card border border-border rounded-2xl p-6 space-y-4">
                 <h2 className="font-bold text-lg">Contact Details</h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -169,7 +158,6 @@ export default function Checkout() {
                 </div>
               </div>
 
-              {/* Delivery Address */}
               <div className="bg-card border border-border rounded-2xl p-6 space-y-4">
                 <h2 className="font-bold text-lg">Delivery Address</h2>
                 <div className="space-y-1">
@@ -192,7 +180,6 @@ export default function Checkout() {
                 </div>
               </div>
 
-              {/* Loyalty Points */}
               {profile && profile.loyalty_points > 100 && (
                 <div className="bg-gradient-to-r from-secondary/30 to-primary/10 border border-border rounded-2xl p-6 space-y-3">
                   <div className="flex items-center gap-3">
@@ -215,14 +202,12 @@ export default function Checkout() {
                 </div>
               )}
 
-              {/* Notes */}
               <div className="bg-card border border-border rounded-2xl p-6">
                 <h2 className="font-bold text-lg mb-4">Order Notes</h2>
                 <textarea value={form.notes} onChange={e => setForm({...form, notes: e.target.value})} placeholder="Special instructions, delivery notes, cake personalisation details..." className="w-full rounded-xl border border-border p-3 text-sm bg-background resize-none h-24" />
               </div>
             </div>
 
-            {/* Right: Summary */}
             <div className="bg-card border border-border rounded-2xl p-6 h-fit sticky top-24 space-y-4">
               <h2 className="font-bold text-lg">Order Summary</h2>
               <div className="space-y-3 max-h-64 overflow-y-auto">
@@ -250,10 +235,10 @@ export default function Checkout() {
                 🏆 You'll earn <strong>{pointsEarnable} points</strong> from this order!
               </div>
               <Button type="submit" size="lg" disabled={loading || items.length === 0} className="w-full bg-primary text-white rounded-full font-bold">
-                {loading ? "Redirecting to payment..." : <><CreditCard className="w-4 h-4 mr-2" />Pay €{total.toFixed(2)} with SumUp</>}
+                {loading ? "Setting up payment..." : <><CreditCard className="w-4 h-4 mr-2" />Pay €{total.toFixed(2)} securely</>}
               </Button>
               <p className="text-xs text-center text-muted-foreground flex items-center justify-center gap-1">
-                <Lock className="w-3 h-3" /> Secure payment via SumUp
+                <Lock className="w-3 h-3" /> Secure payment via Stripe
               </p>
             </div>
           </div>
