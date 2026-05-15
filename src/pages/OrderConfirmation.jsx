@@ -10,76 +10,76 @@ import { motion } from "framer-motion";
 export default function OrderConfirmation() {
   const { id } = useParams();
   const [searchParams] = useSearchParams();
-  const paymentIntentId = searchParams.get('paymentIntentId');
+  const paymentIntentId = searchParams.get('paymentIntentId') || searchParams.get('payment_intent');
+  const redirectStatus = searchParams.get('redirect_status');
   const [order, setOrder] = useState(null);
-  const [polling, setPolling] = useState(true);
-
-  const fetchOrder = async () => {
-    const orders = await base44.entities.Order.filter({});
-    const found = orders.find(o => o.id === id);
-    setOrder(found);
-    return found;
-  };
+  const [updating, setUpdating] = useState(false);
+  const [done, setDone] = useState(false);
 
   useEffect(() => {
     if (!id) return;
 
-    fetchOrder();
+    const run = async () => {
+      // Fetch order
+      const orders = await base44.entities.Order.filter({});
+      const found = orders.find(o => o.id === id);
+      setOrder(found);
 
-    if (paymentIntentId) {
-      let attempts = 0;
-      const interval = setInterval(async () => {
-        attempts++;
+      // If Stripe says succeeded, update order immediately
+      if (redirectStatus === 'succeeded' && paymentIntentId && found?.payment_status !== 'paid') {
+        setUpdating(true);
         try {
-          const res = await base44.functions.invoke('sumupCheckout', {
-            action: 'checkStatus',
-            orderId: id,
-            paymentIntentId,
+          await base44.entities.Order.update(id, {
+            payment_status: 'paid',
+            status: 'confirmed',
+            sumup_transaction_id: paymentIntentId,
           });
-          console.log('Payment status:', res.data?.status);
-          if (res.data?.status === 'succeeded') {
-            clearInterval(interval);
-            setPolling(false);
-            fetchOrder();
-          } else if (res.data?.status === 'payment_failed') {
-            clearInterval(interval);
-            setPolling(false);
-            fetchOrder();
-          }
-        } catch (e) {
-          console.error('Polling error:', e);
+          // Re-fetch updated order
+          const orders2 = await base44.entities.Order.filter({});
+          const updated = orders2.find(o => o.id === id);
+          setOrder(updated);
+        } catch(e) {
+          console.error('Error updating order:', e);
         }
-        if (attempts >= 10) {
-          clearInterval(interval);
-          setPolling(false);
-          fetchOrder();
-        }
-      }, 3000);
-      return () => clearInterval(interval);
-    } else {
-      setPolling(false);
-    }
-  }, [id, paymentIntentId]);
+        setUpdating(false);
+      }
 
-  const isPaid = order?.payment_status === 'paid';
-  const isFailed = order?.payment_status === 'failed';
+      // If Stripe says failed
+      if (redirectStatus === 'failed' && found?.payment_status !== 'failed') {
+        await base44.entities.Order.update(id, {
+          payment_status: 'failed',
+          status: 'cancelled',
+        });
+        const orders2 = await base44.entities.Order.filter({});
+        const updated = orders2.find(o => o.id === id);
+        setOrder(updated);
+      }
+
+      setDone(true);
+    };
+
+    run();
+  }, [id]);
+
+  const isPaid = order?.payment_status === 'paid' || redirectStatus === 'succeeded';
+  const isFailed = order?.payment_status === 'failed' || redirectStatus === 'failed';
 
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
       <div className="max-w-2xl mx-auto px-4 py-16 text-center">
 
-        {polling && !isPaid && (
+        {!done && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
             <div className="w-24 h-24 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-6">
               <Clock className="w-14 h-14 text-yellow-500 animate-pulse" />
             </div>
             <h1 className="font-brand text-4xl text-primary mb-3">Confirming Payment... ⏳</h1>
-            <p className="text-muted-foreground">Please wait while we confirm your payment with Stripe.</p>
+            <p className="text-muted-foreground">Please wait while we confirm your payment.</p>
           </motion.div>
         )}
 
-        {isFailed && (
+        {done && isFailed && (
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
             <div className="w-24 h-24 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-6">
               <XCircle className="w-14 h-14 text-red-500" />
@@ -92,7 +92,7 @@ export default function OrderConfirmation() {
           </motion.div>
         )}
 
-        {isPaid && (
+        {done && isPaid && (
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
             <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: "spring", duration: 0.6 }}>
               <div className="w-24 h-24 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
@@ -129,7 +129,7 @@ export default function OrderConfirmation() {
           </motion.div>
         )}
 
-        {!polling && !isPaid && !isFailed && (
+        {done && !isPaid && !isFailed && (
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
             <div className="w-24 h-24 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-6">
               <Clock className="w-14 h-14 text-yellow-500" />
