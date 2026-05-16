@@ -18,6 +18,9 @@ export default function AdminOrders() {
   const [expandedOrder, setExpandedOrder] = useState(null);
   const [deletingId, setDeletingId] = useState(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState(null);
+  const [selectedIds, setSelectedIds] = useState([]);
+  const [confirmBulkDelete, setConfirmBulkDelete] = useState(false);
+  const [bulkDeleting, setBulkDeleting] = useState(false);
 
   useEffect(() => {
     base44.entities.Order.list("-created_date", 500).then(o => { setOrders(o); setLoading(false); });
@@ -33,6 +36,7 @@ export default function AdminOrders() {
     try {
       await base44.entities.Order.delete(orderId);
       setOrders(o => o.filter(x => x.id !== orderId));
+      setSelectedIds(s => s.filter(id => id !== orderId));
       setConfirmDeleteId(null);
       if (expandedOrder === orderId) setExpandedOrder(null);
     } catch(e) {
@@ -42,6 +46,32 @@ export default function AdminOrders() {
     setDeletingId(null);
   };
 
+  const handleBulkDelete = async () => {
+    setBulkDeleting(true);
+    try {
+      await Promise.all(selectedIds.map(id => base44.entities.Order.delete(id)));
+      setOrders(o => o.filter(x => !selectedIds.includes(x.id)));
+      setSelectedIds([]);
+      setConfirmBulkDelete(false);
+    } catch(e) {
+      console.error('Bulk delete error:', e);
+      alert('Some orders could not be deleted. Please try again.');
+    }
+    setBulkDeleting(false);
+  };
+
+  const toggleSelect = (orderId) => {
+    setSelectedIds(s => s.includes(orderId) ? s.filter(id => id !== orderId) : [...s, orderId]);
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedIds.length === filtered.length) {
+      setSelectedIds([]);
+    } else {
+      setSelectedIds(filtered.map(o => o.id));
+    }
+  };
+
   const filtered = orders.filter(o => {
     const matchSearch = !search || o.order_number?.includes(search) || o.customer_name?.toLowerCase().includes(search.toLowerCase()) || o.customer_email?.toLowerCase().includes(search.toLowerCase());
     const matchStatus = filterStatus === "all" || o.status === filterStatus;
@@ -49,12 +79,25 @@ export default function AdminOrders() {
   });
 
   const totalRevenue = filtered.filter(o => o.payment_status === 'paid').reduce((s, o) => s + (o.total || 0), 0);
+  const allSelected = filtered.length > 0 && selectedIds.length === filtered.length;
+  const someSelected = selectedIds.length > 0;
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="font-brand text-3xl text-primary">Orders</h1>
-        <p className="text-muted-foreground">{filtered.length} orders · €{totalRevenue.toFixed(2)} revenue</p>
+      <div className="flex items-start justify-between">
+        <div>
+          <h1 className="font-brand text-3xl text-primary">Orders</h1>
+          <p className="text-muted-foreground">{filtered.length} orders · €{totalRevenue.toFixed(2)} revenue</p>
+        </div>
+        {someSelected && (
+          <Button
+            className="bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center gap-2"
+            onClick={() => setConfirmBulkDelete(true)}
+          >
+            <Trash2 className="w-4 h-4" />
+            Delete {selectedIds.length} selected
+          </Button>
+        )}
       </div>
 
       <div className="flex flex-wrap gap-3">
@@ -71,7 +114,7 @@ export default function AdminOrders() {
         </Select>
       </div>
 
-      {/* Confirm delete modal */}
+      {/* Single delete confirm modal */}
       {confirmDeleteId && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-white rounded-2xl p-6 max-w-sm w-full mx-4 shadow-xl">
@@ -80,11 +123,7 @@ export default function AdminOrders() {
               Are you sure you want to delete order <strong>{orders.find(o => o.id === confirmDeleteId)?.order_number}</strong>? This cannot be undone.
             </p>
             <div className="flex gap-3">
-              <Button
-                variant="outline"
-                className="flex-1 rounded-full"
-                onClick={() => setConfirmDeleteId(null)}
-              >
+              <Button variant="outline" className="flex-1 rounded-full" onClick={() => setConfirmDeleteId(null)}>
                 Cancel
               </Button>
               <Button
@@ -99,11 +138,44 @@ export default function AdminOrders() {
         </div>
       )}
 
+      {/* Bulk delete confirm modal */}
+      {confirmBulkDelete && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-2xl p-6 max-w-sm w-full mx-4 shadow-xl">
+            <h2 className="font-bold text-lg mb-2">Delete {selectedIds.length} Orders?</h2>
+            <p className="text-muted-foreground text-sm mb-6">
+              Are you sure you want to delete <strong>{selectedIds.length} orders</strong>? This cannot be undone.
+            </p>
+            <div className="flex gap-3">
+              <Button variant="outline" className="flex-1 rounded-full" onClick={() => setConfirmBulkDelete(false)}>
+                Cancel
+              </Button>
+              <Button
+                className="flex-1 rounded-full bg-red-500 hover:bg-red-600 text-white"
+                disabled={bulkDeleting}
+                onClick={handleBulkDelete}
+              >
+                {bulkDeleting ? 'Deleting...' : `Delete ${selectedIds.length} Orders`}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="bg-white rounded-2xl border border-border overflow-hidden shadow-sm">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead className="bg-muted/50">
               <tr>
+                <th className="p-4 w-10">
+                  <input
+                    type="checkbox"
+                    checked={allSelected}
+                    onChange={toggleSelectAll}
+                    className="rounded cursor-pointer w-4 h-4 accent-primary"
+                    title="Select all"
+                  />
+                </th>
                 <th className="text-left p-4 font-semibold">Order</th>
                 <th className="text-left p-4 font-semibold">Customer</th>
                 <th className="text-left p-4 font-semibold">Date</th>
@@ -117,14 +189,14 @@ export default function AdminOrders() {
               {loading ? (
                 Array(5).fill(0).map((_, i) => (
                   <tr key={i}>
-                    <td colSpan={7} className="p-4">
+                    <td colSpan={8} className="p-4">
                       <div className="h-10 bg-muted rounded animate-pulse" />
                     </td>
                   </tr>
                 ))
               ) : filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="p-8 text-center text-muted-foreground">
+                  <td colSpan={8} className="p-8 text-center text-muted-foreground">
                     No orders found
                   </td>
                 </tr>
@@ -132,9 +204,17 @@ export default function AdminOrders() {
                 <>
                   <tr
                     key={order.id}
-                    className="hover:bg-muted/30 transition-colors cursor-pointer"
+                    className={`hover:bg-muted/30 transition-colors cursor-pointer ${selectedIds.includes(order.id) ? 'bg-primary/5' : ''}`}
                     onClick={() => setExpandedOrder(expandedOrder === order.id ? null : order.id)}
                   >
+                    <td className="p-4" onClick={e => e.stopPropagation()}>
+                      <input
+                        type="checkbox"
+                        checked={selectedIds.includes(order.id)}
+                        onChange={() => toggleSelect(order.id)}
+                        className="rounded cursor-pointer w-4 h-4 accent-primary"
+                      />
+                    </td>
                     <td className="p-4 font-bold">{order.order_number}</td>
                     <td className="p-4">
                       <p>{order.customer_name}</p>
@@ -181,7 +261,7 @@ export default function AdminOrders() {
                   </tr>
                   {expandedOrder === order.id && (
                     <tr key={`${order.id}-detail`} className="bg-muted/20">
-                      <td colSpan={7} className="p-4">
+                      <td colSpan={8} className="p-4">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           <div>
                             <p className="font-semibold mb-2">Items</p>
@@ -213,6 +293,22 @@ export default function AdminOrders() {
           </table>
         </div>
       </div>
+
+      {/* Selection summary bar */}
+      {someSelected && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-gray-900 text-white rounded-full px-6 py-3 flex items-center gap-4 shadow-xl z-40">
+          <span className="text-sm font-medium">{selectedIds.length} order{selectedIds.length > 1 ? 's' : ''} selected</span>
+          <button onClick={() => setSelectedIds([])} className="text-gray-400 hover:text-white text-sm underline">
+            Clear
+          </button>
+          <Button
+            className="bg-red-500 hover:bg-red-600 text-white rounded-full text-sm h-8 px-4"
+            onClick={() => setConfirmBulkDelete(true)}
+          >
+            <Trash2 className="w-3 h-3 mr-1" /> Delete Selected
+          </Button>
+        </div>
+      )}
     </div>
   );
 }
