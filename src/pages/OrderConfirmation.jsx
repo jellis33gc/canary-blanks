@@ -106,7 +106,7 @@ export default function OrderConfirmation() {
                 </Button>
               ) : (
                 <Button asChild className="bg-primary text-white rounded-full px-8 font-bold">
-                  <Link to="/register">Create Account to Track Orders <Package className="ml-2 w-4 h-4" /></Link>
+                  <Link to="/account">Create Account to Track Orders <Package className="ml-2 w-4 h-4" /></Link>
                 </Button>
               )}
               <Button asChild variant="outline" className="rounded-full px-8">
