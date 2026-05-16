@@ -31,9 +31,45 @@ export default function AdminOrders() {
     setOrders(o => o.map(x => x.id === orderId ? { ...x, status: newStatus } : x));
   };
 
+  // Reverses the customer profile stats when an order is deleted
+  const reverseCustomerProfile = async (order) => {
+    if (!order.customer_id || order.payment_status !== 'paid') return;
+    try {
+      const profiles = await base44.entities.CustomerProfile.filter({ user_id: order.customer_id });
+      const profile = profiles[0];
+      if (!profile) return;
+
+      const newTotalOrders = Math.max(0, (profile.total_orders || 0) - 1);
+      const newTotalSpent = Math.max(0, (profile.total_spent || 0) - (order.total || 0));
+      const newLoyaltyPoints = Math.max(0, (profile.loyalty_points || 0) - (order.points_earned || 0));
+
+      await base44.entities.CustomerProfile.update(profile.id, {
+        total_orders: newTotalOrders,
+        total_spent: parseFloat(newTotalSpent.toFixed(2)),
+        loyalty_points: newLoyaltyPoints,
+      });
+
+      // Also log the loyalty points reversal if points were earned
+      if (order.points_earned > 0) {
+        await base44.entities.LoyaltyTransaction.create({
+          customer_id: order.customer_id,
+          customer_email: order.customer_email,
+          type: 'redeem',
+          points: -order.points_earned,
+          order_id: order.id,
+          description: `Points reversed — order ${order.order_number} deleted`,
+        });
+      }
+    } catch(e) {
+      console.error('Error reversing customer profile:', e);
+    }
+  };
+
   const handleDelete = async (orderId) => {
     setDeletingId(orderId);
     try {
+      const order = orders.find(o => o.id === orderId);
+      await reverseCustomerProfile(order);
       await base44.entities.Order.delete(orderId);
       setOrders(o => o.filter(x => x.id !== orderId));
       setSelectedIds(s => s.filter(id => id !== orderId));
@@ -49,7 +85,11 @@ export default function AdminOrders() {
   const handleBulkDelete = async () => {
     setBulkDeleting(true);
     try {
-      await Promise.all(selectedIds.map(id => base44.entities.Order.delete(id)));
+      const ordersToDelete = orders.filter(o => selectedIds.includes(o.id));
+      // Reverse all customer profiles first
+      await Promise.all(ordersToDelete.map(order => reverseCustomerProfile(order)));
+      // Then delete all orders
+      await Promise.all(ordersToDelete.map(order => base44.entities.Order.delete(order.id)));
       setOrders(o => o.filter(x => !selectedIds.includes(x.id)));
       setSelectedIds([]);
       setConfirmBulkDelete(false);
@@ -120,7 +160,7 @@ export default function AdminOrders() {
           <div className="bg-white rounded-2xl p-6 max-w-sm w-full mx-4 shadow-xl">
             <h2 className="font-bold text-lg mb-2">Delete Order?</h2>
             <p className="text-muted-foreground text-sm mb-6">
-              Are you sure you want to delete order <strong>{orders.find(o => o.id === confirmDeleteId)?.order_number}</strong>? This cannot be undone.
+              Are you sure you want to delete order <strong>{orders.find(o => o.id === confirmDeleteId)?.order_number}</strong>? This will also reverse the customer's points, order count and spend total. This cannot be undone.
             </p>
             <div className="flex gap-3">
               <Button variant="outline" className="flex-1 rounded-full" onClick={() => setConfirmDeleteId(null)}>
@@ -144,7 +184,7 @@ export default function AdminOrders() {
           <div className="bg-white rounded-2xl p-6 max-w-sm w-full mx-4 shadow-xl">
             <h2 className="font-bold text-lg mb-2">Delete {selectedIds.length} Orders?</h2>
             <p className="text-muted-foreground text-sm mb-6">
-              Are you sure you want to delete <strong>{selectedIds.length} orders</strong>? This cannot be undone.
+              Are you sure you want to delete <strong>{selectedIds.length} orders</strong>? This will also reverse customer points, order counts and spend totals for all affected customers. This cannot be undone.
             </p>
             <div className="flex gap-3">
               <Button variant="outline" className="flex-1 rounded-full" onClick={() => setConfirmBulkDelete(false)}>
