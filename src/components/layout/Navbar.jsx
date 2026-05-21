@@ -52,7 +52,7 @@ export default function Navbar() {
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <Link to="/" className="flex items-center">
-            <img src="https://media.base44.com/images/public/69fe13d34881fdc5bd6d6be8/42bb3f93f_LoveTheCakeLogoCropped1.png" alt="Love the Cake" className="h-12 w-auto" />
+            <img src="https://media.base44.com/images/public/6a0f27c6efeb5eb47a953fea/bf3dabfaf_BirtishFoodStores.png" alt="British Food Stores" className="h-12 w-auto" />
           </Link>
 
           {/* Desktop nav */}
