@@ -1,27 +1,11 @@
 import { useState, useEffect, useCallback } from "react";
 import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { ChevronLeft, ChevronRight, ArrowRight } from "lucide-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { base44 } from "@/api/base44Client";
 
 const AUTOPLAY_INTERVAL = 5000;
-
-const ACCENT_MAP = {
-  "from-pink-400 via-rose-400 to-fuchsia-500": "bg-white text-rose-500",
-  "from-amber-400 via-orange-400 to-yellow-400": "bg-white text-amber-600",
-  "from-violet-500 via-purple-500 to-fuchsia-400": "bg-white text-violet-600",
-  "from-teal-400 via-emerald-400 to-cyan-400": "bg-white text-teal-600",
-  "from-blue-400 via-sky-400 to-cyan-400": "bg-white text-blue-600",
-  "from-red-400 via-rose-500 to-pink-500": "bg-white text-red-600",
-};
-
-const EMOJI_POSITIONS = [
-  "top-8 left-8 text-8xl",
-  "top-16 right-16 text-6xl",
-  "bottom-8 left-1/4 text-5xl",
-  "bottom-16 right-1/3 text-7xl",
-];
 
 export default function HeroSlider() {
   const [slides, setSlides] = useState([]);
@@ -58,20 +42,51 @@ export default function HeroSlider() {
 
   const variants = {
     enter: (dir) => ({ x: dir > 0 ? "100%" : "-100%", opacity: 0 }),
-    center: { x: 0, opacity: 1, transition: { duration: 0.55, ease: [0.32, 0.72, 0, 1] } },
-    exit: (dir) => ({ x: dir > 0 ? "-100%" : "100%", opacity: 0, transition: { duration: 0.45, ease: [0.32, 0.72, 0, 1] } }),
+    center: { x: 0, opacity: 1, transition: { duration: 0.5, ease: [0.32, 0.72, 0, 1] } },
+    exit: (dir) => ({ x: dir > 0 ? "-100%" : "100%", opacity: 0, transition: { duration: 0.4, ease: [0.32, 0.72, 0, 1] } }),
   };
 
-  if (slides.length === 0) return null;
+  const DefaultHero = () => (
+    <section className="gradient-hero">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-24">
+        <div className="grid md:grid-cols-2 gap-8 items-center">
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
+            <h1 className="text-5xl md:text-6xl font-extrabold leading-tight mb-4">
+              <span className="text-secondary block">Authentic</span>
+              <span className="text-primary block">Cakes &amp; Cake</span>
+              <span className="text-primary block">Supplies</span>
+            </h1>
+            <p className="text-gray-600 text-lg mb-8 max-w-md">
+              Your one-stop shop for custom cakes, toppers, decorations, and everything you need to create something magical.
+            </p>
+            <div className="flex flex-wrap gap-3">
+              <Button asChild size="lg" className="bg-primary text-white hover:bg-primary/90 font-bold rounded-full px-8">
+                <Link to="/shop">Shop Now</Link>
+              </Button>
+              <Button asChild size="lg" variant="outline" className="border-secondary text-secondary hover:bg-secondary/10 font-bold rounded-full px-8">
+                <Link to="/shop">Browse Categories</Link>
+              </Button>
+            </div>
+          </motion.div>
+          <div className="flex justify-center">
+            <div className="w-72 h-72 md:w-80 md:h-80 rounded-full bg-white shadow-xl flex flex-col items-center justify-center gap-3">
+              <span className="text-6xl">🎂</span>
+              <p className="font-bold text-secondary text-lg">Handcrafted Quality</p>
+              <p className="text-gray-500 text-sm">Made with Love</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+
+  if (slides.length === 0) return <DefaultHero />;
 
   const slide = slides[current];
-  const emojis = (slide.emoji || "").split(" ").filter(Boolean).slice(0, 4);
-  const accentColor = ACCENT_MAP[slide.bg] || "bg-white text-primary";
 
   return (
     <section
-      className="relative overflow-hidden"
-      style={{ minHeight: "clamp(420px, 55vw, 640px)" }}
+      className="gradient-hero relative overflow-hidden"
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}
     >
@@ -83,82 +98,67 @@ export default function HeroSlider() {
           initial="enter"
           animate="center"
           exit="exit"
-          className={`absolute inset-0 text-white ${slide.bg_image ? "" : `bg-gradient-to-br ${slide.bg}`}`}
+          className="w-full"
         >
-          {/* Background image (if set) */}
-          {slide.bg_image && (
-            <div
-              className="absolute inset-0 bg-cover bg-center"
-              style={{ backgroundImage: `url(${slide.bg_image})` }}
-            />
-          )}
-
-          {/* Overlay: darker when image, lighter when gradient */}
-          <div className={`absolute inset-0 pointer-events-none ${slide.bg_image ? "bg-black/25" : "bg-black/10"}`} />
-
-          {/* Floating emoji decorations (only shown when no image) */}
-          {!slide.bg_image && (
-            <div className="absolute inset-0 opacity-10 pointer-events-none select-none">
-              {emojis.map((em, i) => (
-                <div key={i} className={`absolute ${EMOJI_POSITIONS[i]}`}>{em}</div>
-              ))}
-            </div>
-          )}
-
-          <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-full flex items-center py-16 md:py-24">
-            <motion.div
-              initial={{ opacity: 0, y: 28 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.15, duration: 0.5 }}
-              className="max-w-2xl"
-            >
-              {slide.badge && (
-                <span className={`inline-block text-sm font-bold px-4 py-1.5 rounded-full mb-5 shadow-md ${slide.bg_image ? "bg-white/20 backdrop-blur-sm text-white" : accentColor}`}>
-                  {slide.badge}
-                </span>
-              )}
-              <h1 className="font-brand text-5xl md:text-7xl mb-4 leading-tight drop-shadow-lg whitespace-pre-line">
-                {slide.title}
-              </h1>
-              {slide.subtitle && (
-                <p className="text-lg md:text-xl mb-8 opacity-90 font-medium max-w-xl drop-shadow">
-                  {slide.subtitle}
-                </p>
-              )}
-              <div className="flex flex-wrap gap-4">
-                {slide.cta_label && slide.cta_url && (
-                  <Button asChild size="lg" className="bg-white text-primary hover:bg-white/90 font-bold rounded-full px-8 shadow-lg">
-                    <Link to={slide.cta_url}>{slide.cta_label} <ArrowRight className="ml-1 w-4 h-4" /></Link>
-                  </Button>
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-24">
+            <div className="grid md:grid-cols-2 gap-8 items-center">
+              <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1, duration: 0.5 }}>
+                {slide.badge && (
+                  <span className="inline-block text-sm font-bold px-4 py-1.5 rounded-full mb-5 bg-primary/10 text-primary">
+                    {slide.badge}
+                  </span>
                 )}
-                {slide.cta2_label && slide.cta2_url && (
-                  <Button asChild size="lg" variant="outline" className="border-white text-white hover:bg-white/20 font-bold rounded-full px-8">
-                    <Link to={slide.cta2_url}>{slide.cta2_label}</Link>
-                  </Button>
+                <h1 className="text-5xl md:text-6xl font-extrabold leading-tight mb-4">
+                  {(slide.title || "").split("\n").map((line, i) => (
+                    <span key={i} className={i % 2 === 0 ? "text-secondary block" : "text-primary block"}>{line}</span>
+                  ))}
+                </h1>
+                {slide.subtitle && (
+                  <p className="text-gray-600 text-lg mb-8 max-w-md">{slide.subtitle}</p>
+                )}
+                <div className="flex flex-wrap gap-3">
+                  {slide.cta_label && slide.cta_url && (
+                    <Button asChild size="lg" className="bg-primary text-white hover:bg-primary/90 font-bold rounded-full px-8">
+                      <Link to={slide.cta_url}>{slide.cta_label}</Link>
+                    </Button>
+                  )}
+                  {slide.cta2_label && slide.cta2_url && (
+                    <Button asChild size="lg" variant="outline" className="border-secondary text-secondary hover:bg-secondary/10 font-bold rounded-full px-8">
+                      <Link to={slide.cta2_url}>{slide.cta2_label}</Link>
+                    </Button>
+                  )}
+                </div>
+              </motion.div>
+              <div className="flex justify-center">
+                {slide.bg_image ? (
+                  <img src={slide.bg_image} alt={slide.title} className="w-72 h-72 md:w-80 md:h-80 rounded-full object-cover shadow-xl" />
+                ) : (
+                  <div className="w-72 h-72 md:w-80 md:h-80 rounded-full bg-white shadow-xl flex flex-col items-center justify-center gap-3">
+                    <span className="text-6xl">{(slide.emoji || "").split(" ")[0] || "🎂"}</span>
+                    <p className="font-bold text-secondary text-lg">Handcrafted Quality</p>
+                    <p className="text-gray-500 text-sm">Made with Love</p>
+                  </div>
                 )}
               </div>
-            </motion.div>
+            </div>
           </div>
         </motion.div>
       </AnimatePresence>
 
-      <button onClick={prev} className="absolute left-3 top-1/2 -translate-y-1/2 z-20 p-2.5 bg-white/20 hover:bg-white/40 backdrop-blur-sm rounded-full transition-all text-white shadow" aria-label="Previous slide">
-        <ChevronLeft className="w-6 h-6" />
-      </button>
-      <button onClick={next} className="absolute right-3 top-1/2 -translate-y-1/2 z-20 p-2.5 bg-white/20 hover:bg-white/40 backdrop-blur-sm rounded-full transition-all text-white shadow" aria-label="Next slide">
-        <ChevronRight className="w-6 h-6" />
-      </button>
-
-      <div className="absolute bottom-5 left-1/2 -translate-x-1/2 z-20 flex gap-2">
-        {slides.map((_, i) => (
-          <button key={i} onClick={() => goTo(i)} className={`h-2.5 rounded-full transition-all duration-300 ${i === current ? "w-8 bg-white" : "w-2.5 bg-white/50 hover:bg-white/80"}`} aria-label={`Go to slide ${i + 1}`} />
-        ))}
-      </div>
-
-      {!paused && (
-        <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-white/20 z-20 overflow-hidden">
-          <motion.div key={current} className="h-full bg-white/70" initial={{ width: "0%" }} animate={{ width: "100%" }} transition={{ duration: AUTOPLAY_INTERVAL / 1000, ease: "linear" }} />
-        </div>
+      {slides.length > 1 && (
+        <>
+          <button onClick={prev} className="absolute left-3 top-1/2 -translate-y-1/2 z-20 p-2.5 bg-white/80 hover:bg-white rounded-full shadow transition-all" aria-label="Previous slide">
+            <ChevronLeft className="w-5 h-5 text-secondary" />
+          </button>
+          <button onClick={next} className="absolute right-3 top-1/2 -translate-y-1/2 z-20 p-2.5 bg-white/80 hover:bg-white rounded-full shadow transition-all" aria-label="Next slide">
+            <ChevronRight className="w-5 h-5 text-secondary" />
+          </button>
+          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-20 flex gap-2">
+            {slides.map((_, i) => (
+              <button key={i} onClick={() => goTo(i)} className={`h-2 rounded-full transition-all duration-300 ${i === current ? "w-6 bg-primary" : "w-2 bg-gray-300 hover:bg-gray-400"}`} />
+            ))}
+          </div>
+        </>
       )}
     </section>
   );

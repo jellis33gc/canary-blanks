@@ -36,10 +36,16 @@ export default function Navbar() {
   };
 
   return (
-    <nav className="sticky top-0 z-50 bg-white/95 backdrop-blur-sm border-b border-border shadow-sm">
-      {/* Top bar */}
-      <div className="bg-primary text-primary-foreground text-center text-sm py-2 px-4">
-        🎂 Free shipping on orders over €50 · Use code SWEETDEAL for 10% off!
+    <nav className="sticky top-0 z-50 bg-white border-b border-border shadow-sm">
+      {/* Top info bar */}
+      <div className="bg-gray-50 border-b border-gray-200 text-sm py-2 px-4">
+        <div className="max-w-7xl mx-auto flex items-center justify-between">
+          <span className="text-gray-600">Free shipping on orders over £50!</span>
+          <div className="flex items-center gap-4">
+            <Link to="/orders" className="text-gray-600 hover:text-primary transition-colors">Track Order</Link>
+            <Link to="/contact" className="text-gray-600 hover:text-primary transition-colors">Help</Link>
+          </div>
+        </div>
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -59,7 +65,7 @@ export default function Navbar() {
                 href = item.custom_url;
               }
               return (
-                <Link key={item.id} to={href} className="text-sm font-medium hover:text-primary transition-colors">
+                <Link key={item.id} to={href} className="text-sm font-medium text-gray-700 hover:text-primary transition-colors">
                   {item.label}
                 </Link>
               );
@@ -67,20 +73,20 @@ export default function Navbar() {
           </div>
 
           {/* Actions */}
-          <div className="flex items-center gap-2">
-            <button onClick={() => setSearchOpen(!searchOpen)} className="p-2 hover:text-primary transition-colors">
+          <div className="flex items-center gap-1">
+            <button onClick={() => setSearchOpen(!searchOpen)} className="p-2 text-gray-600 hover:text-primary transition-colors">
               <Search className="w-5 h-5" />
             </button>
-            <Link to="/wishlist" className="p-2 hover:text-primary transition-colors">
-              <Heart className="w-5 h-5" />
-            </Link>
-            <Link to="/account" className="p-2 hover:text-primary transition-colors">
+            <Link to="/account" className="p-2 text-gray-600 hover:text-primary transition-colors">
               <User className="w-5 h-5" />
             </Link>
-            <Link to="/cart" className="relative p-2 hover:text-primary transition-colors">
+            <Link to="/wishlist" className="p-2 text-gray-600 hover:text-primary transition-colors">
+              <Heart className="w-5 h-5" />
+            </Link>
+            <Link to="/cart" className="relative p-2 text-gray-600 hover:text-primary transition-colors">
               <ShoppingCart className="w-5 h-5" />
               {getTotalItems() > 0 && (
-                <span className="absolute -top-1 -right-1 bg-primary text-primary-foreground text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold">
+                <span className="absolute -top-1 -right-1 bg-primary text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold">
                   {getTotalItems()}
                 </span>
               )}
@@ -102,7 +108,7 @@ export default function Navbar() {
                 className="flex-1"
                 autoFocus
               />
-              <Button type="submit" size="sm" className="bg-primary text-primary-foreground">Search</Button>
+              <Button type="submit" size="sm" className="bg-primary text-white">Search</Button>
             </form>
           </div>
         )}
@@ -118,13 +124,13 @@ export default function Navbar() {
                 href = item.custom_url;
               }
               return (
-                <Link key={item.id} to={href} className="block py-2 hover:text-primary" onClick={() => setMenuOpen(false)}>
+                <Link key={item.id} to={href} className="block py-2 text-gray-700 hover:text-primary" onClick={() => setMenuOpen(false)}>
                   {item.label}
                 </Link>
               );
             })}
-            <Link to="/account" className="block py-2 hover:text-primary" onClick={() => setMenuOpen(false)}>My Account</Link>
-            <Link to="/wishlist" className="block py-2 hover:text-primary" onClick={() => setMenuOpen(false)}>Wishlist</Link>
+            <Link to="/account" className="block py-2 text-gray-700 hover:text-primary" onClick={() => setMenuOpen(false)}>My Account</Link>
+            <Link to="/wishlist" className="block py-2 text-gray-700 hover:text-primary" onClick={() => setMenuOpen(false)}>Wishlist</Link>
           </div>
         )}
       </div>

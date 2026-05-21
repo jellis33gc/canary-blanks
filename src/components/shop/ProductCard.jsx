@@ -37,29 +37,34 @@ export default function ProductCard({ product, wishlist = [], onWishlistToggle }
     setTimeout(() => setAdded(false), 1500);
   };
 
+  const rating = product.rating || 4.5;
+  const reviewCount = product.review_count || 0;
+  const fullStars = Math.floor(rating);
+  const hasHalf = rating % 1 >= 0.5;
+
   return (
     <motion.div
       whileHover={{ y: -4 }}
       transition={{ duration: 0.2 }}
-      className="group bg-card rounded-2xl overflow-hidden border border-border shadow-sm hover:shadow-lg transition-shadow"
+      className="group bg-white rounded-xl overflow-hidden border border-gray-200 shadow-sm hover:shadow-md transition-shadow"
     >
       <Link to={`/product/${product.slug || product.id}`} className="block">
-        <div className="relative overflow-hidden aspect-square bg-muted">
+        <div className="relative overflow-hidden aspect-square bg-blue-50/40">
           {product.images?.[0] ? (
             <img src={product.images[0]} alt={product.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
           ) : (
             <div className="w-full h-full flex items-center justify-center text-6xl">🎂</div>
           )}
-          {discount > 0 && (
-            <Badge className="absolute top-3 left-3 bg-primary text-white font-bold">-{discount}%</Badge>
+          {product.is_featured && (
+            <span className="absolute top-3 left-3 bg-primary text-white text-xs font-bold px-3 py-1 rounded-full">Popular</span>
           )}
-          {product.is_featured && !discount && (
-            <Badge className="absolute top-3 left-3 bg-secondary text-secondary-foreground font-bold">✨ Featured</Badge>
+          {discount > 0 && (
+            <span className="absolute top-3 left-3 bg-primary text-white text-xs font-bold px-3 py-1 rounded-full">-{discount}%</span>
           )}
           {onWishlistToggle && (
             <button
               onClick={(e) => { e.preventDefault(); onWishlistToggle(product.id); }}
-              className={`absolute top-3 right-3 p-2 rounded-full shadow-md transition-all ${isWishlisted ? 'bg-primary text-white' : 'bg-white text-muted-foreground hover:text-primary'}`}
+              className={`absolute top-3 right-3 p-2 rounded-full shadow-md transition-all ${isWishlisted ? 'bg-primary text-white' : 'bg-white text-gray-400 hover:text-primary'}`}
             >
               <Heart className={`w-4 h-4 ${isWishlisted ? 'fill-current' : ''}`} />
             </button>
@@ -68,25 +73,30 @@ export default function ProductCard({ product, wishlist = [], onWishlistToggle }
       </Link>
       <div className="p-4">
         <Link to={`/product/${product.slug || product.id}`}>
-          <h3 className="font-bold text-sm leading-tight mb-1 hover:text-primary transition-colors line-clamp-2">{product.name}</h3>
+          <h3 className="font-semibold text-sm leading-tight mb-1 text-gray-900 hover:text-primary transition-colors line-clamp-2">{product.name}</h3>
         </Link>
-        {product.category_name && (
-          <p className="text-xs text-muted-foreground mb-2">{product.category_name}</p>
+        {/* Stars */}
+        {reviewCount > 0 && (
+          <div className="flex items-center gap-1 mb-2">
+            {[1,2,3,4,5].map(s => (
+              <Star key={s} className={`w-3.5 h-3.5 ${s <= fullStars ? 'fill-yellow-400 text-yellow-400' : s === fullStars + 1 && hasHalf ? 'fill-yellow-400/50 text-yellow-400' : 'text-gray-300'}`} />
+            ))}
+            <span className="text-xs text-gray-500 ml-1">({reviewCount})</span>
+          </div>
         )}
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between mt-1">
           <div className="flex items-baseline gap-2">
-            <span className="font-bold text-lg text-primary">{priceLabel}€{displayPrice?.toFixed(2)}</span>
+            <span className="font-bold text-lg text-gray-900">{priceLabel}£{displayPrice?.toFixed(2)}</span>
             {product.compare_at_price > displayPrice && (
-              <span className="text-sm text-muted-foreground line-through">€{product.compare_at_price?.toFixed(2)}</span>
+              <span className="text-sm text-gray-400 line-through">£{product.compare_at_price?.toFixed(2)}</span>
             )}
           </div>
-          <Button
-            size="sm"
+          <button
             onClick={handleAddToCart}
-            className={`transition-all ${added ? 'bg-green-500 hover:bg-green-500' : 'bg-primary hover:bg-primary/90'} text-white rounded-full px-3`}
+            className={`w-9 h-9 rounded-full flex items-center justify-center transition-all shadow ${added ? 'bg-green-500 text-white' : 'bg-primary text-white hover:bg-primary/90'}`}
           >
             {added ? '✓' : <ShoppingCart className="w-4 h-4" />}
-          </Button>
+          </button>
         </div>
       </div>
     </motion.div>

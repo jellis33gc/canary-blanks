@@ -6,7 +6,6 @@ import Footer from "@/components/layout/Footer";
 import ProductCard from "@/components/shop/ProductCard";
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
-import { Star, Truck, Shield, Gift } from "lucide-react";
 import PromoBanners from "@/components/home/PromoBanners";
 import HeroSlider from "@/components/home/HeroSlider";
 
@@ -32,44 +31,26 @@ export default function Home() {
   const featured = products.filter(p => p.is_featured).slice(0, 8);
   const onSale = products.filter(p => p.is_on_sale).slice(0, 8);
 
-  const heroBlock = blocks.find(b => b.type === 'hero');
   const showFeatured = blocks.find(b => b.type === 'featured_products') || true;
   const showSale = blocks.find(b => b.type === 'sale_products');
   const showCategories = blocks.find(b => b.type === 'category_grid') || true;
 
+  const pastelBgs = ["bg-blue-50", "bg-green-50", "bg-purple-50/60", "bg-orange-50"];
+  const emojis = ["🎂", "🎀", "✨", "🧁", "🎉"];
+
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
-
       <PromoBanners />
       <HeroSlider />
-
-      {/* Trust badges */}
-      <section className="border-b border-border bg-muted/50">
-        <div className="max-w-7xl mx-auto px-4 py-6">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {[
-              { icon: Truck, text: "Free shipping over £50" },
-              { icon: Star, text: "500+ 5-star reviews" },
-              { icon: Shield, text: "Secure checkout" },
-              { icon: Gift, text: "Earn loyalty points" },
-            ].map((item, i) => (
-              <div key={i} className="flex items-center gap-3 justify-center">
-                <div className="p-2 bg-primary/10 rounded-full">
-                  <item.icon className="w-5 h-5 text-primary" />
-                </div>
-                <span className="text-sm font-semibold">{item.text}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
 
       {/* Categories */}
       {showCategories && categories.length > 0 && (
         <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-          <h2 className="font-brand text-3xl text-center mb-10 text-gradient">Shop by Category</h2>
-          <div className="grid grid-cols-5 gap-3">
+          <h2 className="text-3xl font-extrabold text-center mb-10">
+            <span className="text-secondary">Shop by </span><span className="text-primary">Category</span>
+          </h2>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {categories.map((item, i) => {
               let href = "/shop";
               if (item.type === "category" && item.category_id) {
@@ -79,11 +60,12 @@ export default function Home() {
               }
               return (
                 <Link key={item.id} to={href}>
-                  <motion.div whileHover={{ scale: 1.05 }} className="relative rounded-2xl overflow-hidden aspect-square bg-gradient-to-br from-primary/20 to-secondary/30 flex items-center justify-center text-center p-4 border-2 border-transparent hover:border-primary transition-all group shadow-sm">
-                    <span className="text-5xl">
-                      {["🎂", "🎀", "✨", "🧁", "🎉"][i % 5]}
-                    </span>
-                    <span className="relative z-10 font-bold text-sm leading-tight">{item.label}</span>
+                  <motion.div
+                    whileHover={{ scale: 1.03 }}
+                    className={`rounded-2xl ${pastelBgs[i % 4]} flex flex-col items-center justify-center gap-3 py-8 px-4 border border-gray-100 hover:border-primary/30 transition-all shadow-sm`}
+                  >
+                    <span className="text-4xl">{emojis[i % 5]}</span>
+                    <span className="font-semibold text-sm text-gray-700">{item.label}</span>
                   </motion.div>
                 </Link>
               );
@@ -96,10 +78,10 @@ export default function Home() {
       {showFeatured && featured.length > 0 && (
         <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="flex items-center justify-between mb-8">
-            <h2 className="font-brand text-3xl text-gradient">✨ Featured Picks</h2>
-            <Button asChild variant="outline" className="rounded-full border-primary text-primary hover:bg-primary hover:text-white">
-              <Link to="/shop?featured=true">View All</Link>
-            </Button>
+            <h2 className="text-3xl font-extrabold">
+              <span className="text-secondary">Featured </span><span className="text-primary">Products</span>
+            </h2>
+            <Link to="/shop?featured=true" className="text-primary font-semibold hover:underline text-sm">View All &rarr;</Link>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
             {featured.map(p => <ProductCard key={p.id} product={p} />)}
@@ -108,14 +90,14 @@ export default function Home() {
       )}
 
       {/* Sale banner */}
-      {onSale.length > 0 && (
-        <section className="bg-gradient-to-r from-secondary/40 to-primary/20 py-16 my-8">
+      {showSale && onSale.length > 0 && (
+        <section className="bg-gray-50 py-16 my-8">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex items-center justify-between mb-8">
-              <h2 className="font-brand text-3xl">🔥 On Sale Now!</h2>
-              <Button asChild variant="outline" className="rounded-full">
-                <Link to="/shop?sale=true">Shop Sale</Link>
-              </Button>
+              <h2 className="text-3xl font-extrabold">
+                <span className="text-secondary">On </span><span className="text-primary">Sale Now!</span>
+              </h2>
+              <Link to="/shop?sale=true" className="text-primary font-semibold hover:underline text-sm">Shop Sale &rarr;</Link>
             </div>
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
               {onSale.map(p => <ProductCard key={p.id} product={p} />)}
@@ -124,14 +106,13 @@ export default function Home() {
         </section>
       )}
 
-      {/* Loyalty CTA */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-        <div className="gradient-fun rounded-3xl p-8 md:p-12 text-white text-center shadow-xl">
-          <div className="text-5xl mb-4">🏆</div>
-          <h2 className="font-brand text-4xl mb-3">Join Our Sweet Rewards!</h2>
-          <p className="text-lg mb-6 opacity-90 max-w-lg mx-auto">Earn 1 point for every £1 spent. Redeem 100 points for £1 off your next order!</p>
-          <Button asChild size="lg" className="bg-white text-primary hover:bg-white/90 font-bold rounded-full px-10">
-            <Link to="/account">Create Account & Start Earning</Link>
+      {/* CTA section */}
+      <section className="gradient-cta py-20 my-8">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <h2 className="text-3xl md:text-4xl font-extrabold text-white mb-4">Can't Find What You're Looking For?</h2>
+          <p className="text-white/80 text-lg mb-8 max-w-xl mx-auto">We're always adding new products. Let us know what you'd like to see!</p>
+          <Button asChild size="lg" className="bg-white text-secondary hover:bg-white/90 font-bold rounded-full px-10">
+            <Link to="/contact">Request a Product</Link>
           </Button>
         </div>
       </section>
