@@ -41,7 +41,7 @@ export default function AdminLayout() {
       {/* Sidebar */}
       <div className={`${sidebarOpen ? 'w-64' : 'w-16'} shrink-0 bg-white border-r border-border transition-all duration-300 flex flex-col fixed h-full z-40`}>
         <div className="flex items-center justify-between p-4 border-b border-border">
-          {sidebarOpen && <span className="font-brand text-xl text-primary">Love the Cake</span>}
+          {sidebarOpen && <img src="https://media.base44.com/images/public/6a0f27c6efeb5eb47a953fea/bf3dabfaf_BirtishFoodStores.png" alt="British Food Stores" className="h-10 w-auto" />}
           <button onClick={() => setSidebarOpen(!sidebarOpen)} className="p-1.5 rounded-lg hover:bg-muted">
             {sidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
           </button>
