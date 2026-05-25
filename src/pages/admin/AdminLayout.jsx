@@ -18,6 +18,7 @@ const navItems = [
   { path: "/admin/discounts", icon: Tag, label: "Discount Codes" },
   { path: "/admin/homepage", icon: Home, label: "Homepage Builder" },
   { path: "/admin/promo-banners", icon: Megaphone, label: "Promo Banners" },
+  { path: "/admin/brands", icon: Star, label: "Brands" },
   { path: "/admin/settings", icon: Settings, label: "Settings" },
 ];
 
