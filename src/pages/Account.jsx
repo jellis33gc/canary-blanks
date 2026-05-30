@@ -54,8 +54,14 @@ export default function Account() {
       }
 
       try {
-        const res = await base44.functions.invoke('getMyOrders', {});
-        setOrders(res.data?.orders || []);
+        const [byId, byEmail] = await Promise.all([
+          base44.entities.Order.filter({ customer_id: u.id }, '-created_date', 100),
+          base44.entities.Order.filter({ customer_email: u.email }, '-created_date', 100),
+        ]);
+        const seen = new Set(byId.map(o => o.id));
+        const merged = [...byId, ...byEmail.filter(o => !seen.has(o.id))];
+        merged.sort((a, b) => new Date(b.created_date) - new Date(a.created_date));
+        setOrders(merged);
       } catch (e) {
         console.error('Orders fetch error:', e);
       }
