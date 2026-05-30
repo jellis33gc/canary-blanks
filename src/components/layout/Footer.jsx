@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
+import { base44 } from "@/api/base44Client";
 
 export default function Footer() {
   const [email, setEmail] = useState("");
@@ -36,7 +37,7 @@ export default function Footer() {
               <li><Link to="/returns" className="hover:text-primary transition-colors">Returns</Link></li>
               <li><Link to="/faq" className="hover:text-primary transition-colors">FAQ</Link></li>
               <li><Link to="/orders" className="hover:text-primary transition-colors">Track Order</Link></li>
-              <li><Link to="/admin" className="hover:text-primary transition-colors">Admin</Link></li>
+              <li><button onClick={() => base44.auth.redirectToLogin('/admin')} className="hover:text-primary transition-colors text-left">Admin</button></li>
             </ul>
           </div>
 
