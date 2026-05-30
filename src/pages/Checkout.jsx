@@ -121,6 +121,15 @@ export default function Checkout() {
         }
       }
 
+      // If total is 0, skip payment and confirm order directly
+      if (total <= 0) {
+        await base44.entities.Order.update(order.id, { payment_status: 'paid', status: 'confirmed' });
+        clearCart();
+        navigate(`/order-confirmation/${order.id}`);
+        setLoading(false);
+        return;
+      }
+
       // Create Stripe Payment Intent
       const stripeRes = await base44.functions.invoke('sumupCheckout', {
         amount: total,
