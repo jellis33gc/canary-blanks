@@ -44,5 +44,17 @@
       "type": "number"
     }
   },
-  "required": []
+  "required": [],
+  "rls": {
+    "create": {},
+    "read": {
+      "data.user_id": "{{user.id}}"
+    },
+    "update": {
+      "data.user_id": "{{user.id}}"
+    },
+    "delete": {
+      "data.user_id": "{{user.id}}"
+    }
+  }
 }
