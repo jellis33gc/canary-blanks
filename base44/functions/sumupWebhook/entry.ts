@@ -2,6 +2,15 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
 Deno.serve(async (req) => {
   const base44 = createClientFromRequest(req);
+
+  // Verify shared secret passed as query param when registering the webhook
+  const url = new URL(req.url);
+  const secret = url.searchParams.get('secret');
+  const expectedSecret = Deno.env.get('SUMUP_API_KEY');
+  if (!secret || secret !== expectedSecret) {
+    return Response.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
   const body = await req.json();
 
   const { checkout_reference, status, transaction_code, transaction_id } = body.payload || {};

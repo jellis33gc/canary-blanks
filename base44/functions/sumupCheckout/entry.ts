@@ -12,7 +12,19 @@ Deno.serve(async (req) => {
 
     // ---- CHECK PAYMENT STATUS mode ----
     if (body.action === 'checkStatus') {
+      const user = await base44.auth.me();
+      if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
+
       const { orderId, paymentIntentId } = body;
+
+      // Verify the order belongs to the requesting user (unless admin)
+      if (user.role !== 'admin') {
+        const orders = await base44.asServiceRole.entities.Order.filter({ id: orderId });
+        const order = orders[0];
+        if (!order || order.customer_id !== user.id) {
+          return Response.json({ error: 'Forbidden' }, { status: 403 });
+        }
+      }
 
       const response = await fetch(`https://api.stripe.com/v1/payment_intents/${paymentIntentId}`, {
         headers: {
