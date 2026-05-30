@@ -120,7 +120,7 @@ export default function Shop() {
             <p className="text-muted-foreground mt-1">{filtered.length} products found</p>
           </div>
           <div className="flex items-center gap-3">
-            <Button variant="outline" className="rounded-full" onClick={() => setFilterOpen(!filterOpen)}>
+            <Button variant="outline" className="rounded-full md:hidden" onClick={() => setFilterOpen(!filterOpen)}>
               <SlidersHorizontal className="w-4 h-4 mr-2" /> Filters
             </Button>
             <Select value={sortBy} onValueChange={setSortBy}>
@@ -183,71 +183,99 @@ export default function Shop() {
           ) : null;
         })()}
 
-        <div className="flex gap-6">
-          {/* Sidebar filters */}
+        <div className="flex gap-6 items-start">
+          {/* Sidebar filters — always visible on desktop, toggleable on mobile */}
+          <div className="w-64 shrink-0 bg-card rounded-2xl border border-border p-5 sticky top-24 max-h-[calc(100vh-7rem)] overflow-y-auto space-y-6 hidden md:block">
+            <div>
+              <h3 className="font-bold mb-3">Category</h3>
+              <div className="space-y-1">
+                <button onClick={() => setSelectedCategory("")} className={`block w-full text-left text-sm py-1 px-2 rounded-lg transition-colors ${!selectedCategory ? 'bg-primary/10 text-primary font-semibold' : 'hover:bg-muted'}`}>All</button>
+                {categories.filter(c => !c.parent_id).map(cat => {
+                  const children = categories.filter(c => c.parent_id === cat.id);
+                  return (
+                    <div key={cat.id}>
+                      <button onClick={() => setSelectedCategory(cat.id)} className={`block w-full text-left text-sm py-1 px-2 rounded-lg transition-colors font-medium ${selectedCategory === cat.id ? 'bg-primary/10 text-primary font-semibold' : 'hover:bg-muted'}`}>{cat.name}</button>
+                      {children.length > 0 && (
+                        <div className="ml-3 border-l border-border pl-2 space-y-0.5 mt-0.5">
+                          {children.map(sub => {
+                            const grandchildren = categories.filter(c => c.parent_id === sub.id);
+                            return (
+                              <div key={sub.id}>
+                                <button onClick={() => setSelectedCategory(sub.id)} className={`block w-full text-left text-sm py-1 px-2 rounded-lg transition-colors ${selectedCategory === sub.id ? 'bg-primary/10 text-primary font-semibold' : 'hover:bg-muted text-muted-foreground'}`}>{sub.name}</button>
+                                {grandchildren.length > 0 && (
+                                  <div className="ml-3 border-l border-border pl-2 space-y-0.5 mt-0.5">
+                                    {grandchildren.map(gc => (
+                                      <button key={gc.id} onClick={() => setSelectedCategory(gc.id)} className={`block w-full text-left text-xs py-1 px-2 rounded-lg transition-colors ${selectedCategory === gc.id ? 'bg-primary/10 text-primary font-semibold' : 'hover:bg-muted text-muted-foreground'}`}>{gc.name}</button>
+                                    ))}
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+            <div>
+              <h3 className="font-bold mb-3">Price Range</h3>
+              <Slider value={priceRange} onValueChange={setPriceRange} max={500} step={5} className="mb-2" />
+              <div className="flex justify-between text-sm text-muted-foreground">
+                <span>£{priceRange[0]}</span>
+                <span>£{priceRange[1]}</span>
+              </div>
+            </div>
+            {brands.length > 0 && (
+              <div>
+                <h3 className="font-bold mb-3">Brand</h3>
+                <div className="space-y-1">
+                  <button onClick={() => setSelectedBrand("")} className={`block w-full text-left text-sm py-1 px-2 rounded-lg transition-colors ${!selectedBrand ? 'bg-primary/10 text-primary font-semibold' : 'hover:bg-muted'}`}>All Brands</button>
+                  {brands.map(brand => (
+                    <button key={brand.id} onClick={() => setSelectedBrand(brand.id)} className={`block w-full text-left text-sm py-1 px-2 rounded-lg transition-colors ${selectedBrand === brand.id ? 'bg-primary/10 text-primary font-semibold' : 'hover:bg-muted'}`}>{brand.name}</button>
+                  ))}
+                </div>
+              </div>
+            )}
+            <div className="space-y-3">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <Checkbox checked={showOnSale} onCheckedChange={setShowOnSale} />
+                <span className="text-sm font-medium">On Sale</span>
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <Checkbox checked={showFeatured} onCheckedChange={setShowFeatured} />
+                <span className="text-sm font-medium">Featured</span>
+              </label>
+            </div>
+          </div>
+
+          {/* Mobile filter panel */}
           {filterOpen && (
-            <div className="w-64 shrink-0 bg-card rounded-2xl border border-border p-5 h-fit sticky top-24 space-y-6">
+            <div className="md:hidden w-full bg-card rounded-2xl border border-border p-5 mb-4 space-y-6">
               <div>
                 <h3 className="font-bold mb-3">Category</h3>
                 <div className="space-y-1">
-                  <button onClick={() => setSelectedCategory("")} className={`block w-full text-left text-sm py-1 px-2 rounded-lg transition-colors ${!selectedCategory ? 'bg-primary/10 text-primary font-semibold' : 'hover:bg-muted'}`}>All</button>
-                  {categories.filter(c => !c.parent_id).map(cat => {
-                    const children = categories.filter(c => c.parent_id === cat.id);
-                    return (
-                      <div key={cat.id}>
-                        <button onClick={() => setSelectedCategory(cat.id)} className={`block w-full text-left text-sm py-1 px-2 rounded-lg transition-colors font-medium ${selectedCategory === cat.id ? 'bg-primary/10 text-primary font-semibold' : 'hover:bg-muted'}`}>{cat.name}</button>
-                        {children.length > 0 && (
-                          <div className="ml-3 border-l border-border pl-2 space-y-0.5 mt-0.5">
-                            {children.map(sub => {
-                              const grandchildren = categories.filter(c => c.parent_id === sub.id);
-                              return (
-                                <div key={sub.id}>
-                                  <button onClick={() => setSelectedCategory(sub.id)} className={`block w-full text-left text-sm py-1 px-2 rounded-lg transition-colors ${selectedCategory === sub.id ? 'bg-primary/10 text-primary font-semibold' : 'hover:bg-muted text-muted-foreground'}`}>{sub.name}</button>
-                                  {grandchildren.length > 0 && (
-                                    <div className="ml-3 border-l border-border pl-2 space-y-0.5 mt-0.5">
-                                      {grandchildren.map(gc => (
-                                        <button key={gc.id} onClick={() => setSelectedCategory(gc.id)} className={`block w-full text-left text-xs py-1 px-2 rounded-lg transition-colors ${selectedCategory === gc.id ? 'bg-primary/10 text-primary font-semibold' : 'hover:bg-muted text-muted-foreground'}`}>{gc.name}</button>
-                                      ))}
-                                    </div>
-                                  )}
-                                </div>
-                              );
-                            })}
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-              <div>
-                <h3 className="font-bold mb-3">Price Range</h3>
-                <Slider value={priceRange} onValueChange={setPriceRange} max={500} step={5} className="mb-2" />
-                <div className="flex justify-between text-sm text-muted-foreground">
-                  <span>£{priceRange[0]}</span>
-                  <span>£{priceRange[1]}</span>
+                  <button onClick={() => { setSelectedCategory(""); setFilterOpen(false); }} className={`block w-full text-left text-sm py-1 px-2 rounded-lg ${!selectedCategory ? 'bg-primary/10 text-primary font-semibold' : 'hover:bg-muted'}`}>All</button>
+                  {categories.filter(c => !c.parent_id).map(cat => (
+                    <button key={cat.id} onClick={() => { setSelectedCategory(cat.id); setFilterOpen(false); }} className={`block w-full text-left text-sm py-1 px-2 rounded-lg ${selectedCategory === cat.id ? 'bg-primary/10 text-primary font-semibold' : 'hover:bg-muted'}`}>{cat.name}</button>
+                  ))}
                 </div>
               </div>
               {brands.length > 0 && (
                 <div>
                   <h3 className="font-bold mb-3">Brand</h3>
                   <div className="space-y-1">
-                    <button onClick={() => setSelectedBrand("")} className={`block w-full text-left text-sm py-1 px-2 rounded-lg transition-colors ${!selectedBrand ? 'bg-primary/10 text-primary font-semibold' : 'hover:bg-muted'}`}>All Brands</button>
+                    <button onClick={() => setSelectedBrand("")} className={`block w-full text-left text-sm py-1 px-2 rounded-lg ${!selectedBrand ? 'bg-primary/10 text-primary font-semibold' : 'hover:bg-muted'}`}>All Brands</button>
                     {brands.map(brand => (
-                      <button key={brand.id} onClick={() => setSelectedBrand(brand.id)} className={`block w-full text-left text-sm py-1 px-2 rounded-lg transition-colors ${selectedBrand === brand.id ? 'bg-primary/10 text-primary font-semibold' : 'hover:bg-muted'}`}>{brand.name}</button>
+                      <button key={brand.id} onClick={() => { setSelectedBrand(brand.id); setFilterOpen(false); }} className={`block w-full text-left text-sm py-1 px-2 rounded-lg ${selectedBrand === brand.id ? 'bg-primary/10 text-primary font-semibold' : 'hover:bg-muted'}`}>{brand.name}</button>
                     ))}
                   </div>
                 </div>
               )}
               <div className="space-y-3">
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <Checkbox checked={showOnSale} onCheckedChange={setShowOnSale} />
-                  <span className="text-sm font-medium">On Sale</span>
-                </label>
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <Checkbox checked={showFeatured} onCheckedChange={setShowFeatured} />
-                  <span className="text-sm font-medium">Featured</span>
-                </label>
+                <label className="flex items-center gap-2 cursor-pointer"><Checkbox checked={showOnSale} onCheckedChange={setShowOnSale} /><span className="text-sm font-medium">On Sale</span></label>
+                <label className="flex items-center gap-2 cursor-pointer"><Checkbox checked={showFeatured} onCheckedChange={setShowFeatured} /><span className="text-sm font-medium">Featured</span></label>
               </div>
             </div>
           )}
