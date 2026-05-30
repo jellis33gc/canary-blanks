@@ -140,6 +140,9 @@
           "data.customer_id": "{{user.id}}"
         },
         {
+          "data.customer_email": "{{user.email}}"
+        },
+        {
           "user_condition": {
             "role": "admin"
           }

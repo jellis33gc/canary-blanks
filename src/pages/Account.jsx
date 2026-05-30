@@ -24,37 +24,56 @@ export default function Account() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    base44.auth.me().then(async u => {
+    const init = async () => {
+      let u;
+      try {
+        u = await base44.auth.me();
+      } catch {
+        base44.auth.redirectToLogin('/account');
+        return;
+      }
+
       setUser(u);
       setFormData({ full_name: u.full_name || "", phone: "" });
 
-      const profiles = await base44.entities.CustomerProfile.filter({ user_id: u.id });
-      let prof = profiles[0];
-      if (!prof) {
-        prof = await base44.entities.CustomerProfile.create({ user_id: u.id, email: u.email, loyalty_points: 0, total_spent: 0, total_orders: 0, wishlist: [] });
-      }
-      setProfile(prof);
-      setFormData(f => ({ ...f, phone: prof.phone || "" }));
+      try {
+        const profiles = await base44.entities.CustomerProfile.filter({ user_id: u.id });
+        let prof = profiles[0];
+        if (!prof) {
+          prof = await base44.entities.CustomerProfile.create({ user_id: u.id, email: u.email, loyalty_points: 0, total_spent: 0, total_orders: 0, wishlist: [] });
+        }
+        setProfile(prof);
+        setFormData(f => ({ ...f, phone: prof.phone || "" }));
 
-      const [ordersByCustomerId, ordersByEmail] = await Promise.all([
-        base44.entities.Order.filter({ customer_id: u.id }, "-created_date", 50),
-        base44.entities.Order.filter({ customer_email: u.email }, "-created_date", 50),
-      ]);
-      const seen = new Set(ordersByCustomerId.map(o => o.id));
-      const merged = [...ordersByCustomerId, ...ordersByEmail.filter(o => !seen.has(o.id))];
-      merged.sort((a, b) => new Date(b.created_date) - new Date(a.created_date));
-      setOrders(merged);
-
-      if (prof.wishlist?.length > 0) {
-        const all = await base44.entities.Product.filter({ is_active: true });
-        setWishlistProducts(all.filter(p => prof.wishlist.includes(p.id)));
+        if (prof.wishlist?.length > 0) {
+          const all = await base44.entities.Product.filter({ is_active: true });
+          setWishlistProducts(all.filter(p => prof.wishlist.includes(p.id)));
+        }
+      } catch (e) {
+        console.error('Profile fetch error:', e);
       }
 
-      const transactions = await base44.entities.LoyaltyTransaction.filter({ customer_id: u.id }, "-created_date", 20);
-      setLoyaltyHistory(transactions);
-    }).catch(() => {
-      base44.auth.redirectToLogin('/account');
-    });
+      try {
+        const [ordersByCustomerId, ordersByEmail] = await Promise.all([
+          base44.entities.Order.filter({ customer_id: u.id }, "-created_date", 50),
+          base44.entities.Order.filter({ customer_email: u.email }, "-created_date", 50),
+        ]);
+        const seen = new Set(ordersByCustomerId.map(o => o.id));
+        const merged = [...ordersByCustomerId, ...ordersByEmail.filter(o => !seen.has(o.id))];
+        merged.sort((a, b) => new Date(b.created_date) - new Date(a.created_date));
+        setOrders(merged);
+      } catch (e) {
+        console.error('Orders fetch error:', e);
+      }
+
+      try {
+        const transactions = await base44.entities.LoyaltyTransaction.filter({ customer_id: u.id }, "-created_date", 20);
+        setLoyaltyHistory(transactions);
+      } catch (e) {
+        console.error('Loyalty fetch error:', e);
+      }
+    };
+    init();
   }, []);
 
   const handleSave = async () => {
