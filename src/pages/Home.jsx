@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
 import PromoBanners from "@/components/home/PromoBanners";
 import HeroSlider from "@/components/home/HeroSlider";
+import BrandSlider from "@/components/home/BrandSlider";
 
 export default function Home() {
   const [products, setProducts] = useState([]);
@@ -34,6 +35,7 @@ export default function Home() {
   const showFeatured = blocks.find(b => b.type === 'featured_products') || true;
   const showSale = blocks.find(b => b.type === 'sale_products');
   const showCategories = blocks.find(b => b.type === 'category_grid') || true;
+  const showBrandSlider = blocks.find(b => b.type === 'brand_slider');
 
   const pastelBgs = ["bg-blue-50", "bg-green-50", "bg-purple-50/60", "bg-orange-50"];
   const emojis = ["🎂", "🎀", "✨", "🧁", "🎉"];
@@ -43,6 +45,7 @@ export default function Home() {
       <Navbar />
       <PromoBanners />
       <HeroSlider />
+      {showBrandSlider && <BrandSlider />}
 
       {/* Categories */}
       {showCategories && categories.length > 0 && (

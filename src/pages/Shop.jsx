@@ -23,6 +23,8 @@ export default function Shop() {
   const [showOnSale, setShowOnSale] = useState(false);
   const [showFeatured, setShowFeatured] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [selectedBrand, setSelectedBrand] = useState("");
+  const [brands, setBrands] = useState([]);
   const [wishlist, setWishlist] = useState([]);
   const [profile, setProfile] = useState(null);
 
@@ -30,6 +32,7 @@ export default function Shop() {
   useEffect(() => {
     const urlParams = new URLSearchParams(location.search);
     setSelectedCategory(urlParams.get("category") || "");
+    setSelectedBrand(urlParams.get("brand") || "");
     setShowOnSale(urlParams.get("sale") === "true");
     setShowFeatured(urlParams.get("featured") === "true");
     setSearchQuery(urlParams.get("search") || "");
@@ -37,6 +40,7 @@ export default function Shop() {
 
   useEffect(() => {
     base44.entities.Category.filter({ is_active: true }, "sort_order").then(setCategories);
+    base44.entities.Brand.filter({ is_active: true }, "sort_order").then(setBrands);
     base44.auth.me().then(user => {
       if (user) {
         base44.entities.CustomerProfile.filter({ user_id: user.id }).then(p => {
@@ -90,6 +94,7 @@ export default function Shop() {
       addDescendants(selectedCategory);
       if (!allRelatedIds.includes(p.category_id)) return false;
     }
+    if (selectedBrand && p.brand_id !== selectedBrand) return false;
     if (showOnSale && !p.is_on_sale) return false;
     if (showFeatured && !p.is_featured) return false;
     if (p.price < priceRange[0] || p.price > priceRange[1]) return false;
@@ -133,7 +138,7 @@ export default function Shop() {
         </div>
 
         {/* Breadcrumb filters */}
-        {(selectedCategory || showOnSale || showFeatured) && (
+        {(selectedCategory || showOnSale || showFeatured || selectedBrand) && (
           <div className="flex flex-wrap gap-2 mb-4">
             {selectedCategory && getBreadcrumb().map((cat, idx) => {
               const breadcrumb = getBreadcrumb();
@@ -143,19 +148,14 @@ export default function Shop() {
                 <Badge key={cat.id} variant="secondary" className="rounded-full cursor-pointer flex items-center gap-1" onClick={() => setSelectedCategory(cat.id)}>
                   {cat.name}
                   {isLast && (
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setSelectedCategory(parent);
-                      }}
-                      className="hover:opacity-70"
-                    >
+                    <button onClick={(e) => { e.stopPropagation(); setSelectedCategory(parent); }} className="hover:opacity-70">
                       <X className="w-3 h-3" />
                     </button>
                   )}
                 </Badge>
               );
             })}
+            {selectedBrand && <Badge variant="secondary" className="rounded-full cursor-pointer flex items-center gap-1">{brands.find(b => b.id === selectedBrand)?.name || "Brand"} <button onClick={() => setSelectedBrand("")}><X className="w-3 h-3" /></button></Badge>}
             {showOnSale && <Badge variant="secondary" className="rounded-full cursor-pointer" onClick={() => setShowOnSale(false)}>On Sale <X className="ml-1 w-3 h-3" /></Badge>}
             {showFeatured && <Badge variant="secondary" className="rounded-full cursor-pointer" onClick={() => setShowFeatured(false)}>Featured <X className="ml-1 w-3 h-3" /></Badge>}
           </div>
@@ -228,6 +228,17 @@ export default function Shop() {
                   <span>£{priceRange[1]}</span>
                 </div>
               </div>
+              {brands.length > 0 && (
+                <div>
+                  <h3 className="font-bold mb-3">Brand</h3>
+                  <div className="space-y-1">
+                    <button onClick={() => setSelectedBrand("")} className={`block w-full text-left text-sm py-1 px-2 rounded-lg transition-colors ${!selectedBrand ? 'bg-primary/10 text-primary font-semibold' : 'hover:bg-muted'}`}>All Brands</button>
+                    {brands.map(brand => (
+                      <button key={brand.id} onClick={() => setSelectedBrand(brand.id)} className={`block w-full text-left text-sm py-1 px-2 rounded-lg transition-colors ${selectedBrand === brand.id ? 'bg-primary/10 text-primary font-semibold' : 'hover:bg-muted'}`}>{brand.name}</button>
+                    ))}
+                  </div>
+                </div>
+              )}
               <div className="space-y-3">
                 <label className="flex items-center gap-2 cursor-pointer">
                   <Checkbox checked={showOnSale} onCheckedChange={setShowOnSale} />

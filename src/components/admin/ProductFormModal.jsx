@@ -25,6 +25,8 @@ function autoSlug(name) {
 
 export default function ProductFormModal({ product, categories, onSave, onClose }) {
   // ── basic form fields (never stores variants) ──────────────────────────
+  const [brands, setBrands] = useState([]);
+
   const [form, setForm] = useState({
     name:              product?.name || "",
     slug:              product?.slug || "",
@@ -34,6 +36,8 @@ export default function ProductFormModal({ product, categories, onSave, onClose 
     compare_at_price:  product?.compare_at_price ?? "",
     category_id:       product?.category_id || "",
     category_name:     product?.category_name || "",
+    brand_id:          product?.brand_id || "",
+    brand_name:        product?.brand_name || "",
     images:            product?.images || [],
     sku:               product?.sku || "",
     stock_quantity:    product?.stock_quantity ?? "",
@@ -92,6 +96,7 @@ export default function ProductFormModal({ product, categories, onSave, onClose 
 
   useEffect(() => {
     base44.entities.ProductAttribute.list("name", 100).then(setSavedAttrs).catch(() => {});
+    base44.entities.Brand.filter({ is_active: true }, "sort_order", 100).then(setBrands).catch(() => {});
   }, []);
 
   // ── generate combinations from attributes ──────────────────────────────
@@ -145,6 +150,12 @@ export default function ProductFormModal({ product, categories, onSave, onClose 
   };
 
   // ── category change ─────────────────────────────────────────────────────
+  const handleBrandChange = (brandId) => {
+    const brand = brands.find(b => b.id === brandId);
+    set("brand_id", brandId === "none" ? "" : brandId);
+    set("brand_name", brandId === "none" ? "" : (brand?.name || ""));
+  };
+
   const handleCategoryChange = (catId) => {
     const cat = categories.find(c => c.id === catId);
     set("category_id", catId);
@@ -256,6 +267,18 @@ export default function ProductFormModal({ product, categories, onSave, onClose 
                   </SelectContent>
                 </Select>
               </div>
+              {brands.length > 0 && (
+                <div className="space-y-1">
+                  <Label>Brand</Label>
+                  <Select value={form.brand_id || "none"} onValueChange={handleBrandChange}>
+                    <SelectTrigger className="rounded-xl"><SelectValue placeholder="Select brand (optional)" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">No Brand</SelectItem>
+                      {brands.map(b => <SelectItem key={b.id} value={b.id}>{b.name}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
               <div className="flex gap-4">
                 <label className="flex items-center gap-2"><Checkbox checked={form.is_active}   onCheckedChange={v => set("is_active",   v)} /><span className="text-sm">Active</span></label>
                 <label className="flex items-center gap-2"><Checkbox checked={form.is_featured} onCheckedChange={v => set("is_featured", v)} /><span className="text-sm">Featured</span></label>

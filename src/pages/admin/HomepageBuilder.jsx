@@ -13,6 +13,7 @@ const BLOCK_TYPES = [
   { value: "featured_products", label: "⭐ Featured Products" },
   { value: "sale_products", label: "🏷️ Sale Products" },
   { value: "category_grid", label: "📁 Category Grid" },
+  { value: "brand_slider", label: "🏢 Brand Slider" },
   { value: "banner", label: "🎨 Promo Banner" },
   { value: "testimonials", label: "💬 Testimonials" },
   { value: "newsletter", label: "📧 Newsletter" },
