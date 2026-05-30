@@ -81,6 +81,8 @@ export default function ProductFormModal({ product, categories, onSave, onClose 
   // ── saved attribute library ─────────────────────────────────────────────
   const [tagInput, setTagInput] = useState("");
   const [savedAttrs, setSavedAttrs] = useState([]);
+  const [brandSearch, setBrandSearch] = useState(product?.brand_name || "");
+  const [brandOpen, setBrandOpen] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [savedOk, setSavedOk] = useState(false);
@@ -150,11 +152,22 @@ export default function ProductFormModal({ product, categories, onSave, onClose 
   };
 
   // ── category change ─────────────────────────────────────────────────────
-  const handleBrandChange = (brandId) => {
-    const brand = brands.find(b => b.id === brandId);
-    set("brand_id", brandId === "none" ? "" : brandId);
-    set("brand_name", brandId === "none" ? "" : (brand?.name || ""));
+  const handleBrandChange = (brand) => {
+    if (!brand) {
+      set("brand_id", "");
+      set("brand_name", "");
+      setBrandSearch("");
+    } else {
+      set("brand_id", brand.id);
+      set("brand_name", brand.name);
+      setBrandSearch(brand.name);
+    }
+    setBrandOpen(false);
   };
+
+  const filteredBrands = brands.filter(b =>
+    b.name.toLowerCase().includes(brandSearch.toLowerCase())
+  );
 
   const handleCategoryChange = (catId) => {
     const cat = categories.find(c => c.id === catId);
@@ -270,13 +283,39 @@ export default function ProductFormModal({ product, categories, onSave, onClose 
               {brands.length > 0 && (
                 <div className="space-y-1">
                   <Label>Brand</Label>
-                  <Select value={form.brand_id || "none"} onValueChange={handleBrandChange}>
-                    <SelectTrigger className="rounded-xl"><SelectValue placeholder="Select brand (optional)" /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="none">No Brand</SelectItem>
-                      {brands.map(b => <SelectItem key={b.id} value={b.id}>{b.name}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
+                  <div className="relative">
+                    <Input
+                      value={brandSearch}
+                      onChange={e => { setBrandSearch(e.target.value); setBrandOpen(true); }}
+                      onFocus={() => setBrandOpen(true)}
+                      onBlur={() => setTimeout(() => setBrandOpen(false), 150)}
+                      placeholder="Search brand..."
+                      className="rounded-xl"
+                    />
+                    {form.brand_id && (
+                      <button
+                        type="button"
+                        onClick={() => handleBrandChange(null)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-red-500"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    )}
+                    {brandOpen && filteredBrands.length > 0 && (
+                      <div className="absolute z-50 top-full mt-1 w-full bg-white border border-border rounded-xl shadow-lg max-h-48 overflow-y-auto">
+                        {filteredBrands.map(b => (
+                          <button
+                            key={b.id}
+                            type="button"
+                            onMouseDown={() => handleBrandChange(b)}
+                            className="w-full text-left px-4 py-2 text-sm hover:bg-muted transition-colors"
+                          >
+                            {b.name}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 </div>
               )}
               <div className="flex gap-4">
