@@ -143,8 +143,8 @@ export default function Account() {
               </div>
               {profile && (
                 <div className="grid grid-cols-3 gap-4 pt-4 border-t">
-                  <div className="text-center"><p className="text-2xl font-bold text-primary">{profile.total_orders || 0}</p><p className="text-xs text-muted-foreground">Orders</p></div>
-                  <div className="text-center"><p className="text-2xl font-bold text-primary">€{(profile.total_spent || 0).toFixed(0)}</p><p className="text-xs text-muted-foreground">Total Spent</p></div>
+                  <div className="text-center"><p className="text-2xl font-bold text-primary">{orders.length}</p><p className="text-xs text-muted-foreground">Orders</p></div>
+                  <div className="text-center"><p className="text-2xl font-bold text-primary">€{orders.reduce((s, o) => s + (o.total || 0), 0).toFixed(0)}</p><p className="text-xs text-muted-foreground">Total Spent</p></div>
                   <div className="text-center"><p className="text-2xl font-bold text-primary">{profile.loyalty_points || 0}</p><p className="text-xs text-muted-foreground">Points</p></div>
                 </div>
               )}
