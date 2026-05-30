@@ -133,18 +133,7 @@
     "total"
   ],
   "rls": {
-    "create": {
-      "$or": [
-        {
-          "data.customer_id": "{{user.id}}"
-        },
-        {
-          "user_condition": {
-            "role": "admin"
-          }
-        }
-      ]
-    },
+    "create": {},
     "read": {
       "$or": [
         {
