@@ -1,0 +1,68 @@
+{
+  "name": "LoyaltySettings",
+  "type": "object",
+  "properties": {
+    "tiers": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "min_points": {
+            "type": "number"
+          },
+          "color": {
+            "type": "string"
+          },
+          "icon": {
+            "type": "string"
+          },
+          "benefits": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "points_per_euro": {
+      "type": "number",
+      "default": 1,
+      "description": "Points earned per \u20ac1 spent"
+    },
+    "redemption_rate": {
+      "type": "number",
+      "default": 100,
+      "description": "Points needed to redeem \u20ac1"
+    },
+    "max_redemption_percent": {
+      "type": "number",
+      "default": 20,
+      "description": "Max % of order value that can be paid with points"
+    },
+    "min_points_to_redeem": {
+      "type": "number",
+      "default": 100,
+      "description": "Minimum points required before redemption is allowed"
+    }
+  },
+  "required": [],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {},
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

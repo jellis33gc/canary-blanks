@@ -32,6 +32,7 @@ import AdminSettings from './pages/admin/Settings';
 import AdminAttributes from './pages/admin/Attributes';
 import AdminMenu from './pages/admin/Menu';
 import AdminBrands from './pages/admin/Brands';
+import AdminLoyalty from './pages/admin/Loyalty';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -80,6 +81,7 @@ const AuthenticatedApp = () => {
         <Route path="promo-banners" element={<AdminPromoBanners />} />
         <Route path="settings" element={<AdminSettings />} />
         <Route path="brands" element={<AdminBrands />} />
+        <Route path="loyalty" element={<AdminLoyalty />} />
       </Route>
 
       <Route path="*" element={<PageNotFound />} />
