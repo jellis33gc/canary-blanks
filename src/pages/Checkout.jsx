@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Slider } from "@/components/ui/slider";
-import { CreditCard, Lock, Gift } from "lucide-react";
+import { CreditCard, Lock, Gift, MapPin, Store } from "lucide-react";
 
 export default function Checkout() {
   const location = useLocation();
@@ -29,6 +29,7 @@ export default function Checkout() {
   const [loading, setLoading] = useState(false);
   const [usePoints, setUsePoints] = useState(false);
   const [pointsToUse, setPointsToUse] = useState(0);
+  const [deliveryMethod, setDeliveryMethod] = useState('delivery');
 
   const [form, setForm] = useState({
     name: "", email: "", phone: "",
@@ -50,7 +51,8 @@ export default function Checkout() {
   const discountAmount = summaryState.discountAmount || 0;
   const amountAfterDiscount = subtotal - discountAmount;
   const isFreeShippingCode = summaryState.discountCode?.type === 'free_shipping';
-  const shipping = isFreeShippingCode || amountAfterDiscount >= 50 ? 0 : (amountAfterDiscount > 0 ? shippingCost : 0);
+  const isLocalCollection = deliveryMethod === 'local_collection';
+  const shipping = isLocalCollection ? 0 : (isFreeShippingCode || amountAfterDiscount >= 50 ? 0 : (amountAfterDiscount > 0 ? shippingCost : 0));
   const maxPointsDiscount = profile ? Math.min(Math.floor(profile.loyalty_points / 100), amountAfterDiscount * 0.2) : 0;
   const pointsDiscount = usePoints ? pointsToUse : 0;
   const total = amountAfterDiscount - pointsDiscount + shipping;
@@ -58,6 +60,16 @@ export default function Checkout() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    // Validate Gran Canaria postcode for delivery orders
+    if (deliveryMethod === 'delivery') {
+      const pc = form.postcode.trim().replace(/\s/g, '');
+      if (!pc.startsWith('35') || pc.length < 5) {
+        alert('Delivery is only available to addresses in Gran Canaria (postcodes starting with 35). Please enter a valid Gran Canaria postcode or select Local Collection.');
+        return;
+      }
+    }
+
     setLoading(true);
     try {
       const orderNum = `LTC-${Date.now()}`;
@@ -75,8 +87,11 @@ export default function Checkout() {
         points_redeemed: usePoints ? pointsToUse * 100 : 0,
         points_discount: pointsDiscount,
         shipping_cost: shipping,
+        shipping_method: isLocalCollection ? 'Local Collection' : 'Delivery (Gran Canaria)',
         total,
-        shipping_address: { name: form.name, line1: form.line1, line2: form.line2, city: form.city, postcode: form.postcode, country: form.country },
+        shipping_address: isLocalCollection
+          ? { name: form.name }
+          : { name: form.name, line1: form.line1, line2: form.line2, city: form.city, postcode: form.postcode, country: form.country },
         notes: form.notes,
         points_earned: pointsEarnable,
       });
@@ -105,10 +120,6 @@ export default function Checkout() {
           });
         }
       }
-
-      await base44.entities.Order.update(order.id, {
-        shipping_method: 'Standard Shipping'
-      });
 
       // Create Stripe Payment Intent
       const stripeRes = await base44.functions.invoke('sumupCheckout', {
@@ -140,6 +151,8 @@ export default function Checkout() {
         <form onSubmit={handleSubmit}>
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <div className="lg:col-span-2 space-y-6">
+
+              {/* Contact Details */}
               <div className="bg-card border border-border rounded-2xl p-6 space-y-4">
                 <h2 className="font-bold text-lg">Contact Details</h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -158,28 +171,69 @@ export default function Checkout() {
                 </div>
               </div>
 
+              {/* Delivery Method */}
               <div className="bg-card border border-border rounded-2xl p-6 space-y-4">
-                <h2 className="font-bold text-lg">Delivery Address</h2>
-                <div className="space-y-1">
-                  <Label>Address Line 1 *</Label>
-                  <Input required value={form.line1} onChange={e => setForm({...form, line1: e.target.value})} className="rounded-xl" />
-                </div>
-                <div className="space-y-1">
-                  <Label>Address Line 2</Label>
-                  <Input value={form.line2} onChange={e => setForm({...form, line2: e.target.value})} className="rounded-xl" />
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-1">
-                    <Label>City *</Label>
-                    <Input required value={form.city} onChange={e => setForm({...form, city: e.target.value})} className="rounded-xl" />
-                  </div>
-                  <div className="space-y-1">
-                    <Label>Postcode *</Label>
-                    <Input required value={form.postcode} onChange={e => setForm({...form, postcode: e.target.value})} className="rounded-xl" />
-                  </div>
+                <h2 className="font-bold text-lg">Delivery Method</h2>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setDeliveryMethod('delivery')}
+                    className={`flex items-start gap-3 p-4 rounded-xl border-2 text-left transition-all ${
+                      deliveryMethod === 'delivery' ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/40'
+                    }`}
+                  >
+                    <MapPin className={`w-5 h-5 mt-0.5 shrink-0 ${deliveryMethod === 'delivery' ? 'text-primary' : 'text-muted-foreground'}`} />
+                    <div>
+                      <p className="font-semibold text-sm">Home Delivery</p>
+                      <p className="text-xs text-muted-foreground mt-0.5">Gran Canaria only<br />(postcodes starting with 35)</p>
+                    </div>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setDeliveryMethod('local_collection')}
+                    className={`flex items-start gap-3 p-4 rounded-xl border-2 text-left transition-all ${
+                      deliveryMethod === 'local_collection' ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/40'
+                    }`}
+                  >
+                    <Store className={`w-5 h-5 mt-0.5 shrink-0 ${deliveryMethod === 'local_collection' ? 'text-primary' : 'text-muted-foreground'}`} />
+                    <div>
+                      <p className="font-semibold text-sm">Local Collection</p>
+                      <p className="text-xs text-muted-foreground mt-0.5">Collect from our store<br />Free of charge</p>
+                    </div>
+                  </button>
                 </div>
               </div>
 
+              {/* Delivery Address (only for delivery) */}
+              {deliveryMethod === 'delivery' && (
+                <div className="bg-card border border-border rounded-2xl p-6 space-y-4">
+                  <h2 className="font-bold text-lg">Delivery Address</h2>
+                  <div className="flex items-start gap-2 bg-amber-50 border border-amber-200 rounded-xl px-3 py-2">
+                    <MapPin className="w-4 h-4 text-amber-600 mt-0.5 shrink-0" />
+                    <p className="text-xs text-amber-700">Delivery is only available within Gran Canaria. Your postcode must start with <strong>35</strong>.</p>
+                  </div>
+                  <div className="space-y-1">
+                    <Label>Address Line 1 *</Label>
+                    <Input required value={form.line1} onChange={e => setForm({...form, line1: e.target.value})} className="rounded-xl" />
+                  </div>
+                  <div className="space-y-1">
+                    <Label>Address Line 2</Label>
+                    <Input value={form.line2} onChange={e => setForm({...form, line2: e.target.value})} className="rounded-xl" />
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-1">
+                      <Label>City *</Label>
+                      <Input required value={form.city} onChange={e => setForm({...form, city: e.target.value})} className="rounded-xl" />
+                    </div>
+                    <div className="space-y-1">
+                      <Label>Postcode * <span className="text-muted-foreground font-normal text-xs">(starts with 35)</span></Label>
+                      <Input required value={form.postcode} onChange={e => setForm({...form, postcode: e.target.value})} className="rounded-xl" placeholder="35001" />
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Loyalty Points */}
               {profile && profile.loyalty_points > 100 && (
                 <div className="bg-gradient-to-r from-secondary/30 to-primary/10 border border-border rounded-2xl p-6 space-y-3">
                   <div className="flex items-center gap-3">
@@ -202,12 +256,14 @@ export default function Checkout() {
                 </div>
               )}
 
+              {/* Order Notes */}
               <div className="bg-card border border-border rounded-2xl p-6">
                 <h2 className="font-bold text-lg mb-4">Order Notes</h2>
                 <textarea value={form.notes} onChange={e => setForm({...form, notes: e.target.value})} placeholder="Special instructions, delivery notes, cake personalisation details..." className="w-full rounded-xl border border-border p-3 text-sm bg-background resize-none h-24" />
               </div>
             </div>
 
+            {/* Order Summary */}
             <div className="bg-card border border-border rounded-2xl p-6 h-fit sticky top-24 space-y-4">
               <h2 className="font-bold text-lg">Order Summary</h2>
               <div className="space-y-3 max-h-64 overflow-y-auto">
@@ -228,7 +284,10 @@ export default function Checkout() {
                 <div className="flex justify-between"><span>Subtotal</span><span>€{subtotal.toFixed(2)}</span></div>
                 {discountAmount > 0 && <div className="flex justify-between text-green-600"><span>Discount</span><span>-€{discountAmount.toFixed(2)}</span></div>}
                 {pointsDiscount > 0 && <div className="flex justify-between text-primary"><span>Points Discount</span><span>-€{pointsDiscount.toFixed(2)}</span></div>}
-                <div className="flex justify-between"><span>Shipping</span><span>{shipping === 0 ? <span className="text-green-600">FREE</span> : `€${shipping.toFixed(2)}`}</span></div>
+                <div className="flex justify-between">
+                  <span>Delivery</span>
+                  <span>{isLocalCollection ? <span className="text-green-600">Collection</span> : shipping === 0 ? <span className="text-green-600">FREE</span> : `€${shipping.toFixed(2)}`}</span>
+                </div>
                 <div className="flex justify-between font-bold text-lg border-t pt-2"><span>Total</span><span className="text-primary">€{total.toFixed(2)}</span></div>
               </div>
               <div className="bg-muted/50 rounded-xl p-3 text-xs text-center text-muted-foreground">
