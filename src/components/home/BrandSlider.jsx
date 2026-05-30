@@ -19,9 +19,15 @@ export default function BrandSlider() {
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}
     >
+      <style>{`
+        @keyframes brand-marquee {
+          0% { transform: translateX(0); }
+          100% { transform: translateX(-50%); }
+        }
+      `}</style>
       <div
         className="flex gap-12 w-max"
-        style={{ animation: `marquee 40s linear infinite`, animationPlayState: paused ? 'paused' : 'running' }}
+        style={{ animation: `brand-marquee 40s linear infinite`, animationPlayState: paused ? 'paused' : 'running' }}
       >
         {[...brands, ...brands].map((brand, i) => (
           <Link key={i} to={`/shop?brand=${brand.id}`} className="flex items-center justify-center h-12 px-4 cursor-pointer">
