@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { User, Package, Heart, Star, LogOut, Edit3, Save } from "lucide-react";
+import { User, Package, Heart, Star, LogOut, Edit3, Save, Trash2 } from "lucide-react";
 import LoyaltyTracker from "@/components/account/LoyaltyTracker";
 import OrderHistory from "@/components/account/OrderHistory";
 import { format } from "date-fns";
@@ -20,7 +20,9 @@ export default function Account() {
   const [wishlistProducts, setWishlistProducts] = useState([]);
   const [loyaltyHistory, setLoyaltyHistory] = useState([]);
   const [editing, setEditing] = useState(false);
+  const [editingAddress, setEditingAddress] = useState(false);
   const [formData, setFormData] = useState({ full_name: "", phone: "" });
+  const [addressForm, setAddressForm] = useState({ name: "", line1: "", line2: "", city: "", postcode: "", country: "Spain", phone: "" });
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -40,10 +42,13 @@ export default function Account() {
         const profiles = await base44.entities.CustomerProfile.filter({ user_id: u.id });
         let prof = profiles[0];
         if (!prof) {
-          prof = await base44.entities.CustomerProfile.create({ user_id: u.id, email: u.email, loyalty_points: 0, total_spent: 0, total_orders: 0, wishlist: [] });
+          prof = await base44.entities.CustomerProfile.create({ user_id: u.id, email: u.email, loyalty_points: 0, total_spent: 0, total_orders: 0, wishlist: [], default_address: null });
         }
         setProfile(prof);
         setFormData(f => ({ ...f, phone: prof.phone || "" }));
+        if (prof.default_address) {
+          setAddressForm(prof.default_address);
+        }
 
         if (prof.wishlist?.length > 0) {
           const all = await base44.entities.Product.filter({ is_active: true });
@@ -80,6 +85,22 @@ export default function Account() {
     await base44.auth.updateMe({ full_name: formData.full_name });
     if (profile) await base44.entities.CustomerProfile.update(profile.id, { phone: formData.phone });
     setEditing(false);
+  };
+
+  const handleSaveAddress = async () => {
+    if (profile) {
+      await base44.entities.CustomerProfile.update(profile.id, { default_address: addressForm });
+      setProfile(p => ({ ...p, default_address: addressForm }));
+      setEditingAddress(false);
+    }
+  };
+
+  const handleClearAddress = async () => {
+    if (profile) {
+      await base44.entities.CustomerProfile.update(profile.id, { default_address: null });
+      setProfile(p => ({ ...p, default_address: null }));
+      setAddressForm({ name: "", line1: "", line2: "", city: "", postcode: "", country: "Spain", phone: "" });
+    }
   };
 
   const handleLogout = () => base44.auth.logout('/');
@@ -147,6 +168,73 @@ export default function Account() {
                   {editing ? <Input value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} className="rounded-xl" /> : <p className="font-medium">{profile?.phone || '—'}</p>}
                 </div>
               </div>
+
+              {/* Default Address */}
+              {profile && (
+                <div className="border-t pt-4 mt-4">
+                  <div className="flex justify-between items-center mb-3">
+                    <h3 className="font-bold text-base">Default Shipping Address</h3>
+                    {!editingAddress ? (
+                      <Button variant="outline" size="sm" className="rounded-full" onClick={() => setEditingAddress(true)}>
+                        <Edit3 className="w-4 h-4 mr-1" />{profile.default_address ? 'Edit' : 'Add'}
+                      </Button>
+                    ) : (
+                      <div className="flex gap-2">
+                        <Button variant="outline" size="sm" className="rounded-full" onClick={() => setEditingAddress(false)}>Cancel</Button>
+                        <Button size="sm" className="rounded-full" onClick={handleSaveAddress}><Save className="w-4 h-4 mr-1" />Save</Button>
+                      </div>
+                    )}
+                  </div>
+
+                  {!editingAddress ? (
+                    profile.default_address ? (
+                      <div className="bg-muted/50 rounded-xl p-4 text-sm space-y-1">
+                        <p className="font-semibold">{profile.default_address.name}</p>
+                        <p>{profile.default_address.line1}</p>
+                        {profile.default_address.line2 && <p>{profile.default_address.line2}</p>}
+                        <p>{profile.default_address.city}, {profile.default_address.postcode}</p>
+                        <p>{profile.default_address.country}</p>
+                        {profile.default_address.phone && <p className="text-muted-foreground">📞 {profile.default_address.phone}</p>}
+                        <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive mt-2" onClick={handleClearAddress}><Trash2 className="w-4 h-4 mr-1" />Remove</Button>
+                      </div>
+                    ) : (
+                      <p className="text-muted-foreground text-sm">No default address saved. Click "Add" to save one for faster checkout.</p>
+                    )
+                  ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-3">
+                      <div className="space-y-1">
+                        <Label>Full Name</Label>
+                        <Input value={addressForm.name} onChange={e => setAddressForm({...addressForm, name: e.target.value})} className="rounded-xl" />
+                      </div>
+                      <div className="space-y-1">
+                        <Label>Phone</Label>
+                        <Input value={addressForm.phone} onChange={e => setAddressForm({...addressForm, phone: e.target.value})} className="rounded-xl" />
+                      </div>
+                      <div className="space-y-1 md:col-span-2">
+                        <Label>Address Line 1</Label>
+                        <Input value={addressForm.line1} onChange={e => setAddressForm({...addressForm, line1: e.target.value})} className="rounded-xl" />
+                      </div>
+                      <div className="space-y-1 md:col-span-2">
+                        <Label>Address Line 2</Label>
+                        <Input value={addressForm.line2} onChange={e => setAddressForm({...addressForm, line2: e.target.value})} className="rounded-xl" />
+                      </div>
+                      <div className="space-y-1">
+                        <Label>City</Label>
+                        <Input value={addressForm.city} onChange={e => setAddressForm({...addressForm, city: e.target.value})} className="rounded-xl" />
+                      </div>
+                      <div className="space-y-1">
+                        <Label>Postcode</Label>
+                        <Input value={addressForm.postcode} onChange={e => setAddressForm({...addressForm, postcode: e.target.value})} className="rounded-xl" />
+                      </div>
+                      <div className="space-y-1 md:col-span-2">
+                        <Label>Country</Label>
+                        <Input value={addressForm.country} onChange={e => setAddressForm({...addressForm, country: e.target.value})} className="rounded-xl" />
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
               {profile && (
                 <div className="grid grid-cols-3 gap-4 pt-4 border-t">
                   <div className="text-center"><p className="text-2xl font-bold text-primary">{orders.length}</p><p className="text-xs text-muted-foreground">Orders</p></div>

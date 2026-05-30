@@ -42,7 +42,22 @@ export default function Checkout() {
       setUser(u);
       setForm(f => ({ ...f, name: u.full_name || "", email: u.email || "" }));
       base44.entities.CustomerProfile.filter({ user_id: u.id }).then(p => {
-        if (p[0]) { setProfile(p[0]); }
+        if (p[0]) {
+          setProfile(p[0]);
+          // Auto-populate from default address if exists
+          if (p[0].default_address) {
+            setForm(f => ({
+              ...f,
+              name: p[0].default_address.name || f.name,
+              line1: p[0].default_address.line1 || "",
+              line2: p[0].default_address.line2 || "",
+              city: p[0].default_address.city || "",
+              postcode: p[0].default_address.postcode || "",
+              country: p[0].default_address.country || "Spain",
+              phone: p[0].default_address.phone || ""
+            }));
+          }
+        }
       });
     }).catch(() => {});
   }, [items]);
