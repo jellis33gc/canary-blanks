@@ -75,7 +75,7 @@ module.exports = {
   				from: { height: 'var(--radix-accordion-content-height)' },
   				to: { height: '0' }
   			},
-  			'scroll': {
+  			'marquee': {
   				'0%': { transform: 'translateX(0)' },
   				'100%': { transform: 'translateX(-50%)' },
   			},
@@ -84,7 +84,7 @@ module.exports = {
   		animation: {
   			'accordion-down': 'accordion-down 0.2s ease-out',
   			'accordion-up': 'accordion-up 0.2s ease-out',
-  			'scroll': 'scroll 20s linear infinite',
+  			'marquee': 'marquee 20s linear infinite',
   		}
   	}
   },

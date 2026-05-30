@@ -21,7 +21,7 @@ export default function BrandSlider() {
     >
       <div
         className="flex gap-12 w-max"
-        style={{ animation: `scroll 40s linear infinite`, animationPlayState: paused ? 'paused' : 'running' }}
+        style={{ animation: `marquee 40s linear infinite`, animationPlayState: paused ? 'paused' : 'running' }}
       >
         {[...brands, ...brands].map((brand, i) => (
           <Link key={i} to={`/shop?brand=${brand.id}`} className="flex items-center justify-center h-12 px-4 cursor-pointer">
