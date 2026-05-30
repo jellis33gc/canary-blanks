@@ -32,10 +32,8 @@ export default function Home() {
   const featured = products.filter(p => p.is_featured).slice(0, 8);
   const onSale = products.filter(p => p.is_on_sale).slice(0, 8);
 
-  const showFeatured = blocks.find(b => b.type === 'featured_products') || true;
-  const showSale = blocks.find(b => b.type === 'sale_products');
-  const showCategories = blocks.find(b => b.type === 'category_grid') || true;
-  const showBrandSlider = blocks.find(b => b.type === 'brand_slider');
+  const activeBlocks = blocks.filter(b => b.is_active).sort((a, b) => a.sort_order - b.sort_order);
+  const hasBlock = (type) => activeBlocks.some(b => b.type === type);
 
   const pastelBgs = ["bg-blue-50", "bg-green-50", "bg-purple-50/60", "bg-orange-50"];
   const emojis = ["🎂", "🎀", "✨", "🧁", "🎉"];
@@ -45,69 +43,85 @@ export default function Home() {
       <Navbar />
       <PromoBanners />
       <HeroSlider />
-      {showBrandSlider && <BrandSlider />}
 
-      {/* Categories */}
-      {showCategories && categories.length > 0 && (
-        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-          <h2 className="text-3xl font-extrabold text-center mb-10">
-            <span className="text-secondary">Shop by </span><span className="text-primary">Category</span>
-          </h2>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {categories.map((item, i) => {
-              let href = "/shop";
-              if (item.type === "category" && item.category_id) {
-                href = `/shop?category=${item.category_id}`;
-              } else if (item.type === "custom_url" && item.custom_url) {
-                href = item.custom_url;
-              }
-              return (
-                <Link key={item.id} to={href}>
-                  <motion.div
-                    whileHover={{ scale: 1.03 }}
-                    className={`rounded-2xl ${pastelBgs[i % 4]} flex flex-col items-center justify-center gap-3 py-8 px-4 border border-gray-100 hover:border-primary/30 transition-all shadow-sm`}
-                  >
-                    <span className="text-4xl">{emojis[i % 5]}</span>
-                    <span className="font-semibold text-sm text-gray-700">{item.label}</span>
-                  </motion.div>
-                </Link>
-              );
-            })}
-          </div>
-        </section>
-      )}
-
-      {/* Featured Products */}
-      {showFeatured && featured.length > 0 && (
-        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="flex items-center justify-between mb-8">
-            <h2 className="text-3xl font-extrabold">
-              <span className="text-secondary">Featured </span><span className="text-primary">Products</span>
-            </h2>
-            <Link to="/shop?featured=true" className="text-primary font-semibold hover:underline text-sm">View All &rarr;</Link>
-          </div>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
-            {featured.map(p => <ProductCard key={p.id} product={p} />)}
-          </div>
-        </section>
-      )}
-
-      {/* Sale banner */}
-      {showSale && onSale.length > 0 && (
-        <section className="bg-gray-50 py-16 my-8">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex items-center justify-between mb-8">
-              <h2 className="text-3xl font-extrabold">
-                <span className="text-secondary">On </span><span className="text-primary">Sale Now!</span>
+      {activeBlocks.map(block => {
+        if (block.type === 'brand_slider') {
+          return <BrandSlider key={block.id} />;
+        }
+        if (block.type === 'category_grid' && categories.length > 0) {
+          return (
+            <section key={block.id} className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+              <h2 className="text-3xl font-extrabold text-center mb-10">
+                <span className="text-secondary">Shop by </span><span className="text-primary">Category</span>
               </h2>
-              <Link to="/shop?sale=true" className="text-primary font-semibold hover:underline text-sm">Shop Sale &rarr;</Link>
-            </div>
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
-              {onSale.map(p => <ProductCard key={p.id} product={p} />)}
-            </div>
-          </div>
-        </section>
-      )}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                {categories.map((item, i) => {
+                  let href = "/shop";
+                  if (item.type === "category" && item.category_id) href = `/shop?category=${item.category_id}`;
+                  else if (item.type === "custom_url" && item.custom_url) href = item.custom_url;
+                  return (
+                    <Link key={item.id} to={href}>
+                      <motion.div whileHover={{ scale: 1.03 }} className={`rounded-2xl ${pastelBgs[i % 4]} flex flex-col items-center justify-center gap-3 py-8 px-4 border border-gray-100 hover:border-primary/30 transition-all shadow-sm`}>
+                        <span className="text-4xl">{emojis[i % 5]}</span>
+                        <span className="font-semibold text-sm text-gray-700">{item.label}</span>
+                      </motion.div>
+                    </Link>
+                  );
+                })}
+              </div>
+            </section>
+          );
+        }
+        if (block.type === 'featured_products' && featured.length > 0) {
+          return (
+            <section key={block.id} className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+              <div className="flex items-center justify-between mb-8">
+                <h2 className="text-3xl font-extrabold">
+                  <span className="text-secondary">{block.title ? block.title.split(' ')[0] : 'Featured'} </span><span className="text-primary">{block.title ? block.title.split(' ').slice(1).join(' ') || 'Products' : 'Products'}</span>
+                </h2>
+                <Link to="/shop?featured=true" className="text-primary font-semibold hover:underline text-sm">View All &rarr;</Link>
+              </div>
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
+                {featured.map(p => <ProductCard key={p.id} product={p} />)}
+              </div>
+            </section>
+          );
+        }
+        if (block.type === 'sale_products' && onSale.length > 0) {
+          return (
+            <section key={block.id} className="bg-gray-50 py-16 my-8">
+              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div className="flex items-center justify-between mb-8">
+                  <h2 className="text-3xl font-extrabold">
+                    <span className="text-secondary">On </span><span className="text-primary">Sale Now!</span>
+                  </h2>
+                  <Link to="/shop?sale=true" className="text-primary font-semibold hover:underline text-sm">Shop Sale &rarr;</Link>
+                </div>
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
+                  {onSale.map(p => <ProductCard key={p.id} product={p} />)}
+                </div>
+              </div>
+            </section>
+          );
+        }
+        if (block.type === 'newsletter') {
+          return (
+            <section key={block.id} className="bg-muted py-16 my-8">
+              <div className="max-w-xl mx-auto px-4 text-center">
+                <h2 className="text-3xl font-extrabold mb-3">
+                  <span className="text-secondary">{block.title || 'Stay in the'} </span><span className="text-primary">Loop!</span>
+                </h2>
+                <p className="text-muted-foreground mb-6">{block.subtitle || 'Subscribe for exclusive deals and new product alerts!'}</p>
+                <div className="flex gap-2 max-w-sm mx-auto">
+                  <input type="email" placeholder="Your email address" className="flex-1 border border-border rounded-full px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30" />
+                  <Button className="rounded-full">Subscribe</Button>
+                </div>
+              </div>
+            </section>
+          );
+        }
+        return null;
+      })}
 
       {/* CTA section */}
       <section className="gradient-cta py-20 my-8">
