@@ -50,7 +50,7 @@ Deno.serve(async (req) => {
     }
 
     // ---- CREATE PAYMENT INTENT mode ----
-    const { amount, currency, orderId, orderNumber } = body;
+    const { amount, currency, orderId, orderNumber, discountCodeId, discountCodeUsedCount } = body;
 
     if (!amount || !orderId) {
       return Response.json({ error: 'Missing required fields: amount, orderId' }, { status: 400 });
@@ -80,6 +80,13 @@ Deno.serve(async (req) => {
 
     if (!response.ok) {
       return Response.json({ error: data.error?.message || 'Stripe API error' }, { status: response.status });
+    }
+
+    // Update discount code usage count via service role
+    if (discountCodeId !== undefined) {
+      await base44.asServiceRole.entities.DiscountCode.update(discountCodeId, {
+        used_count: (discountCodeUsedCount || 0) + 1
+      });
     }
 
     return Response.json({

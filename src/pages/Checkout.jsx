@@ -96,11 +96,7 @@ export default function Checkout() {
         points_earned: pointsEarnable,
       });
 
-      if (summaryState.discountCode) {
-        try {
-          await base44.entities.DiscountCode.update(summaryState.discountCode.id, { used_count: (summaryState.discountCode.used_count || 0) + 1 });
-        } catch (_) {}
-      }
+
 
       if (user && profile) {
         const newPoints = Math.max(0, (profile.loyalty_points || 0) - (usePoints ? pointsToUse * 100 : 0)) + pointsEarnable;
@@ -138,6 +134,8 @@ export default function Checkout() {
         currency: 'eur',
         orderId: order.id,
         orderNumber: orderNum,
+        discountCodeId: summaryState.discountCode?.id,
+        discountCodeUsedCount: summaryState.discountCode?.used_count,
       });
 
       if (stripeRes.data?.clientSecret) {
