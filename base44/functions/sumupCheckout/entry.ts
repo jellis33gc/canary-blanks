@@ -83,10 +83,14 @@ Deno.serve(async (req) => {
     }
 
     // Update discount code usage count via service role
-    if (discountCodeId !== undefined) {
-      await base44.asServiceRole.entities.DiscountCode.update(discountCodeId, {
-        used_count: (discountCodeUsedCount || 0) + 1
-      });
+    if (discountCodeId) {
+      try {
+        await base44.asServiceRole.entities.DiscountCode.update(discountCodeId, {
+          used_count: (discountCodeUsedCount || 0) + 1
+        });
+      } catch (e) {
+        console.error('Failed to update discount code usage:', e.message);
+      }
     }
 
     return Response.json({
