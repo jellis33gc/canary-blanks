@@ -223,8 +223,8 @@ export default function Shop() {
               <h3 className="font-bold mb-3">Price Range</h3>
               <Slider value={priceRange} onValueChange={setPriceRange} max={500} step={5} className="mb-2" />
               <div className="flex justify-between text-sm text-muted-foreground">
-                <span>£{priceRange[0]}</span>
-                <span>£{priceRange[1]}</span>
+                <span>€{priceRange[0]}</span>
+                <span>€{priceRange[1]}</span>
               </div>
             </div>
             {brands.length > 0 && (

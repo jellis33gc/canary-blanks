@@ -46,7 +46,7 @@ export default function Cart() {
     } else {
       const code = codes[0];
       if (code.min_order_value && subtotal < code.min_order_value) {
-        setDiscountError(`Minimum order value £${code.min_order_value} required`);
+        setDiscountError(`Minimum order value €${code.min_order_value} required`);
       } else if (code.usage_limit && code.used_count >= code.usage_limit) {
         setDiscountError("This code has reached its usage limit");
       } else {

@@ -37,7 +37,7 @@ export default function Dashboard() {
   });
 
   const statCards = [
-    { label: "Total Revenue", value: `£${revenue.toFixed(2)}`, icon: TrendingUp, color: "text-green-600", bg: "bg-green-50" },
+    { label: "Total Revenue", value: `€${revenue.toFixed(2)}`, icon: TrendingUp, color: "text-green-600", bg: "bg-green-50" },
     { label: "Total Orders", value: stats.orders.length, icon: ShoppingCart, color: "text-blue-600", bg: "bg-blue-50" },
     { label: "Products", value: stats.products.length, icon: Package, color: "text-purple-600", bg: "bg-purple-50" },
     { label: "Customers", value: stats.customers.length, icon: Users, color: "text-pink-600", bg: "bg-pink-50" },
@@ -84,7 +84,7 @@ export default function Dashboard() {
               <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
               <XAxis dataKey="day" tick={{ fontSize: 12 }} />
               <YAxis tick={{ fontSize: 12 }} />
-              <Tooltip formatter={(v) => `£${v.toFixed(2)}`} />
+              <Tooltip formatter={(v) => `€${v.toFixed(2)}`} />
               <Bar dataKey="revenue" fill="hsl(var(--secondary))" radius={[4,4,0,0]} />
             </BarChart>
           </ResponsiveContainer>
@@ -103,7 +103,7 @@ export default function Dashboard() {
           {pendingOrders.slice(0, 5).map(o => (
             <div key={o.id} className="flex items-center justify-between py-2 border-b border-border last:border-0">
               <div><p className="font-medium text-sm">{o.order_number}</p><p className="text-xs text-muted-foreground">{o.customer_name}</p></div>
-              <p className="font-bold text-sm">£{o.total?.toFixed(2)}</p>
+              <p className="font-bold text-sm">€{o.total?.toFixed(2)}</p>
             </div>
           ))}
           {pendingOrders.length === 0 && <p className="text-sm text-muted-foreground">No pending orders 🎉</p>}

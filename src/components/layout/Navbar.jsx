@@ -40,7 +40,7 @@ export default function Navbar() {
       {/* Top info bar */}
       <div className="bg-gray-50 border-b border-gray-200 text-sm py-2 px-4">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
-          <span className="text-gray-600">Free shipping on orders over £50!</span>
+          <span className="text-gray-600">Free shipping on orders over €50!</span>
           <div className="flex items-center gap-4">
             <Link to="/orders" className="text-gray-600 hover:text-primary transition-colors">Track Order</Link>
             <Link to="/contact" className="text-gray-600 hover:text-primary transition-colors">Help</Link>

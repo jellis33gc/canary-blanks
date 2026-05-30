@@ -171,7 +171,7 @@ export default function AdminProducts() {
   const getPriceDisplay = (p) => {
     const hasVariants = p.variants?.some(v => v.attributes);
     if (!hasVariants) {
-      return p.price ? `£${p.price.toFixed(2)}` : "—";
+      return p.price ? `€${p.price.toFixed(2)}` : "—";
     }
     const variantPrices = p.variants
       .filter(v => v.attributes && v.price)
@@ -179,7 +179,7 @@ export default function AdminProducts() {
     if (variantPrices.length === 0) return "—";
     const min = Math.min(...variantPrices);
     const max = Math.max(...variantPrices);
-    return min === max ? `£${min.toFixed(2)}` : `£${min.toFixed(2)} – £${max.toFixed(2)}`;
+    return min === max ? `€${min.toFixed(2)}` : `€${min.toFixed(2)} – €${max.toFixed(2)}`;
   };
 
   const filtered = products.filter(p => {

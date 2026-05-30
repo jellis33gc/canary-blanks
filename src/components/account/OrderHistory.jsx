@@ -77,7 +77,7 @@ function OrderCard({ order }) {
           </p>
         </div>
         <div className="flex flex-col items-end gap-2 shrink-0">
-          <p className="font-bold text-primary text-lg">£{order.total?.toFixed(2)}</p>
+          <p className="font-bold text-primary text-lg">€{order.total?.toFixed(2)}</p>
           {expanded ? <ChevronUp className="w-4 h-4 text-muted-foreground" /> : <ChevronDown className="w-4 h-4 text-muted-foreground" />}
         </div>
       </button>
@@ -104,7 +104,7 @@ function OrderCard({ order }) {
                     {item.variant && <p className="text-xs text-muted-foreground">{item.variant}</p>}
                   </div>
                   <div className="text-right shrink-0">
-                    <p className="text-sm font-semibold">£{(item.price * item.quantity).toFixed(2)}</p>
+                    <p className="text-sm font-semibold">€{(item.price * item.quantity).toFixed(2)}</p>
                     <p className="text-xs text-muted-foreground">x{item.quantity}</p>
                   </div>
                 </div>
@@ -115,25 +115,25 @@ function OrderCard({ order }) {
           {/* Cost breakdown */}
           <div className="border-t border-border pt-3 space-y-1 text-sm">
             <div className="flex justify-between text-muted-foreground">
-              <span>Subtotal</span><span>£{order.subtotal?.toFixed(2) ?? order.total?.toFixed(2)}</span>
+              <span>Subtotal</span><span>€{order.subtotal?.toFixed(2) ?? order.total?.toFixed(2)}</span>
             </div>
             {order.discount_amount > 0 && (
               <div className="flex justify-between text-green-600">
                 <span className="flex items-center gap-1"><Tag className="w-3 h-3" />{order.discount_code}</span>
-                <span>−£{order.discount_amount?.toFixed(2)}</span>
+                <span>−€{order.discount_amount?.toFixed(2)}</span>
               </div>
             )}
             {order.points_discount > 0 && (
               <div className="flex justify-between text-green-600">
                 <span className="flex items-center gap-1"><Star className="w-3 h-3" />Points redeemed</span>
-                <span>−£{order.points_discount?.toFixed(2)}</span>
+                <span>−€{order.points_discount?.toFixed(2)}</span>
               </div>
             )}
             <div className="flex justify-between text-muted-foreground">
-              <span>Shipping</span><span>{order.shipping_cost > 0 ? `£${order.shipping_cost?.toFixed(2)}` : "FREE"}</span>
+              <span>Shipping</span><span>{order.shipping_cost > 0 ? `€${order.shipping_cost?.toFixed(2)}` : "FREE"}</span>
             </div>
             <div className="flex justify-between font-bold text-base pt-1 border-t border-border">
-              <span>Total</span><span className="text-primary">£{order.total?.toFixed(2)}</span>
+              <span>Total</span><span className="text-primary">€{order.total?.toFixed(2)}</span>
             </div>
           </div>
 

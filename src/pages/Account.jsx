@@ -125,7 +125,7 @@ export default function Account() {
               {profile && (
                 <div className="grid grid-cols-3 gap-4 pt-4 border-t">
                   <div className="text-center"><p className="text-2xl font-bold text-primary">{profile.total_orders || 0}</p><p className="text-xs text-muted-foreground">Orders</p></div>
-                  <div className="text-center"><p className="text-2xl font-bold text-primary">£{(profile.total_spent || 0).toFixed(0)}</p><p className="text-xs text-muted-foreground">Total Spent</p></div>
+                  <div className="text-center"><p className="text-2xl font-bold text-primary">€{(profile.total_spent || 0).toFixed(0)}</p><p className="text-xs text-muted-foreground">Total Spent</p></div>
                   <div className="text-center"><p className="text-2xl font-bold text-primary">{profile.loyalty_points || 0}</p><p className="text-xs text-muted-foreground">Points</p></div>
                 </div>
               )}
@@ -153,7 +153,7 @@ export default function Account() {
                     </div>
                     <div className="p-3">
                       <p className="font-semibold text-sm truncate">{p.name}</p>
-                      <p className="text-primary font-bold">£{p.price?.toFixed(2)}</p>
+                      <p className="text-primary font-bold">€{p.price?.toFixed(2)}</p>
                       <Link to={`/product/${p.slug || p.id}`} className="text-xs text-primary underline mt-1 block">View Product</Link>
                     </div>
                   </div>

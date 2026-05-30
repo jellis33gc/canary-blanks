@@ -80,7 +80,7 @@ export default function LoyaltyTracker({ profile, loyaltyHistory, onPointsRedeem
           <div>
             <p className="text-sm opacity-80 font-medium">Your Balance</p>
             <p className="text-5xl font-brand">{points.toLocaleString()}</p>
-            <p className="text-sm opacity-75 mt-1">= £{(points / 100).toFixed(2)} discount value</p>
+            <p className="text-sm opacity-75 mt-1">= €{(points / 100).toFixed(2)} discount value</p>
           </div>
           <div className="text-right">
             <span className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-sm font-bold bg-white/20`}>
@@ -129,11 +129,11 @@ export default function LoyaltyTracker({ profile, loyaltyHistory, onPointsRedeem
             <Gift className="w-5 h-5 text-primary" />
             <h3 className="font-bold">Redeem Points</h3>
           </div>
-          <p className="text-sm text-muted-foreground">You can redeem up to <strong>£{maxRedeemable}.00</strong> (100 pts = £1)</p>
+          <p className="text-sm text-muted-foreground">You can redeem up to <strong>€{maxRedeemable}.00</strong> (100 pts = €1)</p>
           <div className="flex items-center gap-3">
             <div className="flex items-center border rounded-full overflow-hidden">
               <button onClick={() => setRedeemAmount(a => Math.max(0, a - 1))} className="px-3 py-2 hover:bg-muted font-bold text-lg">−</button>
-              <span className="px-4 py-2 font-bold text-primary min-w-[60px] text-center">£{redeemAmount}</span>
+              <span className="px-4 py-2 font-bold text-primary min-w-[60px] text-center">€{redeemAmount}</span>
               <button onClick={() => setRedeemAmount(a => Math.min(maxRedeemable, a + 1))} className="px-3 py-2 hover:bg-muted font-bold text-lg">+</button>
             </div>
             <span className="text-sm text-muted-foreground">= {redeemAmount * 100} pts</span>
@@ -143,7 +143,7 @@ export default function LoyaltyTracker({ profile, loyaltyHistory, onPointsRedeem
             disabled={redeeming || redeemAmount <= 0}
             className="rounded-full bg-primary text-white font-bold w-full"
           >
-            {redeeming ? "Generating..." : `Redeem £${redeemAmount} Discount Code`}
+            {redeeming ? "Generating..." : `Redeem €${redeemAmount} Discount Code`}
           </Button>
         </div>
       )}
@@ -156,7 +156,7 @@ export default function LoyaltyTracker({ profile, loyaltyHistory, onPointsRedeem
           <div className="bg-white border border-green-200 rounded-xl px-4 py-3 font-mono font-bold text-lg tracking-widest text-primary">
             {redeemMsg}
           </div>
-          <p className="text-xs text-green-600">Use this code at checkout for £{redeemAmount} off your order</p>
+          <p className="text-xs text-green-600">Use this code at checkout for €{redeemAmount} off your order</p>
           <Button variant="outline" size="sm" className="rounded-full mt-2" onClick={() => { setRedeemMsg(""); setRedeemAmount(0); }}>
             Redeem More
           </Button>
@@ -167,8 +167,8 @@ export default function LoyaltyTracker({ profile, loyaltyHistory, onPointsRedeem
       <div className="bg-muted/50 border border-border rounded-2xl p-5">
         <h3 className="font-bold mb-3 flex items-center gap-2"><Zap className="w-4 h-4 text-primary" />How to Earn Points</h3>
         <ul className="space-y-2 text-sm text-muted-foreground">
-          <li className="flex items-center gap-2"><Star className="w-4 h-4 text-yellow-500 shrink-0" /> Earn <strong className="text-foreground">1 point</strong> for every £1 spent</li>
-          <li className="flex items-center gap-2"><Gift className="w-4 h-4 text-primary shrink-0" /> Redeem <strong className="text-foreground">100 points</strong> = £1 discount</li>
+          <li className="flex items-center gap-2"><Star className="w-4 h-4 text-yellow-500 shrink-0" /> Earn <strong className="text-foreground">1 point</strong> for every €1 spent</li>
+          <li className="flex items-center gap-2"><Gift className="w-4 h-4 text-primary shrink-0" /> Redeem <strong className="text-foreground">100 points</strong> = €1 discount</li>
           <li className="flex items-center gap-2"><TrendingUp className="w-4 h-4 text-green-500 shrink-0" /> Points <strong className="text-foreground">never expire</strong></li>
         </ul>
       </div>

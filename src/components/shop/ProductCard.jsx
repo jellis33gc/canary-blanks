@@ -86,9 +86,9 @@ export default function ProductCard({ product, wishlist = [], onWishlistToggle }
         )}
         <div className="flex items-center justify-between mt-1">
           <div className="flex items-baseline gap-2">
-            <span className="font-bold text-lg text-gray-900">{priceLabel}£{displayPrice?.toFixed(2)}</span>
+            <span className="font-bold text-lg text-gray-900">{priceLabel}€{displayPrice?.toFixed(2)}</span>
             {product.compare_at_price > displayPrice && (
-              <span className="text-sm text-gray-400 line-through">£{product.compare_at_price?.toFixed(2)}</span>
+              <span className="text-sm text-gray-400 line-through">€{product.compare_at_price?.toFixed(2)}</span>
             )}
           </div>
           <button
