@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef } from "react";
 import { useSearchParams } from "react-router-dom";
 
-const STRIPE_PUBLISHABLE_KEY = "pk_test_51TXFVlLLvq2lU5kggNxW3qUwDd1qOXb5kvR5sOzmx6ytmxxbmcnRgVSNZ6BVD7vqRvXSkJhPGeCOLPnLWvwMAkUA00rZbsVIbk";
+const STRIPE_PUBLISHABLE_KEY = "pk_live_51Tb3cvL0X9FEn7ZJh5TDAMjfUp4KTKF1q40PNWBrcOhR7QB8p7v8d7mNtcaGg3XKnX9crOlJHRcsPAI0bMVoZsps00UFKqcfuz";
 
 export default function Payment() {
   const [searchParams] = useSearchParams();
