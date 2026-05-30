@@ -33,37 +33,14 @@
     "rating"
   ],
   "rls": {
-    "create": {
-      "$or": [
-        {
-          "created_by": "{{user.email}}"
-        },
-        {
-          "user_condition": {
-            "role": "admin"
-          }
-        }
-      ]
-    },
+    "create": {},
     "read": {
-      "$or": [
-        {
-          "data.is_approved": true
-        },
-        {
-          "created_by": "{{user.email}}"
-        },
-        {
-          "user_condition": {
-            "role": "admin"
-          }
-        }
-      ]
+      "data.is_approved": true
     },
     "update": {
       "$or": [
         {
-          "created_by": "{{user.email}}"
+          "data.author_email": "{{user.email}}"
         },
         {
           "user_condition": {
@@ -75,7 +52,7 @@
     "delete": {
       "$or": [
         {
-          "created_by": "{{user.email}}"
+          "data.author_email": "{{user.email}}"
         },
         {
           "user_condition": {
