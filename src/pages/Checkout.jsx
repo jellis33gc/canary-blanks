@@ -97,7 +97,9 @@ export default function Checkout() {
       });
 
       if (summaryState.discountCode) {
-        await base44.entities.DiscountCode.update(summaryState.discountCode.id, { used_count: (summaryState.discountCode.used_count || 0) + 1 });
+        try {
+          await base44.entities.DiscountCode.update(summaryState.discountCode.id, { used_count: (summaryState.discountCode.used_count || 0) + 1 });
+        } catch (_) {}
       }
 
       if (user && profile) {
