@@ -19,11 +19,11 @@ export default function Home() {
   useEffect(() => {
     Promise.all([
       base44.entities.Product.filter({ is_active: true }, "-created_date", 50),
-      base44.entities.NavMenu.filter({ is_active: true }, "sort_order", 20),
+      base44.entities.Category.filter({ is_active: true }, "sort_order", 20),
       base44.entities.HomepageBlock.list("sort_order", 20),
-    ]).then(([prods, navItems, blks]) => {
+    ]).then(([prods, cats, blks]) => {
       setProducts(prods);
-      setCategories(navItems);
+      setCategories(cats);
       setBlocks(blks.filter(b => b.is_active));
       setLoading(false);
     }).catch(() => setLoading(false));
@@ -55,19 +55,14 @@ export default function Home() {
                 <span className="text-secondary">Shop by </span><span className="text-primary">Category</span>
               </h2>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                {categories.map((item, i) => {
-                  let href = "/shop";
-                  if (item.type === "category" && item.category_id) href = `/shop?category=${item.category_id}`;
-                  else if (item.type === "custom_url" && item.custom_url) href = item.custom_url;
-                  return (
-                    <Link key={item.id} to={href}>
-                      <motion.div whileHover={{ scale: 1.03 }} className={`rounded-2xl ${pastelBgs[i % 4]} flex flex-col items-center justify-center gap-3 py-8 px-4 border border-gray-100 hover:border-primary/30 transition-all shadow-sm`}>
-                        <span className="text-4xl">{emojis[i % 5]}</span>
-                        <span className="font-semibold text-sm text-gray-700">{item.label}</span>
-                      </motion.div>
-                    </Link>
-                  );
-                })}
+                {categories.filter(c => !c.parent_id).map((cat, i) => (
+                  <Link key={cat.id} to={`/shop?category=${cat.id}`}>
+                    <motion.div whileHover={{ scale: 1.03 }} className={`rounded-2xl ${pastelBgs[i % 4]} flex flex-col items-center justify-center gap-3 py-8 px-4 border border-gray-100 hover:border-primary/30 transition-all shadow-sm`}>
+                      {cat.image ? <img src={cat.image} alt={cat.name} className="w-12 h-12 object-cover rounded-full" /> : <span className="text-4xl">{emojis[i % 5]}</span>}
+                      <span className="font-semibold text-sm text-gray-700">{cat.name}</span>
+                    </motion.div>
+                  </Link>
+                ))}
               </div>
             </section>
           );
