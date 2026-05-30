@@ -16,15 +16,19 @@ export default function Home() {
   const [blocks, setBlocks] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  const [promoBanners, setPromoBanners] = useState([]);
+
   useEffect(() => {
     Promise.all([
       base44.entities.Product.filter({ is_active: true }, "-created_date", 50),
       base44.entities.Category.filter({ is_active: true }, "sort_order", 20),
       base44.entities.HomepageBlock.list("sort_order", 20),
-    ]).then(([prods, cats, blks]) => {
+      base44.entities.PromoBanner.filter({ is_active: true }, "sort_order"),
+    ]).then(([prods, cats, blks, banners]) => {
       setProducts(prods);
       setCategories(cats);
       setBlocks(blks.filter(b => b.is_active));
+      setPromoBanners(banners);
       setLoading(false);
     }).catch(() => setLoading(false));
   }, []);
@@ -45,6 +49,36 @@ export default function Home() {
       <HeroSlider />
 
       {activeBlocks.map(block => {
+        if (block.type === 'banner') {
+          const bannerId = block.config?.banner_id;
+          const banner = bannerId ? promoBanners.find(b => b.id === bannerId) : promoBanners[0];
+          if (!banner) return null;
+          const styleMap = {
+            pink: "from-pink-400 to-rose-500",
+            yellow: "from-amber-400 to-yellow-400",
+            purple: "from-violet-500 to-fuchsia-500",
+            mint: "from-teal-400 to-emerald-400",
+            dark: "from-gray-800 to-gray-900",
+          };
+          const grad = styleMap[banner.style] || styleMap.pink;
+          const today = new Date().toISOString().slice(0,10);
+          if (banner.starts_at && today < banner.starts_at) return null;
+          if (banner.ends_at && today > banner.ends_at) return null;
+          return (
+            <section key={block.id} className={`bg-gradient-to-r ${grad} py-10 my-4`}>
+              <div className="max-w-5xl mx-auto px-4 text-center">
+                {banner.badge_text && <span className="inline-block bg-white/20 text-white text-xs font-bold px-3 py-1 rounded-full mb-3">{banner.badge_text}</span>}
+                <h2 className="text-3xl font-extrabold text-white mb-2">{banner.emoji && `${banner.emoji} `}{banner.title}</h2>
+                {banner.subtitle && <p className="text-white/90 text-lg mb-6">{banner.subtitle}</p>}
+                {banner.cta_label && banner.cta_url && (
+                  <a href={banner.cta_url} className="inline-block bg-white text-gray-900 font-bold px-8 py-3 rounded-full hover:bg-white/90 transition-colors">
+                    {banner.cta_label}
+                  </a>
+                )}
+              </div>
+            </section>
+          );
+        }
         if (block.type === 'brand_slider') {
           return <BrandSlider key={block.id} />;
         }

@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Trash2, GripVertical, Save, ChevronDown, ChevronUp } from "lucide-react";
+import { Plus, Trash2, GripVertical, Save, ChevronDown, ChevronUp, Image } from "lucide-react";
 import HeroSlideEditor from "@/components/admin/HeroSlideEditor";
 
 const BLOCK_TYPES = [
@@ -22,12 +22,16 @@ const BLOCK_TYPES = [
 
 export default function HomepageBuilder() {
   const [blocks, setBlocks] = useState([]);
+  const [promoBanners, setPromoBanners] = useState([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [expandedHero, setExpandedHero] = useState(null);
 
   useEffect(() => {
-    base44.entities.HomepageBlock.list("sort_order").then(b => { setBlocks(b); setLoading(false); });
+    Promise.all([
+      base44.entities.HomepageBlock.list("sort_order"),
+      base44.entities.PromoBanner.filter({ is_active: true }, "sort_order"),
+    ]).then(([b, banners]) => { setBlocks(b); setPromoBanners(banners); setLoading(false); });
   }, []);
 
   const addBlock = async () => {
@@ -37,6 +41,10 @@ export default function HomepageBuilder() {
 
   const updateBlock = (id, key, value) => {
     setBlocks(b => b.map(x => x.id === id ? { ...x, [key]: value } : x));
+  };
+
+  const updateBlockConfig = (id, key, value) => {
+    setBlocks(b => b.map(x => x.id === id ? { ...x, config: { ...(x.config || {}), [key]: value } } : x));
   };
 
   const deleteBlock = async (id) => {
@@ -55,7 +63,7 @@ export default function HomepageBuilder() {
 
   const saveAll = async () => {
     setSaving(true);
-    await Promise.all(blocks.map((b, i) => base44.entities.HomepageBlock.update(b.id, { type: b.type, title: b.title, subtitle: b.subtitle, is_active: b.is_active, sort_order: i + 1 })));
+    await Promise.all(blocks.map((b, i) => base44.entities.HomepageBlock.update(b.id, { type: b.type, title: b.title, subtitle: b.subtitle, is_active: b.is_active, sort_order: i + 1, config: b.config || {} })));
     setSaving(false);
     alert("Homepage saved!");
   };
@@ -111,11 +119,11 @@ export default function HomepageBuilder() {
                               <Switch checked={block.is_active} onCheckedChange={v => updateBlock(block.id, "is_active", v)} />
                               <span className="text-xs text-muted-foreground">{block.is_active ? "Visible" : "Hidden"}</span>
                             </div>
-                            {block.type === "hero" && (
+                            {(block.type === "hero" || block.type === "banner") && (
                               <button
                                 onClick={() => setExpandedHero(expandedHero === block.id ? null : block.id)}
                                 className="p-1.5 rounded-lg hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
-                                title="Edit slides"
+                                title={block.type === "hero" ? "Edit slides" : "Configure banner"}
                               >
                                 {expandedHero === block.id ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
                               </button>
@@ -127,6 +135,38 @@ export default function HomepageBuilder() {
                         {block.type === "hero" && expandedHero === block.id && (
                           <div className="border-t border-border px-5 pb-5 bg-muted/30">
                             <HeroSlideEditor />
+                          </div>
+                        )}
+                        {/* Banner picker */}
+                        {block.type === "banner" && expandedHero === block.id && (
+                          <div className="border-t border-border px-5 py-4 bg-muted/30 space-y-3">
+                            <p className="text-sm font-semibold text-muted-foreground">Select Promo Banner to display</p>
+                            {promoBanners.length === 0 ? (
+                              <p className="text-sm text-muted-foreground">No promo banners found. Create some under <strong>Promo Banners</strong> first.</p>
+                            ) : (
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                {promoBanners.map(banner => (
+                                  <button
+                                    key={banner.id}
+                                    onClick={() => updateBlockConfig(block.id, "banner_id", banner.id)}
+                                    className={`flex items-center gap-3 p-3 rounded-xl border-2 text-left transition-all ${
+                                      block.config?.banner_id === banner.id
+                                        ? "border-primary bg-primary/5"
+                                        : "border-border hover:border-primary/50"
+                                    }`}
+                                  >
+                                    <span className="text-2xl">{banner.emoji || "🎨"}</span>
+                                    <div className="min-w-0">
+                                      <p className="font-semibold text-sm truncate">{banner.title}</p>
+                                      {banner.subtitle && <p className="text-xs text-muted-foreground truncate">{banner.subtitle}</p>}
+                                    </div>
+                                    {block.config?.banner_id === banner.id && (
+                                      <span className="ml-auto text-xs bg-primary text-white rounded-full px-2 py-0.5 shrink-0">Selected</span>
+                                    )}
+                                  </button>
+                                ))}
+                              </div>
+                            )}
                           </div>
                         )}
                       </div>
