@@ -36,8 +36,14 @@ export default function Account() {
       setProfile(prof);
       setFormData(f => ({ ...f, phone: prof.phone || "" }));
 
-      const userOrders = await base44.entities.Order.filter({ customer_id: u.id }, "-created_date", 20);
-      setOrders(userOrders);
+      const [ordersByCustomerId, ordersByEmail] = await Promise.all([
+        base44.entities.Order.filter({ customer_id: u.id }, "-created_date", 50),
+        base44.entities.Order.filter({ customer_email: u.email }, "-created_date", 50),
+      ]);
+      const seen = new Set(ordersByCustomerId.map(o => o.id));
+      const merged = [...ordersByCustomerId, ...ordersByEmail.filter(o => !seen.has(o.id))];
+      merged.sort((a, b) => new Date(b.created_date) - new Date(a.created_date));
+      setOrders(merged);
 
       if (prof.wishlist?.length > 0) {
         const all = await base44.entities.Product.filter({ is_active: true });
