@@ -23,7 +23,7 @@ export default function Footer() {
             <img
               src="https://media.base44.com/images/public/6a3fafd9aa6b3dbb7c575d28/662e2144c_CanaryBlankslogo.png"
               alt="CanaryBlanks"
-              className="h-16 w-auto mb-3"
+              className="h-24 w-auto mb-3"
             />
             <p className="text-sm text-gray-500 leading-relaxed">
               Your one-stop shop for custom cakes, cake decorations, toppers, ingredients and party supplies. Made with love!
