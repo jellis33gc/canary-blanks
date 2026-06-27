@@ -288,7 +288,7 @@ export default function Shop() {
               </div>
             ) : filtered.length === 0 ? (
               <div className="text-center py-20">
-                <div className="text-6xl mb-4">🎂</div>
+                <img src="https://media.base44.com/images/public/6a3fafd9aa6b3dbb7c575d28/662e2144c_CanaryBlankslogo.png" alt="CanaryBlanks" className="h-24 w-auto mx-auto mb-4" />
                 <h3 className="font-bold text-xl mb-2">No products found</h3>
                 <p className="text-muted-foreground">Try adjusting your filters</p>
               </div>
