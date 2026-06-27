@@ -21,8 +21,8 @@ export default function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           <div>
             <img
-              src="https://media.base44.com/images/public/6a0f27c6efeb5eb47a953fea/bf3dabfaf_BirtishFoodStores.png"
-              alt="British Food Stores"
+              src="https://media.base44.com/images/public/6a3fafd9aa6b3dbb7c575d28/662e2144c_CanaryBlankslogo.png"
+              alt="CanaryBlanks"
               className="h-16 w-auto mb-3"
             />
             <p className="text-sm text-gray-500 leading-relaxed">
