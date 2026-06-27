@@ -3,7 +3,7 @@ import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import {
   LayoutDashboard, Package, ShoppingCart, Users, Tag, Settings,
-  Star, Home, ChevronRight, Menu, X, Upload, Grid3X3, BarChart2, Megaphone, Layers, List
+  Star, Home, ChevronRight, Menu, X, Upload, Grid3X3, BarChart2, Megaphone, Layers, List, RotateCcw
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -11,6 +11,7 @@ const navItems = [
   { path: "/admin", icon: LayoutDashboard, label: "Dashboard", exact: true },
   { path: "/admin/products", icon: Package, label: "Products" },
   { path: "/admin/orders", icon: ShoppingCart, label: "Orders" },
+  { path: "/admin/returns", icon: RotateCcw, label: "Returns" },
   { path: "/admin/customers", icon: Users, label: "Customers" },
   { path: "/admin/categories", icon: Grid3X3, label: "Categories" },
   { path: "/admin/attributes", icon: Layers, label: "Attributes" },

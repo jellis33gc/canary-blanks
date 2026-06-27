@@ -1,8 +1,11 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
-import { Package, ChevronDown, ChevronUp, MapPin, Tag, Star } from "lucide-react";
-import { format } from "date-fns";
+import { Button } from "@/components/ui/button";
+import { Package, ChevronDown, ChevronUp, MapPin, Tag, Star, RotateCcw } from "lucide-react";
+import { format, differenceInCalendarDays } from "date-fns";
+import { base44 } from "@/api/base44Client";
+import ReturnRequestModal from "@/components/account/ReturnRequestModal";
 
 const STATUS_STEPS = ["pending", "confirmed", "processing", "shipped", "delivered"];
 
@@ -53,9 +56,24 @@ function StatusTracker({ status }) {
   );
 }
 
-function OrderCard({ order }) {
+function OrderCard({ order, user }) {
   const [expanded, setExpanded] = useState(false);
+  const [showReturnModal, setShowReturnModal] = useState(false);
+  const [hasReturn, setHasReturn] = useState(false);
   const meta = STATUS_META[order.status] || STATUS_META.pending;
+
+  // Check for existing return request on this order
+  useEffect(() => {
+    if (order.id) {
+      base44.entities.ReturnRequest.filter({ order_id: order.id }).then(reqs => {
+        if (reqs.length > 0) setHasReturn(true);
+      }).catch(() => {});
+    }
+  }, [order.id]);
+
+  // Eligible for withdrawal: delivered and within 14 days
+  const daysSinceUpdate = differenceInCalendarDays(new Date(), new Date(order.updated_date));
+  const canWithdraw = order.status === "delivered" && daysSinceUpdate <= 14 && !hasReturn;
 
   return (
     <div className="bg-card border border-border rounded-2xl overflow-hidden">
@@ -164,13 +182,40 @@ function OrderCard({ order }) {
               <p className="text-sm text-muted-foreground">{order.notes}</p>
             </div>
           )}
+
+          {/* Withdrawal button */}
+          {canWithdraw && (
+            <div className="border-t border-border pt-3">
+              <Button onClick={() => setShowReturnModal(true)} variant="outline" className="w-full rounded-xl border-primary text-primary hover:bg-primary hover:text-white">
+                <RotateCcw className="w-4 h-4 mr-2" /> Request Withdrawal (14-Day Right)
+              </Button>
+            </div>
+          )}
+          {hasReturn && (
+            <div className="border-t border-border pt-3">
+              <Link to="/returns">
+                <Button variant="outline" className="w-full rounded-xl">
+                  <RotateCcw className="w-4 h-4 mr-2" /> View Return Request Status
+                </Button>
+              </Link>
+            </div>
+          )}
         </div>
+      )}
+
+      {showReturnModal && (
+        <ReturnRequestModal
+          order={order}
+          user={user}
+          onClose={() => setShowReturnModal(false)}
+          onSubmitted={() => { setHasReturn(true); setShowReturnModal(false); }}
+        />
       )}
     </div>
   );
 }
 
-export default function OrderHistory({ orders }) {
+export default function OrderHistory({ orders, user }) {
   const [filter, setFilter] = useState("all");
 
   const filters = [
@@ -235,7 +280,7 @@ export default function OrderHistory({ orders }) {
         {filtered.length === 0 ? (
           <p className="text-center text-muted-foreground py-8 text-sm">No {filter} orders found.</p>
         ) : (
-          filtered.map(order => <OrderCard key={order.id} order={order} />)
+          filtered.map(order => <OrderCard key={order.id} order={order} user={user} />)
         )}
       </div>
     </div>

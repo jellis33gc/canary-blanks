@@ -247,7 +247,7 @@ export default function Account() {
 
           {/* Orders */}
           <TabsContent value="orders">
-            <OrderHistory orders={orders} />
+            <OrderHistory orders={orders} user={user} />
           </TabsContent>
 
           {/* Wishlist */}

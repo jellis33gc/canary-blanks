@@ -1,0 +1,123 @@
+{
+  "name": "ReturnRequest",
+  "type": "object",
+  "properties": {
+    "order_id": {
+      "type": "string",
+      "description": "Reference to the original Order"
+    },
+    "order_number": {
+      "type": "string"
+    },
+    "customer_id": {
+      "type": "string"
+    },
+    "customer_email": {
+      "type": "string"
+    },
+    "customer_name": {
+      "type": "string"
+    },
+    "reason": {
+      "type": "string"
+    },
+    "resolution_type": {
+      "type": "string",
+      "enum": [
+        "refund",
+        "exchange"
+      ],
+      "default": "refund"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "approved",
+        "rejected",
+        "awaiting_return",
+        "received",
+        "completed",
+        "cancelled"
+      ],
+      "default": "pending"
+    },
+    "items": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "product_id": {
+            "type": "string"
+          },
+          "product_name": {
+            "type": "string"
+          },
+          "quantity": {
+            "type": "number"
+          },
+          "price": {
+            "type": "number"
+          }
+        }
+      }
+    },
+    "refund_amount": {
+      "type": "number"
+    },
+    "return_tracking_number": {
+      "type": "string",
+      "description": "Tracking number the customer provides when shipping items back"
+    },
+    "admin_notes": {
+      "type": "string"
+    },
+    "processed_date": {
+      "type": "string",
+      "format": "date"
+    }
+  },
+  "required": [
+    "order_id",
+    "customer_email",
+    "reason"
+  ],
+  "rls": {
+    "create": {},
+    "read": {
+      "$or": [
+        {
+          "data.customer_id": "{{user.id}}"
+        },
+        {
+          "data.customer_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "data.customer_id": "{{user.id}}"
+        },
+        {
+          "data.customer_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

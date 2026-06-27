@@ -17,12 +17,15 @@ import OrderConfirmation from './pages/OrderConfirmation';
 import Payment from './pages/Payment';
 import Account from './pages/Account';
 import Wishlist from './pages/Wishlist';
+import Returns from './pages/Returns';
+import Terms from './pages/Terms';
 
 // Admin pages
 import AdminLayout from './pages/admin/AdminLayout';
 import Dashboard from './pages/admin/Dashboard';
 import AdminProducts from './pages/admin/Products';
 import AdminOrders from './pages/admin/Orders';
+import AdminReturns from './pages/admin/Returns';
 import AdminCustomers from './pages/admin/Customers';
 import AdminCategories from './pages/admin/Categories.jsx';
 import AdminDiscounts from './pages/admin/Discounts';
@@ -66,12 +69,15 @@ const AuthenticatedApp = () => {
       <Route path="/account" element={<Account />} />
       <Route path="/account/orders" element={<Navigate to="/account" replace />} />
       <Route path="/wishlist" element={<Wishlist />} />
+      <Route path="/returns" element={<Returns />} />
+      <Route path="/terms" element={<Terms />} />
 
       {/* Admin */}
       <Route path="/admin" element={<AdminLayout />}>
         <Route index element={<Dashboard />} />
         <Route path="products" element={<AdminProducts />} />
         <Route path="orders" element={<AdminOrders />} />
+        <Route path="returns" element={<AdminReturns />} />
         <Route path="customers" element={<AdminCustomers />} />
         <Route path="categories" element={<AdminCategories />} />
         <Route path="attributes" element={<AdminAttributes />} />
