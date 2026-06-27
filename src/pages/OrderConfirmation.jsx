@@ -32,25 +32,13 @@ export default function OrderConfirmation() {
       setOrder(found);
     }).catch(e => console.error('Fetch error:', e));
 
-    // Update order in background
-    if (isPaid && paymentIntentId) {
+    // Verify payment status with Stripe as a fallback (webhook is primary)
+    if (paymentIntentId) {
       base44.functions.invoke('sumupCheckout', {
-        action: 'updateOrder',
+        action: 'checkStatus',
         orderId: id,
-        paymentStatus: 'paid',
-        orderStatus: 'confirmed',
-        transactionId: paymentIntentId,
-      }).catch(e => console.error('Update error:', e));
-    }
-
-    if (isFailed) {
-      base44.functions.invoke('sumupCheckout', {
-        action: 'updateOrder',
-        orderId: id,
-        paymentStatus: 'failed',
-        orderStatus: 'cancelled',
-        transactionId: '',
-      }).catch(e => console.error('Update error:', e));
+        paymentIntentId,
+      }).catch(e => console.error('Status check error:', e));
     }
 
   }, [id]);
