@@ -15,7 +15,7 @@ export default function BrandSlider() {
 
   return (
     <div
-      className="bg-white border-y border-border py-6 overflow-hidden"
+      className="bg-card border-y border-border py-6 overflow-hidden"
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}
     >

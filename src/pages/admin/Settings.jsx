@@ -6,16 +6,16 @@ import { Label } from "@/components/ui/label";
 import { Save, UserPlus, Trash2 } from "lucide-react";
 
 const DEFAULT_SETTINGS = [
-  { key: "site_name", label: "Site Name", group: "general", value: "Love the Cake" },
-  { key: "site_tagline", label: "Tagline", group: "general", value: "Cakes, Decorations & Party Supplies" },
+  { key: "site_name", label: "Site Name", group: "general", value: "CanaryBlanks" },
+  { key: "site_tagline", label: "Tagline", group: "general", value: "Sublimation Blanks & Craft Supplies" },
   { key: "contact_email", label: "Contact Email", group: "general", value: "" },
   { key: "contact_phone", label: "Contact Phone", group: "general", value: "" },
   { key: "free_shipping_threshold", label: "Free Shipping Over (€)", group: "shipping", value: "50" },
   { key: "standard_shipping_cost", label: "Standard Shipping Cost (€)", group: "shipping", value: "4.99" },
-  { key: "shipping_tab_content", label: "Shipping Tab Content", group: "shipping", value: "🚚 Standard Delivery: 3-5 working days — FREE over €50\n⚡ Express Delivery: 1-2 working days — €5.99\n🎂 Custom Cakes: Please allow 7-14 days for custom orders" },
+  { key: "shipping_tab_content", label: "Shipping Tab Content", group: "shipping", value: "🚚 Standard Delivery: 3-5 working days — FREE over €50\n⚡ Express Delivery: 1-2 working days — €5.99\n🖨️ Custom Blank Orders: Please allow 3-5 working days for dispatch" },
   { key: "loyalty_points_per_pound", label: "Points Earned Per €1 Spent", group: "loyalty", value: "10" },
   { key: "loyalty_points_per_discount", label: "Points Needed for €1 Discount", group: "loyalty", value: "100" },
-  { key: "announcement_bar", label: "Announcement Bar Text", group: "display", value: "🎂 Free shipping on orders over €50!" },
+  { key: "announcement_bar", label: "Announcement Bar Text", group: "display", value: "🖨️ Free shipping on sublimation blanks orders over €50!" },
 ];
 
 export default function AdminSettings() {

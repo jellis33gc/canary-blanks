@@ -57,28 +57,29 @@ export default function HeroSlider() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-24 w-full">
         <div className="grid md:grid-cols-2 gap-8 items-center">
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
+            <span className="inline-block text-sm font-bold px-4 py-1.5 rounded-full mb-5 bg-primary/15 text-primary">Sublimation Blanks & Craft Supplies</span>
             <h1 className="text-5xl md:text-6xl font-extrabold leading-tight mb-4">
-              <span className="text-secondary block">Authentic</span>
-              <span className="text-primary block">Cakes &amp; Cake</span>
-              <span className="text-primary block">Supplies</span>
+              <span className="text-foreground block">Premium</span>
+              <span className="text-primary block">Sublimation</span>
+              <span className="text-primary block">Blanks</span>
             </h1>
-            <p className="text-gray-600 text-lg mb-8 max-w-md">
-              Your one-stop shop for custom cakes, toppers, decorations, and everything you need to create something magical.
+            <p className="text-muted-foreground text-lg mb-8 max-w-md">
+              Your one-stop shop for high-quality sublimation blanks, heat-press supplies, and craft essentials. Bring your designs to life.
             </p>
             <div className="flex flex-wrap gap-3">
-              <Button asChild size="lg" className="bg-primary text-white hover:bg-primary/90 font-bold rounded-full px-8">
+              <Button asChild size="lg" className="bg-primary text-primary-foreground hover:bg-primary/90 font-bold rounded-full px-8">
                 <Link to="/shop">Shop Now</Link>
               </Button>
-              <Button asChild size="lg" variant="outline" className="border-secondary text-secondary hover:bg-secondary/10 font-bold rounded-full px-8">
+              <Button asChild size="lg" variant="outline" className="border-border text-foreground hover:bg-secondary/20 font-bold rounded-full px-8">
                 <Link to="/shop">Browse Categories</Link>
               </Button>
             </div>
           </motion.div>
           <div className="flex justify-center">
-            <div className="w-72 h-72 md:w-80 md:h-80 rounded-full bg-white shadow-xl flex flex-col items-center justify-center gap-3">
-              <span className="text-6xl">🎂</span>
-              <p className="font-bold text-secondary text-lg">Handcrafted Quality</p>
-              <p className="text-gray-500 text-sm">Made with Love</p>
+            <div className="w-72 h-72 md:w-80 md:h-80 rounded-full bg-secondary shadow-xl flex flex-col items-center justify-center gap-3 border border-border">
+              <span className="text-6xl">🖨️</span>
+              <p className="font-bold text-primary text-lg">Print-Ready Quality</p>
+              <p className="text-muted-foreground text-sm">Crafted for Creatives</p>
             </div>
           </div>
         </div>
@@ -179,10 +180,10 @@ export default function HeroSlider() {
       {slides.length > 1 && (
         <>
           <button onClick={prev} className="absolute left-3 top-1/2 -translate-y-1/2 z-20 p-2.5 bg-white/80 hover:bg-white rounded-full shadow transition-all" aria-label="Previous slide">
-            <ChevronLeft className="w-5 h-5 text-secondary" />
+            <ChevronLeft className="w-5 h-5 text-primary" />
           </button>
           <button onClick={next} className="absolute right-3 top-1/2 -translate-y-1/2 z-20 p-2.5 bg-white/80 hover:bg-white rounded-full shadow transition-all" aria-label="Next slide">
-            <ChevronRight className="w-5 h-5 text-secondary" />
+            <ChevronRight className="w-5 h-5 text-primary" />
           </button>
           <div className="absolute bottom-5 left-1/2 -translate-x-1/2 z-20 flex gap-2">
             {slides.map((_, i) => (

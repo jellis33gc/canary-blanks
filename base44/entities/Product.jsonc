@@ -26,6 +26,13 @@
     "category_name": {
       "type": "string"
     },
+    "brand_id": {
+      "type": "string",
+      "description": "Reference to Brand entity"
+    },
+    "brand_name": {
+      "type": "string"
+    },
     "images": {
       "type": "array",
       "items": {
