@@ -132,7 +132,7 @@ export default function AdminPromoBanners() {
               <div className="grid grid-cols-2 gap-4">
                 <div className="col-span-2">
                   <Label>Title *</Label>
-                  <Input value={form.title} onChange={e => setForm({...form, title: e.target.value})} placeholder="e.g. Summer Sale — 20% off all sublimation blanks!" />
+                  <Input value={form.title} onChange={e => setForm({...form, title: e.target.value})} placeholder="e.g. Summer Sale — 20% off all decorations!" />
                 </div>
                 <div className="col-span-2">
                   <Label>Subtitle</Label>

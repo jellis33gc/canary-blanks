@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { ShoppingCart, Heart, User, Search, Menu, X } from "lucide-react";
+import { ShoppingCart, Heart, User, Search, Menu, X, ChevronDown } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -36,14 +36,14 @@ export default function Navbar() {
   };
 
   return (
-    <nav className="sticky top-0 z-50 bg-background border-b border-border shadow-sm">
+    <nav className="sticky top-0 z-50 bg-white border-b border-border shadow-sm">
       {/* Top info bar */}
-      <div className="bg-secondary/30 border-b border-border text-sm py-2 px-4">
+      <div className="bg-gray-50 border-b border-gray-200 text-sm py-2 px-4">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
-          <span className="text-muted-foreground">Free shipping on sublimation blanks orders over €50!</span>
+          <span className="text-gray-600">Free shipping on orders over €50!</span>
           <div className="flex items-center gap-4">
-            <Link to="/orders" className="text-muted-foreground hover:text-primary transition-colors">Track Order</Link>
-            <Link to="/contact" className="text-muted-foreground hover:text-primary transition-colors">Help</Link>
+            <Link to="/orders" className="text-gray-600 hover:text-primary transition-colors">Track Order</Link>
+            <Link to="/contact" className="text-gray-600 hover:text-primary transition-colors">Help</Link>
           </div>
         </div>
       </div>
@@ -52,7 +52,7 @@ export default function Navbar() {
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <Link to="/" className="flex items-center">
-            <img src="https://media.base44.com/images/public/6a3fafd9aa6b3dbb7c575d28/54eb08088_CanaryBlankslogo.png" alt="CanaryBlanks" className="h-12 w-auto" />
+            <img src="https://media.base44.com/images/public/6a0f27c6efeb5eb47a953fea/bf3dabfaf_BirtishFoodStores.png" alt="British Food Stores" className="h-12 w-auto" />
           </Link>
 
           {/* Desktop nav */}
@@ -65,7 +65,7 @@ export default function Navbar() {
                 href = item.custom_url;
               }
               return (
-                <Link key={item.id} to={href} className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors">
+                <Link key={item.id} to={href} className="text-sm font-medium text-gray-700 hover:text-primary transition-colors">
                   {item.label}
                 </Link>
               );
@@ -74,19 +74,19 @@ export default function Navbar() {
 
           {/* Actions */}
           <div className="flex items-center gap-1">
-            <button onClick={() => setSearchOpen(!searchOpen)} className="p-2 text-muted-foreground hover:text-primary transition-colors">
+            <button onClick={() => setSearchOpen(!searchOpen)} className="p-2 text-gray-600 hover:text-primary transition-colors">
               <Search className="w-5 h-5" />
             </button>
-            <Link to="/account" className="p-2 text-muted-foreground hover:text-primary transition-colors">
+            <Link to="/account" className="p-2 text-gray-600 hover:text-primary transition-colors">
               <User className="w-5 h-5" />
             </Link>
-            <Link to="/wishlist" className="p-2 text-muted-foreground hover:text-primary transition-colors">
+            <Link to="/wishlist" className="p-2 text-gray-600 hover:text-primary transition-colors">
               <Heart className="w-5 h-5" />
             </Link>
-            <Link to="/cart" className="relative p-2 text-muted-foreground hover:text-primary transition-colors">
+            <Link to="/cart" className="relative p-2 text-gray-600 hover:text-primary transition-colors">
               <ShoppingCart className="w-5 h-5" />
               {getTotalItems() > 0 && (
-                <span className="absolute -top-1 -right-1 bg-primary text-primary-foreground text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold">
+                <span className="absolute -top-1 -right-1 bg-primary text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold">
                   {getTotalItems()}
                 </span>
               )}
@@ -104,11 +104,11 @@ export default function Navbar() {
               <Input
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
-                placeholder="Search for sublimation blanks, mugs, supplies..."
+                placeholder="Search for cakes, toppers, decorations..."
                 className="flex-1"
                 autoFocus
               />
-              <Button type="submit" size="sm" className="bg-primary text-primary-foreground">Search</Button>
+              <Button type="submit" size="sm" className="bg-primary text-white">Search</Button>
             </form>
           </div>
         )}
@@ -124,13 +124,13 @@ export default function Navbar() {
                 href = item.custom_url;
               }
               return (
-                <Link key={item.id} to={href} className="block py-2 text-muted-foreground hover:text-primary" onClick={() => setMenuOpen(false)}>
+                <Link key={item.id} to={href} className="block py-2 text-gray-700 hover:text-primary" onClick={() => setMenuOpen(false)}>
                   {item.label}
                 </Link>
               );
             })}
-            <Link to="/account" className="block py-2 text-muted-foreground hover:text-primary" onClick={() => setMenuOpen(false)}>My Account</Link>
-            <Link to="/wishlist" className="block py-2 text-muted-foreground hover:text-primary" onClick={() => setMenuOpen(false)}>Wishlist</Link>
+            <Link to="/account" className="block py-2 text-gray-700 hover:text-primary" onClick={() => setMenuOpen(false)}>My Account</Link>
+            <Link to="/wishlist" className="block py-2 text-gray-700 hover:text-primary" onClick={() => setMenuOpen(false)}>Wishlist</Link>
           </div>
         )}
       </div>
