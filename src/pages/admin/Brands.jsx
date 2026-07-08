@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Plus, Pencil, Trash2, Upload } from "lucide-react";
+import { uploadImageFile } from "@/utils/uploadImage";
 
 const empty = { name: "", slug: "", logo: "", website: "", description: "", sort_order: 0, is_active: true };
 
@@ -38,12 +39,19 @@ export default function AdminBrands() {
   const openEdit = (b) => { setEditing(b.id); setForm({ name: b.name, slug: b.slug || "", logo: b.logo || "", website: b.website || "", description: b.description || "", sort_order: b.sort_order ?? 0, is_active: b.is_active ?? true }); setOpen(true); };
 
   const handleLogoUpload = async (e) => {
-    const file = e.target.files[0];
+    const file = e.target.files?.[0];
     if (!file) return;
     setUploading(true);
-    const { file_url } = await base44.integrations.Core.UploadFile({ file });
-    setForm(f => ({ ...f, logo: file_url }));
-    setUploading(false);
+    try {
+      const fileUrl = await uploadImageFile(file);
+      setForm(f => ({ ...f, logo: fileUrl }));
+    } catch (err) {
+      console.error("Logo upload error:", err);
+      alert(err?.message || "Failed to upload logo. Please try again.");
+    } finally {
+      setUploading(false);
+      e.target.value = "";
+    }
   };
 
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
