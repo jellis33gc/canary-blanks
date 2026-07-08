@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Save, UserPlus, Trash2 } from "lucide-react";
 
 const DEFAULT_SETTINGS = [
-  { key: "site_name", label: "Site Name", group: "general", value: "Love the Cake" },
+  { key: "site_name", label: "Site Name", group: "general", value: "Canary Blanks" },
   { key: "site_tagline", label: "Tagline", group: "general", value: "Cakes, Decorations & Party Supplies" },
   { key: "contact_email", label: "Contact Email", group: "general", value: "" },
   { key: "contact_phone", label: "Contact Phone", group: "general", value: "" },

@@ -70,7 +70,7 @@ export default function Footer() {
         </div>
 
         <div className="border-t border-gray-200 mt-8 pt-6 flex flex-col md:flex-row justify-between items-center gap-3 text-sm text-gray-400">
-          <p>© 2026 Love the Cake. All rights reserved.</p>
+          <p>© 2026 Canary Blanks. All rights reserved.</p>
           <div className="flex gap-4">
             <Link to="/privacy" className="hover:text-primary transition-colors">Privacy Policy</Link>
             <Link to="/terms" className="hover:text-primary transition-colors">Terms of Use</Link>
