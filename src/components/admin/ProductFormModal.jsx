@@ -180,9 +180,15 @@ export default function ProductFormModal({ product, categories, onSave, onClose 
     const file = e.target.files[0];
     if (!file) return;
     setUploading(true);
-    const { file_url } = await base44.integrations.Core.UploadFile({ file });
-    set("images", [...form.images, file_url]);
+    try {
+      const { file_url } = await base44.integrations.Core.UploadFile({ file });
+      setForm(f => ({ ...f, images: [...(f.images || []), file_url] }));
+    } catch (err) {
+      console.error("Image upload error:", err);
+      alert("Failed to upload image. Please try again.");
+    }
     setUploading(false);
+    e.target.value = "";
   };
 
   // ── SAVE ────────────────────────────────────────────────────────────────
