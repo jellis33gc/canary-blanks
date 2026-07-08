@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, Edit, Trash2, X, Save, Upload, ChevronRight, ArrowUp, ArrowDown } from "lucide-react";
+import { uploadImageFile } from "@/utils/uploadImage";
 
 export default function AdminCategories() {
   const [categories, setCategories] = useState([]);
@@ -60,12 +61,19 @@ export default function AdminCategories() {
   };
 
   const handleImageUpload = async (e) => {
-    const file = e.target.files[0];
+    const file = e.target.files?.[0];
     if (!file) return;
     setUploading(true);
-    const { file_url } = await base44.integrations.Core.UploadFile({ file });
-    setForm(f => ({ ...f, image: file_url }));
-    setUploading(false);
+    try {
+      const fileUrl = await uploadImageFile(file);
+      setForm(f => ({ ...f, image: fileUrl }));
+    } catch (err) {
+      console.error("Category image upload error:", err);
+      alert(err?.message || "Failed to upload image. Please try again.");
+    } finally {
+      setUploading(false);
+      e.target.value = "";
+    }
   };
 
   const topLevel = categories.filter(c => !c.parent_id).sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0));
