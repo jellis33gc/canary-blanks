@@ -7,6 +7,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { X, Plus, Upload, Trash2, RefreshCw, BookmarkPlus, Library } from "lucide-react";
+import { uploadImageFile } from "@/utils/uploadImage";
 
 // ─── helpers ────────────────────────────────────────────────────────────────
 
@@ -177,18 +178,19 @@ export default function ProductFormModal({ product, categories, onSave, onClose 
 
   // ── image upload ────────────────────────────────────────────────────────
   const handleImageUpload = async (e) => {
-    const file = e.target.files[0];
+    const file = e.target.files?.[0];
     if (!file) return;
     setUploading(true);
     try {
-      const { file_url } = await base44.integrations.Core.UploadFile({ file });
-      setForm(f => ({ ...f, images: [...(f.images || []), file_url] }));
+      const fileUrl = await uploadImageFile(file);
+      setForm(f => ({ ...f, images: [...(f.images || []), fileUrl] }));
     } catch (err) {
       console.error("Image upload error:", err);
-      alert("Failed to upload image. Please try again.");
+      alert(err?.message || "Failed to upload image. Please try again.");
+    } finally {
+      setUploading(false);
+      e.target.value = "";
     }
-    setUploading(false);
-    e.target.value = "";
   };
 
   // ── SAVE ────────────────────────────────────────────────────────────────
