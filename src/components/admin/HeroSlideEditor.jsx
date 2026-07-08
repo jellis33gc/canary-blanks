@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, Trash2, Save, GripVertical, Upload, X } from "lucide-react";
+import { uploadImageFile } from "@/utils/uploadImage";
 
 const BG_OPTIONS = [
   { value: "from-pink-400 via-rose-400 to-fuchsia-500", label: "🌸 Pink / Rose" },
@@ -158,12 +159,19 @@ export default function HeroSlideEditor() {
                       accept="image/*"
                       className="hidden"
                       onChange={async (e) => {
-                        const file = e.target.files[0];
+                        const file = e.target.files?.[0];
                         if (!file) return;
                         update(slide.id, "_uploading", true);
-                        const { file_url } = await base44.integrations.Core.UploadFile({ file });
-                        update(slide.id, "bg_image", file_url);
-                        update(slide.id, "_uploading", false);
+                        try {
+                          const fileUrl = await uploadImageFile(file);
+                          update(slide.id, "bg_image", fileUrl);
+                        } catch (err) {
+                          console.error("Hero image upload error:", err);
+                          alert(err?.message || "Failed to upload image. Please try again.");
+                        } finally {
+                          update(slide.id, "_uploading", false);
+                          e.target.value = "";
+                        }
                       }}
                     />
                     {slide._uploading && <span className="text-xs text-primary ml-2">Uploading…</span>}
