@@ -116,41 +116,30 @@ export default function HeroSlider() {
             exit="exit"
             className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-24"
           >
-            <div className="grid md:grid-cols-2 gap-8 items-center">
-              <div>
-                {slide.badge && (
-                  <span className="inline-block text-sm font-bold px-4 py-1.5 rounded-full mb-5 bg-white/20 text-white backdrop-blur-sm">
-                    {slide.badge}
-                  </span>
+            <div className="max-w-xl">
+              {slide.badge && (
+                <span className="inline-block text-sm font-bold px-4 py-1.5 rounded-full mb-5 bg-white/20 text-white backdrop-blur-sm">
+                  {slide.badge}
+                </span>
+              )}
+              <h1 className="text-5xl md:text-6xl font-extrabold leading-tight mb-4">
+                {(slide.title || "").split("\n").map((line, i) => (
+                  <span key={i} className="text-white block drop-shadow-md">{line}</span>
+                ))}
+              </h1>
+              {slide.subtitle && (
+                <p className="text-white/90 text-lg mb-8 max-w-md drop-shadow">{slide.subtitle}</p>
+              )}
+              <div className="flex flex-wrap gap-3">
+                {slide.cta_label && slide.cta_url && (
+                  <Button asChild size="lg" className="bg-white text-secondary hover:bg-white/90 font-bold rounded-full px-8 shadow-lg">
+                    <Link to={slide.cta_url}>{slide.cta_label}</Link>
+                  </Button>
                 )}
-                <h1 className="text-5xl md:text-6xl font-extrabold leading-tight mb-4">
-                  {(slide.title || "").split("\n").map((line, i) => (
-                    <span key={i} className="text-white block drop-shadow-md">{line}</span>
-                  ))}
-                </h1>
-                {slide.subtitle && (
-                  <p className="text-white/90 text-lg mb-8 max-w-md drop-shadow">{slide.subtitle}</p>
-                )}
-                <div className="flex flex-wrap gap-3">
-                  {slide.cta_label && slide.cta_url && (
-                    <Button asChild size="lg" className="bg-white text-secondary hover:bg-white/90 font-bold rounded-full px-8 shadow-lg">
-                      <Link to={slide.cta_url}>{slide.cta_label}</Link>
-                    </Button>
-                  )}
-                  {slide.cta2_label && slide.cta2_url && (
-                    <Button asChild size="lg" className="bg-white/20 border border-white text-white hover:bg-white/30 font-bold rounded-full px-8 backdrop-blur-sm">
-                      <Link to={slide.cta2_url}>{slide.cta2_label}</Link>
-                    </Button>
-                  )}
-                </div>
-              </div>
-              <div className="flex justify-center">
-                {slide.bg_image ? null : (
-                  <div className="w-64 h-64 md:w-72 md:h-72 rounded-full bg-white/20 backdrop-blur-sm shadow-xl flex flex-col items-center justify-center gap-3 border border-white/30">
-                    <span className="text-6xl">{(slide.emoji || "").split(" ")[0] || "🎂"}</span>
-                    <p className="font-bold text-white text-lg drop-shadow">Handcrafted Quality</p>
-                    <p className="text-white/80 text-sm">Made with Love</p>
-                  </div>
+                {slide.cta2_label && slide.cta2_url && (
+                  <Button asChild size="lg" className="bg-white/20 border border-white text-white hover:bg-white/30 font-bold rounded-full px-8 backdrop-blur-sm">
+                    <Link to={slide.cta2_url}>{slide.cta2_label}</Link>
+                  </Button>
                 )}
               </div>
             </div>
