@@ -91,61 +91,83 @@ export default function HeroSlider() {
 
   const slide = slides[current];
 
+  const renderContent = () => (
+    <div className="max-w-xl">
+      {slide.badge && (
+        <span className="inline-block text-sm font-bold px-4 py-1.5 rounded-full mb-5 bg-white/20 text-white backdrop-blur-sm">
+          {slide.badge}
+        </span>
+      )}
+      <h1 className="text-5xl md:text-6xl font-extrabold leading-tight mb-4">
+        {(slide.title || "").split("\n").map((line, i) => (
+          <span key={i} className="text-white block drop-shadow-md">{line}</span>
+        ))}
+      </h1>
+      {slide.subtitle && (
+        <p className="text-white/90 text-lg mb-8 max-w-md drop-shadow">{slide.subtitle}</p>
+      )}
+      <div className="flex flex-wrap gap-3">
+        {slide.cta_label && slide.cta_url && (
+          <Button asChild size="lg" className="bg-white text-secondary hover:bg-white/90 font-bold rounded-full px-8 shadow-lg">
+            <Link to={slide.cta_url}>{slide.cta_label}</Link>
+          </Button>
+        )}
+        {slide.cta2_label && slide.cta2_url && (
+          <Button asChild size="lg" className="bg-white/20 border border-white text-white hover:bg-white/30 font-bold rounded-full px-8 backdrop-blur-sm">
+            <Link to={slide.cta2_url}>{slide.cta2_label}</Link>
+          </Button>
+        )}
+      </div>
+    </div>
+  );
+
   return (
     <section
-      className={`relative overflow-hidden flex items-center ${slide.bg_image ? 'min-h-[300px] md:min-h-[400px]' : 'min-h-[520px]'}`}
+      className="relative overflow-hidden"
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}
     >
       {slide.bg_image ? (
-        <img src={slide.bg_image} alt="" className="w-full h-auto max-h-[600px] object-contain block" />
+        <div className="relative w-full">
+          <img src={slide.bg_image} alt="" className="w-full h-auto block" />
+          <div className="absolute inset-0 bg-black/20 pointer-events-none" />
+          <div className="absolute inset-0 z-10 flex items-center">
+            <AnimatePresence initial={false} custom={direction} mode="wait">
+              <motion.div
+                key={`content-${slide.id}`}
+                custom={direction}
+                variants={contentVariants}
+                initial="enter"
+                animate="center"
+                exit="exit"
+                className="w-full px-4 sm:px-6 lg:px-8 py-16 md:py-24"
+              >
+                {renderContent()}
+              </motion.div>
+            </AnimatePresence>
+          </div>
+        </div>
       ) : (
-        <div className={`absolute inset-0 w-full h-full bg-gradient-to-br ${slide.bg || "from-pink-400 via-rose-400 to-fuchsia-500"}`} />
+        <div className="relative min-h-[520px] flex items-center">
+          <div className={`absolute inset-0 w-full h-full bg-gradient-to-br ${slide.bg || "from-pink-400 via-rose-400 to-fuchsia-500"}`} />
+          <div className="absolute inset-0 bg-black/20 pointer-events-none" />
+          <div className="relative z-10 w-full">
+            <AnimatePresence initial={false} custom={direction} mode="wait">
+              <motion.div
+                key={`content-${slide.id}`}
+                custom={direction}
+                variants={contentVariants}
+                initial="enter"
+                animate="center"
+                exit="exit"
+                className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-24"
+              >
+                {renderContent()}
+              </motion.div>
+            </AnimatePresence>
+          </div>
+        </div>
       )}
-      <div className="absolute inset-0 bg-black/20 pointer-events-none" />
-
-      {/* Content layer */}
-      <div className="relative z-10 w-full">
-        <AnimatePresence initial={false} custom={direction} mode="wait">
-          <motion.div
-            key={`content-${slide.id}`}
-            custom={direction}
-            variants={contentVariants}
-            initial="enter"
-            animate="center"
-            exit="exit"
-            className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-24"
-          >
-            <div className="max-w-xl">
-              {slide.badge && (
-                <span className="inline-block text-sm font-bold px-4 py-1.5 rounded-full mb-5 bg-white/20 text-white backdrop-blur-sm">
-                  {slide.badge}
-                </span>
-              )}
-              <h1 className="text-5xl md:text-6xl font-extrabold leading-tight mb-4">
-                {(slide.title || "").split("\n").map((line, i) => (
-                  <span key={i} className="text-white block drop-shadow-md">{line}</span>
-                ))}
-              </h1>
-              {slide.subtitle && (
-                <p className="text-white/90 text-lg mb-8 max-w-md drop-shadow">{slide.subtitle}</p>
-              )}
-              <div className="flex flex-wrap gap-3">
-                {slide.cta_label && slide.cta_url && (
-                  <Button asChild size="lg" className="bg-white text-secondary hover:bg-white/90 font-bold rounded-full px-8 shadow-lg">
-                    <Link to={slide.cta_url}>{slide.cta_label}</Link>
-                  </Button>
-                )}
-                {slide.cta2_label && slide.cta2_url && (
-                  <Button asChild size="lg" className="bg-white/20 border border-white text-white hover:bg-white/30 font-bold rounded-full px-8 backdrop-blur-sm">
-                    <Link to={slide.cta2_url}>{slide.cta2_label}</Link>
-                  </Button>
-                )}
-              </div>
-            </div>
-          </motion.div>
-        </AnimatePresence>
-      </div>
 
       {/* Nav arrows */}
       {slides.length > 1 && (
