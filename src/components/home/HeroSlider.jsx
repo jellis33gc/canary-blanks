@@ -93,17 +93,16 @@ export default function HeroSlider() {
 
   return (
     <section
-      className="relative overflow-hidden flex items-center min-h-[520px]"
+      className={`relative overflow-hidden flex items-center ${slide.bg_image ? 'min-h-[300px] md:min-h-[400px]' : 'min-h-[520px]'}`}
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}
     >
       {slide.bg_image ? (
-        <img src={slide.bg_image} alt="" className="absolute inset-0 w-full h-full object-cover" />
+        <img src={slide.bg_image} alt="" className="w-full h-auto max-h-[600px] object-contain block" />
       ) : (
         <div className={`absolute inset-0 w-full h-full bg-gradient-to-br ${slide.bg || "from-pink-400 via-rose-400 to-fuchsia-500"}`} />
       )}
-      {/* Overlay for readability */}
-      <div className="absolute inset-0 bg-black/20" />
+      <div className="absolute inset-0 bg-black/20 pointer-events-none" />
 
       {/* Content layer */}
       <div className="relative z-10 w-full">
