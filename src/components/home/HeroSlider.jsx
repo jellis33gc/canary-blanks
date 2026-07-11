@@ -99,9 +99,13 @@ export default function HeroSlider() {
         </span>
       )}
       <h1 className="text-5xl md:text-6xl font-extrabold leading-tight mb-4">
-        {(slide.title || "").split("\n").map((line, i) => (
-          <span key={i} className="text-white block drop-shadow-md">{line}</span>
-        ))}
+        {(slide.title || "").split("\n").map((line, i) => {
+          const m = line.match(/^\[(white|dark|primary)\](.*)/);
+          const color = m ? m[1] : "white";
+          const text = m ? m[2] : line;
+          const colorClass = color === "dark" ? "text-foreground" : color === "primary" ? "text-primary" : "text-white";
+          return <span key={i} className={`${colorClass} block drop-shadow-md`}>{text}</span>;
+        })}
       </h1>
       {slide.subtitle && (
         <p className="text-white/90 text-lg mb-8 max-w-md drop-shadow">{slide.subtitle}</p>

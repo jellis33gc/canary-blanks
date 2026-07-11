@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -137,8 +138,8 @@ export default function HeroSlideEditor() {
                 </Select>
               </div>
               <div className="space-y-1 md:col-span-2">
-                <Label className="text-xs">Title (use \n for line breaks)</Label>
-                <Input value={slide.title || ""} onChange={e => update(slide.id, "title", e.target.value)} placeholder="e.g. Bake Magic\nHappen!" className="rounded-xl h-9" />
+                <Label className="text-xs">Title — press Enter for line breaks; optionally prefix a line with [white], [dark], or [primary] to colour it</Label>
+                <Textarea value={slide.title || ""} onChange={e => update(slide.id, "title", e.target.value)} placeholder={"[dark]Premium\n[primary]Sublimation\n[primary]Blanks"} className="rounded-xl min-h-[80px] resize-y" />
               </div>
               <div className="space-y-1 md:col-span-2">
                 <Label className="text-xs">Subtitle</Label>
