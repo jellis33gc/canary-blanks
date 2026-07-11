@@ -93,34 +93,20 @@ export default function HeroSlider() {
 
   return (
     <section
-      className={`relative overflow-hidden flex items-center ${slide.bg_image ? '' : 'min-h-[520px]'}`}
+      className="relative overflow-hidden flex items-center min-h-[520px]"
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}
     >
-      {/* Parallax background layer */}
-      <AnimatePresence initial={false} custom={direction}>
-        <motion.div
-          key={`bg-${slide.id}`}
-          custom={direction}
-          variants={bgVariants}
-          initial="enter"
-          animate="center"
-          exit="exit"
-          className={slide.bg_image ? "w-full" : "absolute inset-0 w-full h-full"}
-          style={{ willChange: "transform" }}
-        >
-          {slide.bg_image ? (
-            <img src={slide.bg_image} alt="" className="w-full h-auto block" />
-          ) : (
-            <div className={`w-full h-full bg-gradient-to-br ${slide.bg || "from-pink-400 via-rose-400 to-fuchsia-500"}`} />
-          )}
-          {/* Overlay for readability */}
-          <div className="absolute inset-0 bg-black/20" />
-        </motion.div>
-      </AnimatePresence>
+      {slide.bg_image ? (
+        <img src={slide.bg_image} alt="" className="absolute inset-0 w-full h-full object-cover" />
+      ) : (
+        <div className={`absolute inset-0 w-full h-full bg-gradient-to-br ${slide.bg || "from-pink-400 via-rose-400 to-fuchsia-500"}`} />
+      )}
+      {/* Overlay for readability */}
+      <div className="absolute inset-0 bg-black/20" />
 
       {/* Content layer */}
-      <div className="absolute inset-0 z-10 w-full flex items-center">
+      <div className="relative z-10 w-full">
         <AnimatePresence initial={false} custom={direction} mode="wait">
           <motion.div
             key={`content-${slide.id}`}
