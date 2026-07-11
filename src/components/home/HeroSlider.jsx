@@ -112,7 +112,7 @@ export default function HeroSlider() {
             <Link to={slide.cta_url}>{slide.cta_label}</Link>
           </Button>
         )}
-        {slide.cta2_label && slide.cta2_url && (
+        {slide.cta2_enabled && slide.cta2_label && slide.cta2_url && (
           <Button asChild size="lg" className="bg-white/20 border border-white text-white hover:bg-white/30 font-bold rounded-full px-8 backdrop-blur-sm">
             <Link to={slide.cta2_url}>{slide.cta2_label}</Link>
           </Button>

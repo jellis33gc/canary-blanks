@@ -196,53 +196,61 @@ export default function HeroSlideEditor() {
               )}
               <div className="space-y-1">
                 <Label className="text-xs">Secondary Button Label</Label>
-                <Input value={slide.cta2_label || ""} onChange={e => update(slide.id, "cta2_label", e.target.value)} placeholder="View All" className="rounded-xl h-9" />
+                <Input value={slide.cta2_label || ""} onChange={e => update(slide.id, "cta2_label", e.target.value)} placeholder="View All" className="rounded-xl h-9" disabled={!slide.cta2_enabled} />
               </div>
-              <div className="space-y-1">
-                <Label className="text-xs">Secondary Button — Link Type</Label>
-                <Select
-                  value={getLinkType(slide.cta2_url)}
-                  onValueChange={v => update(slide.id, "cta2_url", buildLinkUrl(v, getLinkValue(slide.cta2_url, v)))}
-                >
-                  <SelectTrigger className="rounded-xl h-9"><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="custom">Custom URL</SelectItem>
-                    <SelectItem value="category">Category</SelectItem>
-                    <SelectItem value="tag">Tag</SelectItem>
-                  </SelectContent>
-                </Select>
+              <div className="flex items-center gap-2 pb-1.5">
+                <Switch checked={!!slide.cta2_enabled} onCheckedChange={v => update(slide.id, "cta2_enabled", v)} />
+                <Label className="text-xs">Enable Secondary Button</Label>
               </div>
-              {getLinkType(slide.cta2_url) === "category" ? (
-                <div className="space-y-1 md:col-span-2">
-                  <Label className="text-xs">Secondary Button — Category</Label>
-                  <Select
-                    value={getLinkValue(slide.cta2_url, "category")}
-                    onValueChange={v => update(slide.id, "cta2_url", buildLinkUrl("category", v))}
-                  >
-                    <SelectTrigger className="rounded-xl h-9"><SelectValue placeholder="Select category…" /></SelectTrigger>
-                    <SelectContent>
-                      {categories.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
-                </div>
-              ) : getLinkType(slide.cta2_url) === "tag" ? (
-                <div className="space-y-1 md:col-span-2">
-                  <Label className="text-xs">Secondary Button — Tag</Label>
-                  <Select
-                    value={getLinkValue(slide.cta2_url, "tag")}
-                    onValueChange={v => update(slide.id, "cta2_url", buildLinkUrl("tag", v))}
-                  >
-                    <SelectTrigger className="rounded-xl h-9"><SelectValue placeholder="Select tag…" /></SelectTrigger>
-                    <SelectContent>
-                      {tags.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
-                </div>
-              ) : (
-                <div className="space-y-1 md:col-span-2">
-                  <Label className="text-xs">Secondary Button URL</Label>
-                  <Input value={slide.cta2_url || ""} onChange={e => update(slide.id, "cta2_url", e.target.value)} placeholder="/shop" className="rounded-xl h-9" />
-                </div>
+              {slide.cta2_enabled && (
+                <>
+                  <div className="space-y-1">
+                    <Label className="text-xs">Secondary Button — Link Type</Label>
+                    <Select
+                      value={getLinkType(slide.cta2_url)}
+                      onValueChange={v => update(slide.id, "cta2_url", buildLinkUrl(v, getLinkValue(slide.cta2_url, v)))}
+                    >
+                      <SelectTrigger className="rounded-xl h-9"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="custom">Custom URL</SelectItem>
+                        <SelectItem value="category">Category</SelectItem>
+                        <SelectItem value="tag">Tag</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  {getLinkType(slide.cta2_url) === "category" ? (
+                    <div className="space-y-1 md:col-span-2">
+                      <Label className="text-xs">Secondary Button — Category</Label>
+                      <Select
+                        value={getLinkValue(slide.cta2_url, "category")}
+                        onValueChange={v => update(slide.id, "cta2_url", buildLinkUrl("category", v))}
+                      >
+                        <SelectTrigger className="rounded-xl h-9"><SelectValue placeholder="Select category…" /></SelectTrigger>
+                        <SelectContent>
+                          {categories.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  ) : getLinkType(slide.cta2_url) === "tag" ? (
+                    <div className="space-y-1 md:col-span-2">
+                      <Label className="text-xs">Secondary Button — Tag</Label>
+                      <Select
+                        value={getLinkValue(slide.cta2_url, "tag")}
+                        onValueChange={v => update(slide.id, "cta2_url", buildLinkUrl("tag", v))}
+                      >
+                        <SelectTrigger className="rounded-xl h-9"><SelectValue placeholder="Select tag…" /></SelectTrigger>
+                        <SelectContent>
+                          {tags.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  ) : (
+                    <div className="space-y-1 md:col-span-2">
+                      <Label className="text-xs">Secondary Button URL</Label>
+                      <Input value={slide.cta2_url || ""} onChange={e => update(slide.id, "cta2_url", e.target.value)} placeholder="/shop" className="rounded-xl h-9" />
+                    </div>
+                  )}
+                </>
               )}
               <div className="space-y-1 md:col-span-2">
                 <Label className="text-xs">Emojis (space-separated, up to 4 — ignored when a background image is set)</Label>

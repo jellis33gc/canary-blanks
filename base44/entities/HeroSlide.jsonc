@@ -25,6 +25,10 @@
     "cta_url": {
       "type": "string"
     },
+    "cta2_enabled": {
+      "type": "boolean",
+      "default": false
+    },
     "cta2_label": {
       "type": "string"
     },
