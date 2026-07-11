@@ -23,6 +23,7 @@ export default function Shop() {
   const [showOnSale, setShowOnSale] = useState(false);
   const [showFeatured, setShowFeatured] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [selectedTag, setSelectedTag] = useState("");
   const [selectedBrand, setSelectedBrand] = useState("");
   const [brands, setBrands] = useState([]);
   const [wishlist, setWishlist] = useState([]);
@@ -36,6 +37,7 @@ export default function Shop() {
     setShowOnSale(urlParams.get("sale") === "true");
     setShowFeatured(urlParams.get("featured") === "true");
     setSearchQuery(urlParams.get("search") || "");
+    setSelectedTag(urlParams.get("tag") || "");
   }, [location.search]);
 
   useEffect(() => {
@@ -98,6 +100,7 @@ export default function Shop() {
     if (showOnSale && !p.is_on_sale) return false;
     if (showFeatured && !p.is_featured) return false;
     if (p.price < priceRange[0] || p.price > priceRange[1]) return false;
+    if (selectedTag && (!p.tags || !p.tags.includes(selectedTag))) return false;
     if (searchQuery && !p.name.toLowerCase().includes(searchQuery.toLowerCase()) && !p.description?.toLowerCase().includes(searchQuery.toLowerCase())) return false;
     return true;
   }).sort((a, b) => {
@@ -115,7 +118,7 @@ export default function Shop() {
         <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
           <div>
             <h1 className="font-brand text-3xl text-gradient">
-              {searchQuery ? `Search: "${searchQuery}"` : selectedCategory ? categories.find(c => c.id === selectedCategory)?.name : "All Products"}
+              {selectedTag ? `Tag: ${selectedTag}` : searchQuery ? `Search: "${searchQuery}"` : selectedCategory ? categories.find(c => c.id === selectedCategory)?.name : "All Products"}
             </h1>
             <p className="text-muted-foreground mt-1">{filtered.length} products found</p>
           </div>

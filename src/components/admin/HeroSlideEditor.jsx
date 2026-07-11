@@ -31,14 +31,40 @@ const empty = () => ({
   sort_order: 0,
 });
 
+const getLinkType = (url) => {
+  if (!url) return "custom";
+  if (url.startsWith("/shop?category=")) return "category";
+  if (url.startsWith("/shop?tag=")) return "tag";
+  return "custom";
+};
+
+const getLinkValue = (url, type) => {
+  if (type === "category") return url?.replace("/shop?category=", "") || "";
+  if (type === "tag") return decodeURIComponent(url?.replace("/shop?tag=", "") || "");
+  return url || "";
+};
+
+const buildLinkUrl = (type, value) => {
+  if (type === "category") return value ? `/shop?category=${value}` : "/shop";
+  if (type === "tag") return value ? `/shop?tag=${encodeURIComponent(value)}` : "/shop";
+  return value || "/shop";
+};
+
 export default function HeroSlideEditor() {
   const [slides, setSlides] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [tags, setTags] = useState([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [expanded, setExpanded] = useState(null);
 
   useEffect(() => {
     base44.entities.HeroSlide.list("sort_order").then(s => { setSlides(s); setLoading(false); });
+    base44.entities.Category.filter({ is_active: true }, "sort_order").then(setCategories);
+    base44.entities.Product.filter({ is_active: true }, "-created_date", 200).then(prods => {
+      const allTags = [...new Set(prods.flatMap(p => p.tags || []))].sort();
+      setTags(allTags);
+    });
   }, []);
 
   const update = (id, key, value) => {
@@ -123,17 +149,101 @@ export default function HeroSlideEditor() {
                 <Input value={slide.cta_label || ""} onChange={e => update(slide.id, "cta_label", e.target.value)} placeholder="Shop Now" className="rounded-xl h-9" />
               </div>
               <div className="space-y-1">
-                <Label className="text-xs">Primary Button URL</Label>
-                <Input value={slide.cta_url || ""} onChange={e => update(slide.id, "cta_url", e.target.value)} placeholder="/shop" className="rounded-xl h-9" />
+                <Label className="text-xs">Primary Button — Link Type</Label>
+                <Select
+                  value={getLinkType(slide.cta_url)}
+                  onValueChange={v => update(slide.id, "cta_url", buildLinkUrl(v, getLinkValue(slide.cta_url, v)))}
+                >
+                  <SelectTrigger className="rounded-xl h-9"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="custom">Custom URL</SelectItem>
+                    <SelectItem value="category">Category</SelectItem>
+                    <SelectItem value="tag">Tag</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
+              {getLinkType(slide.cta_url) === "category" ? (
+                <div className="space-y-1 md:col-span-2">
+                  <Label className="text-xs">Primary Button — Category</Label>
+                  <Select
+                    value={getLinkValue(slide.cta_url, "category")}
+                    onValueChange={v => update(slide.id, "cta_url", buildLinkUrl("category", v))}
+                  >
+                    <SelectTrigger className="rounded-xl h-9"><SelectValue placeholder="Select category…" /></SelectTrigger>
+                    <SelectContent>
+                      {categories.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+              ) : getLinkType(slide.cta_url) === "tag" ? (
+                <div className="space-y-1 md:col-span-2">
+                  <Label className="text-xs">Primary Button — Tag</Label>
+                  <Select
+                    value={getLinkValue(slide.cta_url, "tag")}
+                    onValueChange={v => update(slide.id, "cta_url", buildLinkUrl("tag", v))}
+                  >
+                    <SelectTrigger className="rounded-xl h-9"><SelectValue placeholder="Select tag…" /></SelectTrigger>
+                    <SelectContent>
+                      {tags.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+              ) : (
+                <div className="space-y-1 md:col-span-2">
+                  <Label className="text-xs">Primary Button URL</Label>
+                  <Input value={slide.cta_url || ""} onChange={e => update(slide.id, "cta_url", e.target.value)} placeholder="/shop" className="rounded-xl h-9" />
+                </div>
+              )}
               <div className="space-y-1">
                 <Label className="text-xs">Secondary Button Label</Label>
                 <Input value={slide.cta2_label || ""} onChange={e => update(slide.id, "cta2_label", e.target.value)} placeholder="View All" className="rounded-xl h-9" />
               </div>
               <div className="space-y-1">
-                <Label className="text-xs">Secondary Button URL</Label>
-                <Input value={slide.cta2_url || ""} onChange={e => update(slide.id, "cta2_url", e.target.value)} placeholder="/shop" className="rounded-xl h-9" />
+                <Label className="text-xs">Secondary Button — Link Type</Label>
+                <Select
+                  value={getLinkType(slide.cta2_url)}
+                  onValueChange={v => update(slide.id, "cta2_url", buildLinkUrl(v, getLinkValue(slide.cta2_url, v)))}
+                >
+                  <SelectTrigger className="rounded-xl h-9"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="custom">Custom URL</SelectItem>
+                    <SelectItem value="category">Category</SelectItem>
+                    <SelectItem value="tag">Tag</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
+              {getLinkType(slide.cta2_url) === "category" ? (
+                <div className="space-y-1 md:col-span-2">
+                  <Label className="text-xs">Secondary Button — Category</Label>
+                  <Select
+                    value={getLinkValue(slide.cta2_url, "category")}
+                    onValueChange={v => update(slide.id, "cta2_url", buildLinkUrl("category", v))}
+                  >
+                    <SelectTrigger className="rounded-xl h-9"><SelectValue placeholder="Select category…" /></SelectTrigger>
+                    <SelectContent>
+                      {categories.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+              ) : getLinkType(slide.cta2_url) === "tag" ? (
+                <div className="space-y-1 md:col-span-2">
+                  <Label className="text-xs">Secondary Button — Tag</Label>
+                  <Select
+                    value={getLinkValue(slide.cta2_url, "tag")}
+                    onValueChange={v => update(slide.id, "cta2_url", buildLinkUrl("tag", v))}
+                  >
+                    <SelectTrigger className="rounded-xl h-9"><SelectValue placeholder="Select tag…" /></SelectTrigger>
+                    <SelectContent>
+                      {tags.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+              ) : (
+                <div className="space-y-1 md:col-span-2">
+                  <Label className="text-xs">Secondary Button URL</Label>
+                  <Input value={slide.cta2_url || ""} onChange={e => update(slide.id, "cta2_url", e.target.value)} placeholder="/shop" className="rounded-xl h-9" />
+                </div>
+              )}
               <div className="space-y-1 md:col-span-2">
                 <Label className="text-xs">Emojis (space-separated, up to 4 — ignored when a background image is set)</Label>
                 <Input value={slide.emoji || ""} onChange={e => update(slide.id, "emoji", e.target.value)} placeholder="🎂 🧁 🎀 🍰" className="rounded-xl h-9" />
