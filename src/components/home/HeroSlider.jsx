@@ -93,7 +93,7 @@ export default function HeroSlider() {
 
   return (
     <section
-      className="relative overflow-hidden min-h-[520px] flex items-center"
+      className={`relative overflow-hidden flex items-center ${slide.bg_image ? '' : 'min-h-[520px]'}`}
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}
     >
@@ -106,14 +106,11 @@ export default function HeroSlider() {
           initial="enter"
           animate="center"
           exit="exit"
-          className="absolute inset-0 w-full h-full"
+          className={slide.bg_image ? "w-full" : "absolute inset-0 w-full h-full"}
           style={{ willChange: "transform" }}
         >
           {slide.bg_image ? (
-            <div
-              className="w-full h-full bg-cover bg-center"
-              style={{ backgroundImage: `url(${slide.bg_image})` }}
-            />
+            <img src={slide.bg_image} alt="" className="w-full h-auto block" />
           ) : (
             <div className={`w-full h-full bg-gradient-to-br ${slide.bg || "from-pink-400 via-rose-400 to-fuchsia-500"}`} />
           )}
@@ -123,7 +120,7 @@ export default function HeroSlider() {
       </AnimatePresence>
 
       {/* Content layer */}
-      <div className="relative z-10 w-full">
+      <div className="absolute inset-0 z-10 w-full flex items-center">
         <AnimatePresence initial={false} custom={direction} mode="wait">
           <motion.div
             key={`content-${slide.id}`}
