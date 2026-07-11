@@ -86,7 +86,7 @@ export default function Cart() {
                 <motion.div key={`${item.product_id}-${item.variant}`} initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }}
                   className="bg-card border border-border rounded-2xl p-4 flex gap-4 items-center">
                   <div className="w-20 h-20 rounded-xl overflow-hidden bg-muted shrink-0">
-                    {item.image ? <img src={item.image} alt={item.product_name} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-3xl">🎂</div>}
+                    {item.image ? <img src={item.image} alt={item.product_name} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center bg-muted"><img src="https://media.base44.com/images/public/6a3fafd9aa6b3dbb7c575d28/662e2144c_CanaryBlankslogo.png" alt="Canary Blanks" className="w-full h-full object-contain opacity-40" /></div>}
                   </div>
                   <div className="flex-1 min-w-0">
                     <h3 className="font-bold truncate">{item.product_name}</h3>

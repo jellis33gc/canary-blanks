@@ -187,14 +187,16 @@ export default function ProductPage() {
               {images[selectedImage] ? (
                 <img src={images[selectedImage]} alt={product.name} className="w-full h-full object-cover" />
               ) : (
-                <div className="w-full h-full flex items-center justify-center text-8xl">🎂</div>
+                <div className="w-full h-full flex items-center justify-center bg-muted">
+                  <img src="https://media.base44.com/images/public/6a3fafd9aa6b3dbb7c575d28/662e2144c_CanaryBlankslogo.png" alt="Canary Blanks" className="w-2/3 h-auto object-contain opacity-40" />
+                </div>
               )}
             </div>
             {images.length > 1 && (
               <div className="flex gap-2 overflow-x-auto">
                 {images.map((img, i) => (
                   <button key={i} onClick={() => setSelectedImage(i)} className={`w-16 h-16 rounded-xl overflow-hidden border-2 transition-all shrink-0 ${selectedImage === i ? 'border-primary' : 'border-border'}`}>
-                    {img ? <img src={img} alt="" className="w-full h-full object-cover" /> : <span>🎂</span>}
+                    {img ? <img src={img} alt="" className="w-full h-full object-cover" /> : <img src="https://media.base44.com/images/public/6a3fafd9aa6b3dbb7c575d28/662e2144c_CanaryBlankslogo.png" alt="Canary Blanks" className="w-full h-full object-contain opacity-40" />}
                   </button>
                 ))}
               </div>

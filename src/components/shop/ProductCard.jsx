@@ -54,7 +54,7 @@ export default function ProductCard({ product, wishlist = [], onWishlistToggle }
             <img src={product.images[0]} alt={product.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
           ) : (
             <div className="w-full h-full flex items-center justify-center bg-gray-50 p-8">
-              <img src="https://media.base44.com/images/public/6a0f27c6efeb5eb47a953fea/bf3dabfaf_BirtishFoodStores.png" alt="British Food Stores" className="w-full h-full object-contain opacity-40" />
+              <img src="https://media.base44.com/images/public/6a3fafd9aa6b3dbb7c575d28/662e2144c_CanaryBlankslogo.png" alt="Canary Blanks" className="w-full h-full object-contain opacity-40" />
             </div>
           )}
           {product.is_featured && (
