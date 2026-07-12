@@ -1,4 +1,5 @@
-import { createContext, useContext, useState, useCallback } from "react";
+import { createContext, useContext, useState, useCallback, useEffect } from "react";
+import { useCartTracking } from "@/components/marketing/useCartTracking";
 
 const CartContext = createContext(null);
 
@@ -10,6 +11,14 @@ const saveCart = (items) => localStorage.setItem('ltc_cart', JSON.stringify(item
 
 export function CartProvider({ children }) {
   const [items, setItems] = useState(loadCart);
+  const { trackCart, setEmail: setCartEmail } = useCartTracking();
+
+  // Mirror the (localStorage) cart server-side for abandoned-cart detection. Best-effort:
+  // trackCart itself swallows errors so this never blocks the shopping experience.
+  useEffect(() => {
+    const total = items.reduce((sum, i) => sum + i.price * i.quantity, 0);
+    trackCart({ items, total, checkoutUrl: `${window.location.origin}/cart` });
+  }, [items, trackCart]);
 
   const addItem = useCallback((product, quantity = 1, variant = '', customOptions = {}) => {
     setItems(prev => {
@@ -49,7 +58,7 @@ export function CartProvider({ children }) {
   const getTotalItems = useCallback(() => items.reduce((sum, i) => sum + i.quantity, 0), [items]);
 
   return (
-    <CartContext.Provider value={{ items, addItem, removeItem, updateQuantity, clearCart, getSubtotal, getTotalItems }}>
+    <CartContext.Provider value={{ items, addItem, removeItem, updateQuantity, clearCart, getSubtotal, getTotalItems, setCartEmail }}>
       {children}
     </CartContext.Provider>
   );
