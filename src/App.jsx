@@ -20,6 +20,7 @@ import Wishlist from './pages/Wishlist';
 import Returns from './pages/Returns';
 import Terms from './pages/Terms';
 import Contact from './pages/Contact';
+import Unsubscribe from './pages/Unsubscribe';
 
 // Admin pages
 import AdminLayout from './pages/admin/AdminLayout';
@@ -37,6 +38,7 @@ import AdminAttributes from './pages/admin/Attributes';
 import AdminMenu from './pages/admin/Menu';
 import AdminBrands from './pages/admin/Brands';
 import AdminLoyalty from './pages/admin/Loyalty';
+import AdminMarketing from './pages/admin/Marketing';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -73,6 +75,7 @@ const AuthenticatedApp = () => {
       <Route path="/returns" element={<Returns />} />
       <Route path="/terms" element={<Terms />} />
       <Route path="/contact" element={<Contact />} />
+      <Route path="/unsubscribe" element={<Unsubscribe />} />
       {/* Redirects for legacy/footer links */}
       <Route path="/orders" element={<Navigate to="/account" replace />} />
       <Route path="/privacy" element={<Navigate to="/terms" replace />} />
@@ -95,6 +98,7 @@ const AuthenticatedApp = () => {
         <Route path="settings" element={<AdminSettings />} />
         <Route path="brands" element={<AdminBrands />} />
         <Route path="loyalty" element={<AdminLoyalty />} />
+        <Route path="marketing" element={<AdminMarketing />} />
       </Route>
 
       <Route path="*" element={<PageNotFound />} />
