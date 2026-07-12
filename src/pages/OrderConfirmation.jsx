@@ -3,6 +3,7 @@ import { useParams, useSearchParams, Link } from "react-router-dom";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { base44 } from "@/api/base44Client";
+import { markCartRecovered } from "@/components/marketing/useCartTracking";
 import { Button } from "@/components/ui/button";
 import { CheckCircle, XCircle, Package, ArrowRight } from "lucide-react";
 import { motion } from "framer-motion";
@@ -30,6 +31,7 @@ export default function OrderConfirmation() {
     base44.entities.Order.filter({}).then(orders => {
       const found = orders.find(o => o.id === id);
       setOrder(found);
+      if (found) markCartRecovered();
     }).catch(e => console.error('Fetch error:', e));
 
     // Verify payment status with Stripe as a fallback (webhook is primary)
