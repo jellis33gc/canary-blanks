@@ -6,7 +6,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Trash2, GripVertical, Save, ChevronDown, ChevronUp, Image } from "lucide-react";
+import { Plus, Trash2, GripVertical, Save, ChevronDown, ChevronUp, Image, Upload, X } from "lucide-react";
+import { uploadImageFile } from "@/utils/uploadImage";
 import HeroSlideEditor from "@/components/admin/HeroSlideEditor";
 
 const BLOCK_TYPES = [
@@ -18,6 +19,7 @@ const BLOCK_TYPES = [
   { value: "banner", label: "🎨 Promo Banner" },
   { value: "testimonials", label: "💬 Testimonials" },
   { value: "newsletter", label: "📧 Newsletter" },
+  { value: "static_banner", label: "🖼️ Static Banner" },
 ];
 
 export default function HomepageBuilder() {
@@ -119,7 +121,7 @@ export default function HomepageBuilder() {
                               <Switch checked={block.is_active} onCheckedChange={v => updateBlock(block.id, "is_active", v)} />
                               <span className="text-xs text-muted-foreground">{block.is_active ? "Visible" : "Hidden"}</span>
                             </div>
-                            {(block.type === "hero" || block.type === "banner") && (
+                            {(block.type === "hero" || block.type === "banner" || block.type === "static_banner") && (
                               <button
                                 onClick={() => setExpandedHero(expandedHero === block.id ? null : block.id)}
                                 className="p-1.5 rounded-lg hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
@@ -131,6 +133,45 @@ export default function HomepageBuilder() {
                             <button onClick={() => deleteBlock(block.id)} className="p-1.5 rounded-lg hover:bg-red-50 hover:text-red-500 transition-colors"><Trash2 className="w-4 h-4" /></button>
                           </div>
                         </div>
+                        {/* Static banner uploader */}
+                        {block.type === "static_banner" && expandedHero === block.id && (
+                          <div className="border-t border-border px-5 py-4 bg-muted/30 space-y-3">
+                            <p className="text-sm font-semibold text-muted-foreground">Upload Banner Image</p>
+                            {block.config?.image ? (
+                              <div className="relative rounded-xl overflow-hidden border border-border">
+                                <img src={block.config.image} alt="Static banner" className="w-full h-auto block" />
+                                <button
+                                  onClick={() => updateBlockConfig(block.id, "image", "")}
+                                  className="absolute top-2 right-2 p-1.5 bg-black/60 hover:bg-black/80 text-white rounded-full transition-colors"
+                                >
+                                  <X className="w-4 h-4" />
+                                </button>
+                              </div>
+                            ) : (
+                              <label className="flex items-center gap-2 cursor-pointer border border-dashed border-border rounded-xl px-4 py-3 hover:bg-muted/50 transition-colors">
+                                <Upload className="w-4 h-4 text-muted-foreground" />
+                                <span className="text-sm text-muted-foreground">Click to upload image</span>
+                                <input
+                                  type="file"
+                                  accept="image/*"
+                                  className="hidden"
+                                  onChange={async (e) => {
+                                    const file = e.target.files?.[0];
+                                    if (!file) return;
+                                    try {
+                                      const fileUrl = await uploadImageFile(file);
+                                      updateBlockConfig(block.id, "image", fileUrl);
+                                    } catch (err) {
+                                      alert(err?.message || "Failed to upload image.");
+                                    } finally {
+                                      e.target.value = "";
+                                    }
+                                  }}
+                                />
+                              </label>
+                            )}
+                          </div>
+                        )}
                         {/* Hero slide editor */}
                         {block.type === "hero" && expandedHero === block.id && (
                           <div className="border-t border-border px-5 pb-5 bg-muted/30">

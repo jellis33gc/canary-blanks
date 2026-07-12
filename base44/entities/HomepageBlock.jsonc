@@ -12,7 +12,8 @@
         "banner",
         "testimonials",
         "newsletter",
-        "brand_slider"
+        "brand_slider",
+        "static_banner"
       ]
     },
     "title": {

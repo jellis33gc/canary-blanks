@@ -50,6 +50,13 @@ export default function Home() {
       <HeroSlider />
 
       {activeBlocks.map(block => {
+        if (block.type === 'static_banner' && block.config?.image) {
+          return (
+            <section key={block.id} className="w-full">
+              <img src={block.config.image} alt="" className="w-full h-auto block" />
+            </section>
+          );
+        }
         if (block.type === 'banner') {
           const bannerId = block.config?.banner_id;
           const banner = bannerId ? promoBanners.find(b => b.id === bannerId) : promoBanners[0];
