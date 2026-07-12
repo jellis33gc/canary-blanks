@@ -3,6 +3,8 @@ import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Loader2, CheckCircle2 } from "lucide-react";
 
+const ADMIN_EMAIL = "hello@canaryblanks.es";
+
 export default function NewsletterForm({ variant = "footer" }) {
   const [email, setEmail] = useState("");
   const [status, setStatus] = useState("idle"); // idle | loading | success | error
@@ -14,15 +16,14 @@ export default function NewsletterForm({ variant = "footer" }) {
     setStatus("loading");
     setMessage("");
     try {
-      const res = await base44.functions.invoke("subscribeNewsletter", { email: email.trim() });
-      if (res.data?.error) {
-        setStatus("error");
-        setMessage(res.data.error);
-      } else {
-        setStatus("success");
-        setMessage("You're subscribed! Check your inbox for a confirmation.");
-        setEmail("");
-      }
+      await base44.integrations.Core.SendEmail({
+        to: ADMIN_EMAIL,
+        subject: "New Newsletter Signup",
+        body: `A new customer has subscribed to the newsletter!\n\nEmail: ${email.trim()}\n\nDate: ${new Date().toISOString()}`,
+      });
+      setStatus("success");
+      setMessage("You're subscribed! Check your inbox for a confirmation.");
+      setEmail("");
     } catch {
       setStatus("error");
       setMessage("Something went wrong. Please try again.");
