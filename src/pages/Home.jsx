@@ -47,9 +47,11 @@ export default function Home() {
     <div className="min-h-screen bg-background">
       <Navbar />
       <PromoBanners />
-      <HeroSlider />
 
       {activeBlocks.map(block => {
+        if (block.type === 'hero') {
+          return <HeroSlider key={block.id} />;
+        }
         if (block.type === 'static_banner' && block.config?.image) {
           return (
             <section key={block.id} className="w-full">
