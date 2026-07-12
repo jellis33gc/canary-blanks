@@ -19,6 +19,7 @@ import Account from './pages/Account';
 import Wishlist from './pages/Wishlist';
 import Returns from './pages/Returns';
 import Terms from './pages/Terms';
+import Contact from './pages/Contact';
 
 // Admin pages
 import AdminLayout from './pages/admin/AdminLayout';
@@ -71,6 +72,12 @@ const AuthenticatedApp = () => {
       <Route path="/wishlist" element={<Wishlist />} />
       <Route path="/returns" element={<Returns />} />
       <Route path="/terms" element={<Terms />} />
+      <Route path="/contact" element={<Contact />} />
+      {/* Redirects for legacy/footer links */}
+      <Route path="/orders" element={<Navigate to="/account" replace />} />
+      <Route path="/privacy" element={<Navigate to="/terms" replace />} />
+      <Route path="/shipping" element={<Navigate to="/terms" replace />} />
+      <Route path="/faq" element={<Navigate to="/terms" replace />} />
 
       {/* Admin */}
       <Route path="/admin" element={<AdminLayout />}>
