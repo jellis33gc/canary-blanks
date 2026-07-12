@@ -1,0 +1,86 @@
+{
+  "name": "CartEvent",
+  "type": "object",
+  "title": "Cart Event",
+  "description": "A live snapshot of a shopper's cart (from localStorage), used to detect and recover abandoned carts.",
+  "properties": {
+    "session_id": {
+      "type": "string"
+    },
+    "email": {
+      "type": "string",
+      "format": "email"
+    },
+    "cart_items": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "quantity": {
+            "type": "integer"
+          },
+          "price": {
+            "type": "number"
+          },
+          "image_url": {
+            "type": "string"
+          },
+          "product_url": {
+            "type": "string"
+          }
+        }
+      },
+      "default": []
+    },
+    "cart_total": {
+      "type": "number",
+      "default": 0
+    },
+    "checkout_url": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "recovered",
+        "abandoned",
+        "emailed"
+      ],
+      "default": "active"
+    },
+    "last_activity_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "session_id",
+    "status"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

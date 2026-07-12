@@ -1,0 +1,67 @@
+{
+  "name": "EmailLog",
+  "type": "object",
+  "title": "Email Log",
+  "description": "Record of every marketing email sent, for auditing and basic reporting.",
+  "properties": {
+    "recipient_email": {
+      "type": "string",
+      "format": "email"
+    },
+    "source_type": {
+      "type": "string",
+      "enum": [
+        "welcome",
+        "flow_step",
+        "campaign"
+      ]
+    },
+    "source_id": {
+      "type": "string"
+    },
+    "subject": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "sent",
+        "failed"
+      ],
+      "default": "sent"
+    },
+    "provider_message_id": {
+      "type": "string"
+    },
+    "error": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "recipient_email",
+    "source_type",
+    "status"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

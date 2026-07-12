@@ -1,0 +1,105 @@
+{
+  "name": "Campaign",
+  "type": "object",
+  "title": "Campaign",
+  "description": "A one-off or scheduled marketing email blast sent to some/all active subscribers.",
+  "properties": {
+    "name": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200
+    },
+    "subject": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 300
+    },
+    "preheader": {
+      "type": "string",
+      "maxLength": 300
+    },
+    "html_body": {
+      "type": "string"
+    },
+    "from_name": {
+      "type": "string"
+    },
+    "from_email": {
+      "type": "string",
+      "format": "email"
+    },
+    "reply_to_email": {
+      "type": "string",
+      "format": "email"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "draft",
+        "scheduled",
+        "sending",
+        "sent",
+        "failed"
+      ],
+      "default": "draft"
+    },
+    "tag_filter": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": []
+    },
+    "scheduled_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "sent_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "recipient_count": {
+      "type": "integer",
+      "default": 0
+    },
+    "sent_count": {
+      "type": "integer",
+      "default": 0
+    },
+    "failed_count": {
+      "type": "integer",
+      "default": 0
+    },
+    "last_error": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "name",
+    "subject",
+    "html_body",
+    "status"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

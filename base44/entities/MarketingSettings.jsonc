@@ -1,0 +1,83 @@
+{
+  "name": "MarketingSettings",
+  "type": "object",
+  "title": "Marketing Settings",
+  "description": "Single-record configuration for the marketing module: brand, sender, discount, and timing.",
+  "properties": {
+    "brand_name": {
+      "type": "string",
+      "maxLength": 200
+    },
+    "from_name": {
+      "type": "string",
+      "maxLength": 200
+    },
+    "from_email": {
+      "type": "string",
+      "format": "email"
+    },
+    "reply_to_email": {
+      "type": "string",
+      "format": "email"
+    },
+    "logo_url": {
+      "type": "string"
+    },
+    "primary_color": {
+      "type": "string",
+      "default": "#111111"
+    },
+    "company_postal_address": {
+      "type": "string"
+    },
+    "discount_code": {
+      "type": "string"
+    },
+    "discount_description": {
+      "type": "string",
+      "default": "10% off your first order"
+    },
+    "welcome_email_delay_hours": {
+      "type": "number",
+      "default": 0
+    },
+    "abandoned_cart_inactivity_hours": {
+      "type": "number",
+      "default": 1
+    },
+    "unsubscribe_page_path": {
+      "type": "string",
+      "default": "/unsubscribe"
+    },
+    "app_base_url": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "from_name",
+    "from_email",
+    "company_postal_address"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

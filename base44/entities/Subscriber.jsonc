@@ -1,0 +1,95 @@
+{
+  "name": "Subscriber",
+  "type": "object",
+  "title": "Subscriber",
+  "description": "A newsletter/marketing subscriber. Created via the signup form, updated by flows and campaigns.",
+  "properties": {
+    "email": {
+      "type": "string",
+      "format": "email"
+    },
+    "first_name": {
+      "type": "string",
+      "maxLength": 100
+    },
+    "last_name": {
+      "type": "string",
+      "maxLength": 100
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "unsubscribed",
+        "bounced"
+      ],
+      "default": "active"
+    },
+    "source": {
+      "type": "string",
+      "enum": [
+        "newsletter_form",
+        "checkout",
+        "abandoned_cart",
+        "manual_import",
+        "other"
+      ],
+      "default": "newsletter_form"
+    },
+    "tags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": []
+    },
+    "unsubscribe_token": {
+      "type": "string"
+    },
+    "discount_code": {
+      "type": "string"
+    },
+    "discount_used": {
+      "type": "boolean",
+      "default": false
+    },
+    "welcome_flow_sent": {
+      "type": "boolean",
+      "default": false
+    },
+    "subscribed_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "unsubscribed_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "email",
+    "status"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

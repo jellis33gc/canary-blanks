@@ -1,0 +1,56 @@
+{
+  "name": "EmailFlow",
+  "type": "object",
+  "title": "Email Flow",
+  "description": "An automated multi-step email sequence, e.g. Welcome Series or Abandoned Cart Recovery.",
+  "properties": {
+    "key": {
+      "type": "string",
+      "enum": [
+        "welcome_series",
+        "abandoned_cart",
+        "custom"
+      ]
+    },
+    "name": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200
+    },
+    "description": {
+      "type": "string",
+      "maxLength": 1000
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true
+    }
+  },
+  "required": [
+    "key",
+    "name",
+    "is_active"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

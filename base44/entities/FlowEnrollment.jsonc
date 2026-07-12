@@ -1,0 +1,68 @@
+{
+  "name": "FlowEnrollment",
+  "type": "object",
+  "title": "Flow Enrollment",
+  "description": "Tracks a single subscriber's progress through an EmailFlow.",
+  "properties": {
+    "flow_id": {
+      "type": "string"
+    },
+    "subscriber_email": {
+      "type": "string",
+      "format": "email"
+    },
+    "current_step": {
+      "type": "integer",
+      "minimum": 1,
+      "default": 1
+    },
+    "next_send_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "completed",
+        "exited"
+      ],
+      "default": "active"
+    },
+    "trigger_ref_id": {
+      "type": "string"
+    },
+    "exit_reason": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "flow_id",
+    "subscriber_email",
+    "current_step",
+    "next_send_at",
+    "status"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

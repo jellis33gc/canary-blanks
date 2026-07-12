@@ -1,0 +1,60 @@
+{
+  "name": "FlowStep",
+  "type": "object",
+  "title": "Flow Step",
+  "description": "A single email within an EmailFlow, sent a fixed number of hours after the previous step.",
+  "properties": {
+    "flow_id": {
+      "type": "string"
+    },
+    "step_order": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "delay_hours": {
+      "type": "number",
+      "minimum": 0,
+      "default": 0
+    },
+    "subject": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 300
+    },
+    "html_body": {
+      "type": "string"
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true
+    }
+  },
+  "required": [
+    "flow_id",
+    "step_order",
+    "subject",
+    "html_body"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}
