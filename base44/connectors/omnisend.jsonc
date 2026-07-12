@@ -1,0 +1,7 @@
+{
+  "type": "omnisend",
+  "scopes": [
+    "brands.read",
+    "contacts.write"
+  ]
+}
