@@ -11,34 +11,54 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'A valid email address is required.' }, { status: 400 });
     }
 
-    const { accessToken } = await base44.asServiceRole.connectors.getConnection('omnisend');
+    const { accessToken } = await base44.asServiceRole.connectors.getConnection('mailchimp');
 
-    const omnisendRes = await fetch('https://api.omnisend.com/api/contacts', {
+    // 1. Get the data center prefix from Mailchimp metadata
+    const metaRes = await fetch('https://login.mailchimp.com/oauth2/metadata', {
+      headers: { 'Authorization': `OAuth ${accessToken}` },
+    });
+    const meta = await metaRes.json();
+    const dc = meta.dc;
+    if (!dc) {
+      return Response.json({ error: 'Could not determine Mailchimp data center.' }, { status: 500 });
+    }
+
+    const apiBase = `https://${dc}.api.mailchimp.com/3.0`;
+
+    // 2. Fetch the first available audience list
+    const listsRes = await fetch(`${apiBase}/lists?count=10`, {
+      headers: { 'Authorization': `Bearer ${accessToken}` },
+    });
+    const listsData = await listsRes.json();
+
+    if (!listsRes.ok) {
+      return Response.json({ error: listsData?.detail || 'Failed to fetch Mailchimp audiences.' }, { status: listsRes.status });
+    }
+
+    const listId = listsData?.lists?.[0]?.id;
+    if (!listId) {
+      return Response.json({ error: 'No Mailchimp audience found. Create an audience in Mailchimp first.' }, { status: 400 });
+    }
+
+    // 3. Add the subscriber to the audience
+    const memberRes = await fetch(`${apiBase}/lists/${listId}/members`, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${accessToken}`,
-        'Omnisend-Version': '2026-03-15',
-        'accept': 'application/json',
-        'content-type': 'application/json',
+        'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        identifiers: [
-          {
-            type: 'email',
-            id: email,
-            channels: {
-              email: { status: 'subscribed' },
-            },
-          },
-        ],
+        email_address: email,
+        status: 'subscribed',
         tags: ['newsletter_signup'],
       }),
     });
 
-    const data = await omnisendRes.json().catch(() => null);
+    const memberData = await memberRes.json().catch(() => null);
 
-    if (!omnisendRes.ok && omnisendRes.status !== 409) {
-      return Response.json({ error: data?.error?.description || data?.error?.title || 'Omnisend rejected the request.' }, { status: omnisendRes.status });
+    // Member already subscribed is not an error
+    if (!memberRes.ok && memberData?.title !== 'Member Exists') {
+      return Response.json({ error: memberData?.detail || memberData?.title || 'Mailchimp rejected the request.' }, { status: memberRes.status });
     }
 
     return Response.json({ success: true, message: 'Subscribed successfully!' });
