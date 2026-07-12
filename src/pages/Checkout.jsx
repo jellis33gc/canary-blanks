@@ -14,7 +14,7 @@ import { CreditCard, Lock, Gift, MapPin, Store } from "lucide-react";
 export default function Checkout() {
   const location = useLocation();
   const navigate = useNavigate();
-  const { items, getSubtotal, clearCart } = useCartStore();
+  const { items, getSubtotal, clearCart, setCartEmail } = useCartStore();
   const summaryState = location.state || {};
   const [shippingCost, setShippingCost] = useState(5.99);
 
@@ -36,6 +36,14 @@ export default function Checkout() {
     line1: "", line2: "", city: "", postcode: "", country: "Spain",
     notes: ""
   });
+
+  // Feed the checkout email into abandoned-cart tracking once it looks valid, debounced
+  // so we're not firing on every keystroke.
+  useEffect(() => {
+    if (!form.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) return;
+    const t = setTimeout(() => setCartEmail(form.email), 800);
+    return () => clearTimeout(t);
+  }, [form.email, setCartEmail]);
 
   useEffect(() => {
     base44.auth.me().then(u => {
