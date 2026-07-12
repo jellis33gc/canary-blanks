@@ -1,9 +1,8 @@
-import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
+import NewsletterForm from "@/components/home/NewsletterForm";
 
 export default function Footer() {
-  const [email, setEmail] = useState("");
   const navigate = useNavigate();
 
   const handleAdminClick = async () => {
@@ -54,18 +53,7 @@ export default function Footer() {
           <div>
             <h4 className="font-bold text-gray-900 mb-4">Newsletter</h4>
             <p className="text-sm text-gray-500 mb-4">Subscribe for exclusive deals and new product alerts!</p>
-            <div className="flex gap-2">
-              <input
-                type="email"
-                value={email}
-                onChange={e => setEmail(e.target.value)}
-                placeholder="Your email"
-                className="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
-              />
-              <button className="bg-primary text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-primary/90 transition-colors">
-                Join
-              </button>
-            </div>
+            <NewsletterForm />
           </div>
         </div>
 

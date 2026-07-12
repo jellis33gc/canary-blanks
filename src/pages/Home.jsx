@@ -9,6 +9,7 @@ import { motion } from "framer-motion";
 import PromoBanners from "@/components/home/PromoBanners";
 import HeroSlider from "@/components/home/HeroSlider";
 import BrandSlider from "@/components/home/BrandSlider";
+import NewsletterForm from "@/components/home/NewsletterForm";
 
 export default function Home() {
   const [products, setProducts] = useState([]);
@@ -141,10 +142,7 @@ export default function Home() {
                   <span className="text-secondary">{block.title || 'Stay in the'} </span><span className="text-primary">Loop!</span>
                 </h2>
                 <p className="text-muted-foreground mb-6">{block.subtitle || 'Subscribe for exclusive deals and new product alerts!'}</p>
-                <div className="flex gap-2 max-w-sm mx-auto">
-                  <input type="email" placeholder="Your email address" className="flex-1 border border-border rounded-full px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30" />
-                  <Button className="rounded-full">Subscribe</Button>
-                </div>
+                <NewsletterForm variant="block" />
               </div>
             </section>
           );
