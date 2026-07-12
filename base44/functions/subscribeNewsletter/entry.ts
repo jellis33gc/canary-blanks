@@ -44,31 +44,65 @@ function buildUnsubscribeUrl(settings: any, token: string) {
   return `${base}${path}?token=${encodeURIComponent(token)}`;
 }
 
-function renderEmail(html: string, vars: Record<string, string>, settings: any) {
-  let out = html;
-  for (const [key, value] of Object.entries(vars)) {
-    out = out.replaceAll(`{{${key}}}`, value ?? "");
+function toParagraphs(text: string) {
+  if (/<[a-z][\s\S]*>/i.test(text)) return text; // already HTML - leave as authored
+  return text
+    .split(/\n{2,}/)
+    .map((para) => `<p style="margin:0 0 16px;">${para.replace(/\n/g, "<br/>")}</p>`)
+    .join("");
+}
+
+function linkify(value: string) {
+  if (/^https?:\/\//i.test(value)) {
+    return `<a href="${value}" style="color:#DC2828;font-weight:600;">${value}</a>`;
   }
-  const footer = `
-    <hr style="margin-top:32px;border:none;border-top:1px solid #e5e5e5" />
-    <p style="font-size:12px;color:#888;line-height:1.6;font-family:sans-serif">
-      ${settings.brand_name || settings.from_name || ""}${
-    settings.company_postal_address ? " &middot; " + settings.company_postal_address : ""
-  }<br/>
-      You're receiving this because you signed up at our store.
-      <a href="${vars.unsubscribe_url}" style="color:#888">Unsubscribe</a>
-    </p>`;
-  return out.includes("{{footer}}") ? out.replace("{{footer}}", footer) : out + footer;
+  return value;
+}
+
+// Branded shell matching canaryblanks.es: logo header, red (#DC2828) accent, navy
+// (#142048) body text, Inter font - so any content dropped in (plain text or HTML)
+// looks like it belongs on the site instead of a bare unstyled email.
+function wrapInBrandShell(innerHtml: string, settings: any, unsubscribeUrl: string) {
+  const primary = "#DC2828";
+  const dark = "#142048";
+  const logo = settings.logo_url || "";
+  const brand = settings.brand_name || settings.from_name || "";
+  return `
+  <div style="background:#f4f5f7;padding:32px 16px;font-family:'Inter',Helvetica,Arial,sans-serif;">
+    <div style="max-width:560px;margin:0 auto;background:#ffffff;border-radius:16px;overflow:hidden;border:1px solid #eceef1;">
+      <div style="padding:28px 32px;text-align:center;border-bottom:3px solid ${primary};">
+        ${logo ? `<img src="${logo}" alt="${brand}" style="height:48px;width:auto;" />` : `<span style="font-size:20px;font-weight:800;color:${dark};">${brand}</span>`}
+      </div>
+      <div style="padding:32px;color:${dark};font-size:15px;line-height:1.65;">
+        ${innerHtml}
+      </div>
+      <div style="background:#f9fafb;padding:20px 32px;text-align:center;border-top:1px solid #eceef1;">
+        <p style="font-size:12px;color:#8b8f99;line-height:1.6;margin:0;">
+          ${brand}${settings.company_postal_address ? " &middot; " + settings.company_postal_address : ""}<br/>
+          <a href="${unsubscribeUrl}" style="color:#8b8f99;">Unsubscribe</a>
+        </p>
+      </div>
+    </div>
+  </div>`;
+}
+
+function renderEmail(html: string, vars: Record<string, string>, settings: any) {
+  let body = toParagraphs(html);
+  for (const [key, value] of Object.entries(vars)) {
+    const rendered = /url$/i.test(key) ? linkify(value || "") : value ?? "";
+    body = body.replaceAll(`{{${key}}}`, rendered);
+  }
+  return wrapInBrandShell(body, settings, vars.unsubscribe_url);
 }
 
 function defaultWelcomeHtml(firstName: string, discountCode: string, discountDescription: string) {
   return `
-    <div style="font-family:sans-serif;max-width:520px;margin:0 auto">
-      <h1 style="font-size:22px">Welcome${firstName ? ", " + firstName : ""}!</h1>
-      <p>Thanks for signing up. Here's ${discountDescription || "a discount"} on us:</p>
-      <p style="font-size:24px;font-weight:bold;letter-spacing:2px;background:#f5f5f5;padding:12px 16px;display:inline-block;border-radius:6px">${discountCode}</p>
-      <p>Use it at checkout on your next order.</p>
-    </div>`;
+    <p style="margin:0 0 16px;">Hi${firstName ? " " + firstName : ""},</p>
+    <p style="margin:0 0 16px;">Thanks for signing up! Here's ${discountDescription || "a discount"} on us:</p>
+    <div style="text-align:center;margin:24px 0;">
+      <span style="display:inline-block;border:2px dashed #DC2828;border-radius:10px;padding:14px 28px;font-size:20px;font-weight:800;letter-spacing:2px;color:#DC2828;">${discountCode}</span>
+    </div>
+    <p style="margin:0;">Use it at checkout on your next order. Happy crafting!</p>`;
 }
 
 Deno.serve(async (req) => {
