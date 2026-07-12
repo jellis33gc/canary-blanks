@@ -147,10 +147,10 @@ export default function Home() {
           return (
             <section key={block.id} className="bg-muted py-16 my-8">
               <div className="max-w-xl mx-auto px-4 text-center">
-                <h2 className="text-3xl font-extrabold mb-3">
-                  <span className="text-secondary">{block.title || 'Stay in the'} </span><span className="text-primary">Loop!</span>
+                <h2 className="text-3xl font-extrabold mb-3 text-secondary">
+                  {block.title || 'Stay in the Loop!'}
                 </h2>
-                <p className="text-muted-foreground mb-6">{block.subtitle || 'Subscribe for exclusive deals and new product alerts!'}</p>
+                {block.subtitle && <p className="text-muted-foreground mb-6">{block.subtitle}</p>}
                 <NewsletterForm variant="block" />
               </div>
             </section>
