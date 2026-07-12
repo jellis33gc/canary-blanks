@@ -3,6 +3,7 @@
   "scopes": [
     "chat:write",
     "channels:read",
+    "channels:manage",
     "groups:read",
     "im:read",
     "mpim:read",
