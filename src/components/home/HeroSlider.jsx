@@ -132,10 +132,10 @@ export default function HeroSlider() {
       onMouseLeave={() => setPaused(false)}
     >
       {slide.bg_image ? (
-        <div className="relative w-full">
-          <img src={slide.bg_image} alt="" className="w-full h-auto block" />
+        <div className="relative w-full min-h-[520px] flex items-center">
+          <img src={slide.bg_image} alt="" className="absolute inset-0 w-full h-full object-cover" />
           <div className="absolute inset-0 bg-black/20 pointer-events-none" />
-          <div className="absolute inset-0 z-10 flex items-center">
+          <div className="relative z-10 w-full">
             <AnimatePresence initial={false} custom={direction} mode="wait">
               <motion.div
                 key={`content-${slide.id}`}
@@ -144,7 +144,7 @@ export default function HeroSlider() {
                 initial="enter"
                 animate="center"
                 exit="exit"
-                className="w-full px-4 sm:px-6 lg:px-8 py-16 md:py-24"
+                className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-24"
               >
                 {renderContent()}
               </motion.div>
