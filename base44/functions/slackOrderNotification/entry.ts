@@ -1,6 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
-const CHANNEL_ID = "C0B3KATR9T2"; // #new-order
+const CHANNEL_ID = "C0BGWPJ1HKN"; // #new-sales
 
 Deno.serve(async (req) => {
   const body = await req.json();
@@ -8,7 +8,7 @@ Deno.serve(async (req) => {
 
   const order = body.data;
 
-  const { accessToken } = await base44.asServiceRole.connectors.getConnection("slack");
+  const { accessToken } = await base44.asServiceRole.connectors.getConnection("slackbot");
 
   const items = (order.items || []).map(i => `• ${i.product_name} x${i.quantity} — £${(i.price * i.quantity).toFixed(2)}`).join("\n");
 
