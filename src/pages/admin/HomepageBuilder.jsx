@@ -6,7 +6,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Trash2, GripVertical, Save, ChevronDown, ChevronUp, Image, Upload, X } from "lucide-react";
+import { Plus, Trash2, GripVertical, Save, ChevronDown, ChevronUp, Image, Upload, X, Mail } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
 import { uploadImageFile } from "@/utils/uploadImage";
 import HeroSlideEditor from "@/components/admin/HeroSlideEditor";
 
@@ -121,11 +122,11 @@ export default function HomepageBuilder() {
                               <Switch checked={block.is_active} onCheckedChange={v => updateBlock(block.id, "is_active", v)} />
                               <span className="text-xs text-muted-foreground">{block.is_active ? "Visible" : "Hidden"}</span>
                             </div>
-                            {(block.type === "hero" || block.type === "banner" || block.type === "static_banner") && (
+                            {(block.type === "hero" || block.type === "banner" || block.type === "static_banner" || block.type === "newsletter") && (
                               <button
                                 onClick={() => setExpandedHero(expandedHero === block.id ? null : block.id)}
                                 className="p-1.5 rounded-lg hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
-                                title={block.type === "hero" ? "Edit slides" : "Configure banner"}
+                                title={block.type === "hero" ? "Edit slides" : block.type === "newsletter" ? "Edit newsletter" : "Configure banner"}
                               >
                                 {expandedHero === block.id ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
                               </button>
@@ -170,6 +171,23 @@ export default function HomepageBuilder() {
                                 />
                               </label>
                             )}
+                          </div>
+                        )}
+                        {/* Newsletter editor */}
+                        {block.type === "newsletter" && expandedHero === block.id && (
+                          <div className="border-t border-border px-5 py-4 bg-muted/30 space-y-4">
+                            <div className="flex items-center gap-2">
+                              <Mail className="w-4 h-4 text-primary" />
+                              <p className="text-sm font-semibold text-muted-foreground">Newsletter Content</p>
+                            </div>
+                            <div className="space-y-1">
+                              <Label className="text-xs">Heading Text (use the Title field above)</Label>
+                              <Input value={block.title || ""} onChange={e => updateBlock(block.id, "title", e.target.value)} className="rounded-xl h-9" placeholder="e.g. Stay in the Loop!" />
+                            </div>
+                            <div className="space-y-1">
+                              <Label className="text-xs">Description Text (shown below the heading)</Label>
+                              <Textarea value={block.subtitle || ""} onChange={e => updateBlock(block.id, "subtitle", e.target.value)} className="rounded-xl min-h-[60px] resize-y" placeholder="e.g. Subscribe for exclusive deals and new product alerts!" />
+                            </div>
                           </div>
                         )}
                         {/* Hero slide editor */}
