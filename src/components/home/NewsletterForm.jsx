@@ -3,12 +3,11 @@ import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Loader2, CheckCircle2 } from "lucide-react";
 
-const ADMIN_EMAIL = "hello@canaryblanks.es";
-
 export default function NewsletterForm({ variant = "footer" }) {
   const [email, setEmail] = useState("");
   const [status, setStatus] = useState("idle"); // idle | loading | success | error
   const [message, setMessage] = useState("");
+  const [discountCode, setDiscountCode] = useState("");
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -16,13 +15,18 @@ export default function NewsletterForm({ variant = "footer" }) {
     setStatus("loading");
     setMessage("");
     try {
-      await base44.integrations.Core.SendEmail({
-        to: ADMIN_EMAIL,
-        subject: "New Newsletter Signup",
-        body: `A new customer has subscribed to the newsletter!\n\nEmail: ${email.trim()}\n\nDate: ${new Date().toISOString()}`,
-      });
+      const response = await base44.functions.invoke("subscribeNewsletter", { email: email.trim() });
+      const data = response?.data ?? response;
+
+      if (data?.error) {
+        setStatus("error");
+        setMessage(data.error);
+        return;
+      }
+
       setStatus("success");
-      setMessage("You're subscribed! Check your inbox for a confirmation.");
+      setMessage(data?.message || "You're subscribed!");
+      setDiscountCode(data?.discount_code || "");
       setEmail("");
     } catch {
       setStatus("error");
@@ -49,6 +53,9 @@ export default function NewsletterForm({ variant = "footer" }) {
         {message && (
           <p className={`text-xs mt-2 ${status === "error" ? "text-destructive" : "text-muted-foreground"}`}>{message}</p>
         )}
+        {discountCode && (
+          <p className="text-sm mt-2 font-bold tracking-wide bg-muted inline-block px-3 py-1 rounded-lg">{discountCode}</p>
+        )}
       </form>
     );
   }
@@ -70,6 +77,9 @@ export default function NewsletterForm({ variant = "footer" }) {
       </div>
       {message && (
         <p className={`text-xs mt-2 ${status === "error" ? "text-destructive" : "text-muted-foreground"}`}>{message}</p>
+      )}
+      {discountCode && (
+        <p className="text-sm mt-2 font-bold tracking-wide bg-gray-100 inline-block px-3 py-1 rounded-lg">{discountCode}</p>
       )}
     </form>
   );
