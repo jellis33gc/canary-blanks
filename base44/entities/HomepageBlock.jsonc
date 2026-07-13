@@ -22,6 +22,10 @@
     "subtitle": {
       "type": "string"
     },
+    "description": {
+      "type": "string",
+      "maxLength": 1000
+    },
     "is_active": {
       "type": "boolean",
       "default": true

@@ -19,6 +19,10 @@
     "subtitle": {
       "type": "string"
     },
+    "description": {
+      "type": "string",
+      "maxLength": 1000
+    },
     "cta_label": {
       "type": "string"
     },

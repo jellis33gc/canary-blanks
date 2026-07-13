@@ -29,6 +29,10 @@
         "type": "string"
       },
       "description": "Labels that are currently out of stock and cannot be ordered"
+    },
+    "description": {
+      "type": "string",
+      "maxLength": 1000
     }
   },
   "required": [
