@@ -16,13 +16,19 @@ export default function Checkout() {
   const navigate = useNavigate();
   const { items, getSubtotal, clearCart, setCartEmail } = useCartStore();
   const summaryState = location.state || {};
-  const [shippingCost, setShippingCost] = useState(5.99);
 
-  useEffect(() => {
-    base44.entities.SiteSettings.filter({ key: "shipping_cost" }).then(settings => {
-      if (settings[0]) setShippingCost(parseFloat(settings[0].value));
-    }).catch(() => {});
-  }, []);
+  const GRAN_CANARIA_RATE = 4.95;
+  const OTHER_CANARIES_RATE = 9.95;
+
+  const getShippingZone = (postcode) => {
+    if (!postcode) return null;
+    const pc = postcode.trim().replace(/\s/g, '');
+    const pcNum = parseInt(pc, 10);
+    if (isNaN(pcNum)) return null;
+    if (pcNum >= 35000 && pcNum <= 35499) return 'gran_canaria';
+    if ((pcNum >= 35500 && pcNum <= 35699) || (pcNum >= 38000 && pcNum <= 38999)) return 'other_canaries';
+    return 'outside';
+  };
 
   const [user, setUser] = useState(null);
   const [profile, setProfile] = useState(null);
@@ -75,7 +81,11 @@ export default function Checkout() {
   const amountAfterDiscount = subtotal - discountAmount;
   const isFreeShippingCode = summaryState.discountCode?.type === 'free_shipping';
   const isLocalCollection = deliveryMethod === 'local_collection';
-  const shipping = isLocalCollection ? 0 : (isFreeShippingCode || amountAfterDiscount >= 50 ? 0 : (amountAfterDiscount > 0 ? shippingCost : 0));
+  const shippingZone = !isLocalCollection ? getShippingZone(form.postcode) : null;
+  const zoneRate = shippingZone === 'gran_canaria' ? GRAN_CANARIA_RATE : shippingZone === 'other_canaries' ? OTHER_CANARIES_RATE : 0;
+  const hasValidZone = shippingZone === 'gran_canaria' || shippingZone === 'other_canaries';
+  const isFreeShipping = isFreeShippingCode || amountAfterDiscount >= 50;
+  const shipping = isLocalCollection ? 0 : (isFreeShipping || amountAfterDiscount <= 0 ? 0 : (hasValidZone ? zoneRate : 0));
   const maxPointsDiscount = profile ? Math.min(Math.floor(profile.loyalty_points / 100), amountAfterDiscount * 0.2) : 0;
   const pointsDiscount = usePoints ? pointsToUse : 0;
   const total = amountAfterDiscount - pointsDiscount + shipping;
@@ -84,11 +94,11 @@ export default function Checkout() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Validate Gran Canaria postcode for delivery orders
+    // Validate Canary Islands postcode for delivery orders
     if (deliveryMethod === 'delivery') {
-      const pc = form.postcode.trim().replace(/\s/g, '');
-      if (!pc.startsWith('35') || pc.length < 5) {
-        alert('Delivery is only available to addresses in Gran Canaria (postcodes starting with 35). Please enter a valid Gran Canaria postcode or select Local Collection.');
+      const zone = getShippingZone(form.postcode);
+      if (zone === 'outside' || !zone) {
+        alert('We only deliver within the Canary Islands. Please enter a valid Canary Islands postcode (35xxx or 38xxx) or select Local Collection.');
         return;
       }
     }
@@ -110,7 +120,7 @@ export default function Checkout() {
         points_redeemed: usePoints ? pointsToUse * 100 : 0,
         points_discount: pointsDiscount,
         shipping_cost: shipping,
-        shipping_method: isLocalCollection ? 'Local Collection' : 'Delivery (Gran Canaria)',
+        shipping_method: isLocalCollection ? 'Local Collection' : (shippingZone === 'gran_canaria' ? 'Delivery (Gran Canaria)' : 'Delivery (Canary Islands)'),
         total,
         shipping_address: isLocalCollection
           ? { name: form.name }
@@ -217,7 +227,7 @@ export default function Checkout() {
                     <MapPin className={`w-5 h-5 mt-0.5 shrink-0 ${deliveryMethod === 'delivery' ? 'text-primary' : 'text-muted-foreground'}`} />
                     <div>
                       <p className="font-semibold text-sm">Home Delivery</p>
-                      <p className="text-xs text-muted-foreground mt-0.5">Gran Canaria only<br />(postcodes starting with 35)</p>
+                      <p className="text-xs text-muted-foreground mt-0.5">Canary Islands only<br />Gran Canaria €4.95 · Other islands €9.95</p>
                     </div>
                   </button>
                   <button
@@ -242,7 +252,7 @@ export default function Checkout() {
                   <h2 className="font-bold text-lg">Delivery Address</h2>
                   <div className="flex items-start gap-2 bg-amber-50 border border-amber-200 rounded-xl px-3 py-2">
                     <MapPin className="w-4 h-4 text-amber-600 mt-0.5 shrink-0" />
-                    <p className="text-xs text-amber-700">Delivery is only available within Gran Canaria. Your postcode must start with <strong>35</strong>.</p>
+                    <p className="text-xs text-amber-700">We deliver within the Canary Islands only. Gran Canaria (35xxx): <strong>€4.95</strong>. Other islands (38xxx): <strong>€9.95</strong>.</p>
                   </div>
                   <div className="space-y-1">
                     <Label>Address Line 1 *</Label>
@@ -258,7 +268,7 @@ export default function Checkout() {
                       <Input required value={form.city} onChange={e => setForm({...form, city: e.target.value})} className="rounded-xl" />
                     </div>
                     <div className="space-y-1">
-                      <Label>Postcode * <span className="text-muted-foreground font-normal text-xs">(starts with 35)</span></Label>
+                      <Label>Postcode * <span className="text-muted-foreground font-normal text-xs">(Canary Islands: 35xxx or 38xxx)</span></Label>
                       <Input required value={form.postcode} onChange={e => setForm({...form, postcode: e.target.value})} className="rounded-xl" placeholder="35001" />
                     </div>
                   </div>
@@ -318,7 +328,7 @@ export default function Checkout() {
                 {pointsDiscount > 0 && <div className="flex justify-between text-primary"><span>Points Discount</span><span>-€{pointsDiscount.toFixed(2)}</span></div>}
                 <div className="flex justify-between">
                   <span>Delivery</span>
-                  <span>{isLocalCollection ? <span className="text-green-600">Collection</span> : shipping === 0 ? <span className="text-green-600">FREE</span> : `€${shipping.toFixed(2)}`}</span>
+                  <span>{isLocalCollection ? <span className="text-green-600">Collection</span> : isFreeShipping ? <span className="text-green-600">FREE</span> : hasValidZone ? `€${zoneRate.toFixed(2)}` : <span className="text-muted-foreground">Enter postcode</span>}</span>
                 </div>
                 <div className="flex justify-between font-bold text-lg border-t pt-2"><span>Total</span><span className="text-primary">€{total.toFixed(2)}</span></div>
               </div>
