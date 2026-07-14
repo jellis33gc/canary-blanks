@@ -352,7 +352,18 @@ export default function ProductPage() {
             <div className="flex items-center gap-4 mb-6">
               <div className="flex items-center border-2 border-border rounded-full">
                 <button onClick={() => setQuantity(Math.max(1, quantity - 1))} className="p-2 hover:text-primary transition-colors"><Minus className="w-4 h-4" /></button>
-                <span className="w-10 text-center font-bold">{quantity}</span>
+                <input
+                  type="number"
+                  min="1"
+                  value={quantity}
+                  onChange={e => {
+                    const val = parseInt(e.target.value);
+                    if (isNaN(val)) { setQuantity(1); return; }
+                    const max = comboStock !== null && !isBackorder ? comboStock : Infinity;
+                    setQuantity(Math.max(1, Math.min(max, val)));
+                  }}
+                  className="w-12 text-center font-bold bg-transparent border-0 focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                />
                 <button onClick={() => setQuantity(comboStock !== null && !isBackorder ? Math.min(comboStock, quantity + 1) : quantity + 1)} disabled={comboStock !== null && !isBackorder && quantity >= comboStock} className="p-2 hover:text-primary transition-colors disabled:opacity-30"><Plus className="w-4 h-4" /></button>
               </div>
               <Button
