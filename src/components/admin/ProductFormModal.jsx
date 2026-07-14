@@ -76,6 +76,7 @@ export default function ProductFormModal({ product, categories, onSave, onClose 
       attributes: v.attributes,
       price:      v.price ?? "",
       sku:        v.sku || "",
+      stock_quantity: v.stock_quantity ?? "",
     }))
   );
 
@@ -123,7 +124,7 @@ export default function ProductFormModal({ product, categories, onSave, onClose 
       const key = vals.join(" / ");
       if (existing[key]) return existing[key];
       const suffix = vals.map(v => v.trim().split(/\s+/).map(w => w[0]?.toUpperCase() || "").join("")).join("");
-      return { combo: key, attributes: attrMap, price: "", sku: baseSku ? `${baseSku}-${suffix}` : suffix };
+      return { combo: key, attributes: attrMap, price: "", sku: baseSku ? `${baseSku}-${suffix}` : suffix, stock_quantity: "" };
     });
 
     setCombinations(newCombinations);
@@ -205,7 +206,13 @@ export default function ProductFormModal({ product, categories, onSave, onClose 
 
     // variants = only valid attribute combos from combinations state
     const variants = isVariable
-      ? combinations.filter(c => c.attributes && Object.keys(c.attributes).length > 0)
+      ? combinations
+          .filter(c => c.attributes && Object.keys(c.attributes).length > 0)
+          .map(c => ({
+            ...c,
+            stock_quantity: c.stock_quantity !== "" && c.stock_quantity !== undefined && c.stock_quantity !== null
+              ? parseInt(c.stock_quantity) : undefined,
+          }))
       : [];
 
     await onSave({
@@ -519,23 +526,27 @@ export default function ProductFormModal({ product, categories, onSave, onClose 
                       <p className="font-semibold text-sm mb-3">Step 2 — Price Each Combination</p>
                       <div className="border border-border rounded-xl overflow-hidden">
                         <div className="grid grid-cols-12 bg-muted px-3 py-2 text-xs font-semibold text-muted-foreground">
-                          <span className="col-span-5">Combination</span>
-                          <span className="col-span-4">Price (£)</span>
-                          <span className="col-span-3">SKU</span>
+                          <span className="col-span-4">Combination</span>
+                          <span className="col-span-3">Price (£)</span>
+                          <span className="col-span-2">SKU</span>
+                          <span className="col-span-3">Stock</span>
                         </div>
                         {combinations.map((combo, i) => (
                           <div key={i} className="grid grid-cols-12 items-center px-3 py-2 border-t border-border gap-2">
-                            <span className="col-span-5 text-sm font-medium">{combo.combo}</span>
-                            <div className="col-span-4">
+                            <span className="col-span-4 text-sm font-medium">{combo.combo}</span>
+                            <div className="col-span-3">
                               <Input type="number" step="0.01" value={combo.price} onChange={e => updateCombo(i, "price", e.target.value)} placeholder="0.00" className="rounded-lg h-8 text-sm" />
                             </div>
-                            <div className="col-span-3">
+                            <div className="col-span-2">
                               <Input value={combo.sku} onChange={e => updateCombo(i, "sku", e.target.value)} placeholder="SKU" className="rounded-lg h-8 text-sm" />
+                            </div>
+                            <div className="col-span-3">
+                              <Input type="number" min="0" value={combo.stock_quantity ?? ""} onChange={e => updateCombo(i, "stock_quantity", e.target.value)} placeholder="Unlimited" className="rounded-lg h-8 text-sm" />
                             </div>
                           </div>
                         ))}
                       </div>
-                      <p className="text-xs text-muted-foreground mt-2">💡 Leave price blank to fall back to the base product price.</p>
+                      <p className="text-xs text-muted-foreground mt-2">💡 Leave price blank to fall back to the base price. Leave stock blank for unlimited.</p>
                     </div>
                   )}
                 </div>

@@ -161,10 +161,15 @@ export default function ProductPage() {
     }
   }
 
+  // Per-combo stock (number when set, null = unlimited/not applicable)
+  const comboStock = usesAttributeVariants && selectedCombo
+    ? (selectedCombo.stock_quantity !== undefined && selectedCombo.stock_quantity !== null && selectedCombo.stock_quantity !== "" ? Number(selectedCombo.stock_quantity) : null)
+    : null;
+
   // Block add to cart if any selected variant is OOS (global attribute map OR per-combo flag)
   const hasOOSSelected = Object.entries(selectedVariants).some(
     ([variantName, label]) => (oosMap[variantName] || []).includes(label)
-  ) || selectedCombo?.out_of_stock === true;
+  ) || selectedCombo?.out_of_stock === true || comboStock === 0;
 
   return (
     <div className="min-h-screen bg-background">
@@ -338,7 +343,7 @@ export default function ProductPage() {
               <div className="flex items-center border-2 border-border rounded-full">
                 <button onClick={() => setQuantity(Math.max(1, quantity - 1))} className="p-2 hover:text-primary transition-colors"><Minus className="w-4 h-4" /></button>
                 <span className="w-10 text-center font-bold">{quantity}</span>
-                <button onClick={() => setQuantity(quantity + 1)} className="p-2 hover:text-primary transition-colors"><Plus className="w-4 h-4" /></button>
+                <button onClick={() => setQuantity(comboStock !== null ? Math.min(comboStock, quantity + 1) : quantity + 1)} disabled={comboStock !== null && quantity >= comboStock} className="p-2 hover:text-primary transition-colors disabled:opacity-30"><Plus className="w-4 h-4" /></button>
               </div>
               <Button
                 onClick={handleAddToCart}
@@ -352,13 +357,17 @@ export default function ProductPage() {
             </div>
 
             {/* Stock */}
-            {!usesAttributeVariants && product.stock_quantity !== undefined && product.stock_quantity !== null ? (
-              <p className="text-sm text-muted-foreground mb-4">
-                {product.stock_quantity > 10 ? '✅ In Stock' : product.stock_quantity > 0 ? `⚠️ Only ${product.stock_quantity} left!` : '❌ Out of Stock'}
-              </p>
-            ) : (
-              <p className="text-sm text-muted-foreground mb-4">✅ In Stock</p>
-            )}
+            {(() => {
+              if (usesAttributeVariants) {
+                if (!selectedCombo) return <p className="text-sm text-muted-foreground mb-4">Select options to check availability</p>;
+                if (comboStock === null) return <p className="text-sm text-muted-foreground mb-4">✅ In Stock</p>;
+                return <p className="text-sm text-muted-foreground mb-4">{comboStock > 10 ? '✅ In Stock' : comboStock > 0 ? `⚠️ Only ${comboStock} left!` : '❌ Out of Stock'}</p>;
+              }
+              if (product.stock_quantity !== undefined && product.stock_quantity !== null) {
+                return <p className="text-sm text-muted-foreground mb-4">{product.stock_quantity > 10 ? '✅ In Stock' : product.stock_quantity > 0 ? `⚠️ Only ${product.stock_quantity} left!` : '❌ Out of Stock'}</p>;
+              }
+              return <p className="text-sm text-muted-foreground mb-4">✅ In Stock</p>;
+            })()}
 
             <p className="text-xs text-muted-foreground">🏆 Earn {Math.floor(displayPrice)} loyalty points with this purchase</p>
           </div>
