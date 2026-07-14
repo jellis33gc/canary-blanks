@@ -22,7 +22,18 @@ export default function Dashboard() {
 
   const revenue = stats.orders.filter(o => o.payment_status === 'paid').reduce((s, o) => s + (o.total || 0), 0);
   const pendingOrders = stats.orders.filter(o => o.status === 'pending');
-  const lowStock = stats.products.filter(p => p.stock_quantity !== undefined && p.stock_quantity < 5);
+  const getEffectiveStock = (p) => {
+    if (p.variants && p.variants.length > 0) {
+      const stocks = p.variants.map(v => v.stock_quantity).filter(s => s !== undefined && s !== null && s !== "");
+      if (stocks.length === 0) return null;
+      return stocks.reduce((sum, s) => sum + Number(s), 0);
+    }
+    if (p.stock_quantity === undefined || p.stock_quantity === null || p.stock_quantity === "") return null;
+    return Number(p.stock_quantity);
+  };
+  const lowStock = stats.products
+    .map(p => ({ ...p, effective_stock: getEffectiveStock(p) }))
+    .filter(p => p.effective_stock !== null && p.effective_stock < 5);
 
   // Sales by day (last 7 days)
   const chartData = Array.from({ length: 7 }, (_, i) => {
@@ -118,8 +129,8 @@ export default function Dashboard() {
           </div>
           {lowStock.slice(0, 5).map(p => (
             <div key={p.id} className="flex items-center justify-between py-2 border-b border-border last:border-0">
-              <p className="font-medium text-sm">{p.name}</p>
-              <p className={`text-sm font-bold ${p.stock_quantity === 0 ? 'text-red-500' : 'text-yellow-600'}`}>{p.stock_quantity === 0 ? 'Out of stock' : `${p.stock_quantity} left`}</p>
+              <p className="font-medium text-sm">{p.name}{p.variants?.length > 0 && <span className="text-xs text-muted-foreground ml-1">({p.variants.length} variants)</span>}</p>
+              <p className={`text-sm font-bold ${p.effective_stock === 0 ? 'text-red-500' : 'text-yellow-600'}`}>{p.effective_stock === 0 ? 'Out of stock' : `${p.effective_stock} left`}</p>
             </div>
           ))}
           {lowStock.length === 0 && <p className="text-sm text-muted-foreground">All products in stock ✅</p>}
