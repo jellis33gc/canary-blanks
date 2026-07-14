@@ -25,8 +25,8 @@ export function CartProvider({ children }) {
       const key = `${product.id}-${variant}`;
       const existing = prev.find(i => `${i.product_id}-${i.variant}` === key);
       const newItems = existing
-        ? prev.map(i => `${i.product_id}-${i.variant}` === key ? { ...i, quantity: i.quantity + quantity } : i)
-        : [...prev, { product_id: product.id, product_name: product.name, variant, quantity, price: product.price, image: product.images?.[0] || '', custom_options: customOptions }];
+        ? prev.map(i => `${i.product_id}-${i.variant}` === key ? { ...i, quantity: i.quantity + quantity, is_backorder: i.is_backorder || product.is_backorder || false, backorder_date: i.backorder_date || product.backorder_date || '' } : i)
+        : [...prev, { product_id: product.id, product_name: product.name, variant, quantity, price: product.price, image: product.images?.[0] || '', custom_options: customOptions, is_backorder: product.is_backorder || false, backorder_date: product.backorder_date || '' }];
       saveCart(newItems);
       return newItems;
     });

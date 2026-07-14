@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Slider } from "@/components/ui/slider";
 import { CreditCard, Lock, Gift, MapPin, Store } from "lucide-react";
+import { format } from "date-fns";
 
 export default function Checkout() {
   const location = useLocation();
@@ -317,6 +318,9 @@ export default function Checkout() {
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium truncate">{item.product_name}</p>
                       <p className="text-xs text-muted-foreground">x{item.quantity}</p>
+                      {item.is_backorder && item.backorder_date && (
+                        <p className="text-xs text-amber-600 font-medium">📦 Back in stock {format(new Date(item.backorder_date), "dd MMM yyyy")}</p>
+                      )}
                     </div>
                     <p className="text-sm font-bold shrink-0">€{(item.price * item.quantity).toFixed(2)}</p>
                   </div>

@@ -48,6 +48,14 @@
     "stock_quantity": {
       "type": "number"
     },
+    "allow_backorders": {
+      "type": "boolean",
+      "default": false
+    },
+    "backorder_date": {
+      "type": "string",
+      "format": "date"
+    },
     "sku": {
       "type": "string"
     },

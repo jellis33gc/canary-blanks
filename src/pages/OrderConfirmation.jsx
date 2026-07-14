@@ -7,6 +7,7 @@ import { markCartRecovered } from "@/components/marketing/useCartTracking";
 import { Button } from "@/components/ui/button";
 import { CheckCircle, XCircle, Package, ArrowRight } from "lucide-react";
 import { motion } from "framer-motion";
+import { format } from "date-fns";
 
 export default function OrderConfirmation() {
   const { id } = useParams();
@@ -84,7 +85,12 @@ export default function OrderConfirmation() {
                 <div>
                   <p className="font-semibold mb-2">Items:</p>
                   {order.items?.map((item, i) => (
-                    <p key={i} className="text-sm text-muted-foreground">• {item.product_name} x{item.quantity} — €{(item.price * item.quantity).toFixed(2)}</p>
+                    <div key={i}>
+                      <p className="text-sm text-muted-foreground">• {item.product_name} x{item.quantity} — €{(item.price * item.quantity).toFixed(2)}</p>
+                      {item.is_backorder && item.backorder_date && (
+                        <p className="text-xs text-amber-600 ml-3">📦 Back in stock {format(new Date(item.backorder_date), "dd MMM yyyy")} (pre-order)</p>
+                      )}
+                    </div>
                   ))}
                 </div>
               </div>

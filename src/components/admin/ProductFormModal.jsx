@@ -42,6 +42,8 @@ export default function ProductFormModal({ product, categories, onSave, onClose 
     images:            product?.images || [],
     sku:               product?.sku || "",
     stock_quantity:    product?.stock_quantity ?? "",
+    allow_backorders:  product?.allow_backorders ?? false,
+    backorder_date:    product?.backorder_date || "",
     is_active:         product?.is_active ?? true,
     is_featured:       product?.is_featured ?? false,
     is_on_sale:        product?.is_on_sale ?? false,
@@ -408,6 +410,19 @@ export default function ProductFormModal({ product, categories, onSave, onClose 
                   <Label>Stock Quantity</Label>
                   <Input type="number" value={form.stock_quantity} onChange={e => set("stock_quantity", e.target.value)} className="rounded-xl" placeholder="Leave empty for unlimited" />
                 </div>
+              </div>
+              <div className="space-y-3 border-t border-border pt-4">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <Checkbox checked={form.allow_backorders} onCheckedChange={v => set("allow_backorders", v)} />
+                  <span className="text-sm font-medium">Allow back orders</span>
+                </label>
+                <p className="text-xs text-muted-foreground -mt-2">Customers can purchase this product even when out of stock.</p>
+                {form.allow_backorders && (
+                  <div className="space-y-1">
+                    <Label>Back in stock date</Label>
+                    <Input type="date" value={form.backorder_date} onChange={e => set("backorder_date", e.target.value)} className="rounded-xl" />
+                  </div>
+                )}
               </div>
             </TabsContent>
 

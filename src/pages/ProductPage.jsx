@@ -14,6 +14,7 @@ import useCartStore from "@/lib/cartStore.jsx";
 import { motion } from "framer-motion";
 import ProductReviews from "@/components/product/ProductReviews";
 import ProductRatingSummary from "@/components/product/ProductRatingSummary";
+import { format } from "date-fns";
 
 export default function ProductPage() {
   const { slug } = useParams();
@@ -96,7 +97,7 @@ export default function ProductPage() {
   const handleAddToCart = () => {
     if (!product) return;
     const variantStr = Object.values(selectedVariants).join(" / ");
-    addItem({ ...product, price: displayPrice }, quantity, variantStr, customOptions);
+    addItem({ ...product, price: displayPrice, is_backorder: isBackorder, backorder_date: product.backorder_date || '' }, quantity, variantStr, customOptions);
     setAdded(true);
     setTimeout(() => setAdded(false), 2000);
   };
@@ -166,10 +167,19 @@ export default function ProductPage() {
     ? (selectedCombo.stock_quantity !== undefined && selectedCombo.stock_quantity !== null && selectedCombo.stock_quantity !== "" ? Number(selectedCombo.stock_quantity) : null)
     : null;
 
+  // Back-order support
+  const canBackorder = product.allow_backorders === true;
+  const backorderDateLabel = product.backorder_date ? format(new Date(product.backorder_date), "dd MMM yyyy") : "";
+  const stockOutOfStock = usesAttributeVariants
+    ? (selectedCombo ? comboStock === 0 : false)
+    : (product.stock_quantity !== undefined && product.stock_quantity !== null && product.stock_quantity === 0);
+  const isBackorder = stockOutOfStock && canBackorder;
+
   // Block add to cart if any selected variant is OOS (global attribute map OR per-combo flag)
-  const hasOOSSelected = Object.entries(selectedVariants).some(
+  const manualOOS = Object.entries(selectedVariants).some(
     ([variantName, label]) => (oosMap[variantName] || []).includes(label)
-  ) || selectedCombo?.out_of_stock === true || comboStock === 0;
+  ) || selectedCombo?.out_of_stock === true;
+  const hasOOSSelected = manualOOS || (stockOutOfStock && !canBackorder);
 
   return (
     <div className="min-h-screen bg-background">
@@ -343,7 +353,7 @@ export default function ProductPage() {
               <div className="flex items-center border-2 border-border rounded-full">
                 <button onClick={() => setQuantity(Math.max(1, quantity - 1))} className="p-2 hover:text-primary transition-colors"><Minus className="w-4 h-4" /></button>
                 <span className="w-10 text-center font-bold">{quantity}</span>
-                <button onClick={() => setQuantity(comboStock !== null ? Math.min(comboStock, quantity + 1) : quantity + 1)} disabled={comboStock !== null && quantity >= comboStock} className="p-2 hover:text-primary transition-colors disabled:opacity-30"><Plus className="w-4 h-4" /></button>
+                <button onClick={() => setQuantity(comboStock !== null && !isBackorder ? Math.min(comboStock, quantity + 1) : quantity + 1)} disabled={comboStock !== null && !isBackorder && quantity >= comboStock} className="p-2 hover:text-primary transition-colors disabled:opacity-30"><Plus className="w-4 h-4" /></button>
               </div>
               <Button
                 onClick={handleAddToCart}
@@ -352,7 +362,7 @@ export default function ProductPage() {
                 className={`flex-1 rounded-full font-bold transition-all ${added ? 'bg-green-500 hover:bg-green-500' : hasOOSSelected ? 'bg-muted text-muted-foreground' : 'bg-primary hover:bg-primary/90 text-white'}`}
               >
                 <ShoppingCart className="w-5 h-5 mr-2" />
-                {hasOOSSelected ? 'Option Out of Stock' : added ? '✓ Added to Cart!' : 'Add to Cart'}
+                {hasOOSSelected ? 'Out of Stock' : isBackorder ? 'Pre-Order' : added ? '✓ Added to Cart!' : 'Add to Cart'}
               </Button>
             </div>
 
@@ -361,10 +371,18 @@ export default function ProductPage() {
               if (usesAttributeVariants) {
                 if (!selectedCombo) return <p className="text-sm text-muted-foreground mb-4">Select options to check availability</p>;
                 if (comboStock === null) return <p className="text-sm text-muted-foreground mb-4">✅ In Stock</p>;
-                return <p className="text-sm text-muted-foreground mb-4">{comboStock > 10 ? '✅ In Stock' : comboStock > 0 ? `⚠️ Only ${comboStock} left!` : '❌ Out of Stock'}</p>;
+                if (comboStock === 0) {
+                  if (isBackorder && backorderDateLabel) return <p className="text-sm text-amber-600 mb-4 font-medium">📦 Back in stock {backorderDateLabel} — available for pre-order</p>;
+                  return <p className="text-sm text-muted-foreground mb-4">❌ Out of Stock</p>;
+                }
+                return <p className="text-sm text-muted-foreground mb-4">{comboStock > 10 ? '✅ In Stock' : `⚠️ Only ${comboStock} left!`}</p>;
               }
               if (product.stock_quantity !== undefined && product.stock_quantity !== null) {
-                return <p className="text-sm text-muted-foreground mb-4">{product.stock_quantity > 10 ? '✅ In Stock' : product.stock_quantity > 0 ? `⚠️ Only ${product.stock_quantity} left!` : '❌ Out of Stock'}</p>;
+                if (product.stock_quantity === 0) {
+                  if (isBackorder && backorderDateLabel) return <p className="text-sm text-amber-600 mb-4 font-medium">📦 Back in stock {backorderDateLabel} — available for pre-order</p>;
+                  return <p className="text-sm text-muted-foreground mb-4">❌ Out of Stock</p>;
+                }
+                return <p className="text-sm text-muted-foreground mb-4">{product.stock_quantity > 10 ? '✅ In Stock' : `⚠️ Only ${product.stock_quantity} left!`}</p>;
               }
               return <p className="text-sm text-muted-foreground mb-4">✅ In Stock</p>;
             })()}

@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Minus, Plus, Trash2, ShoppingBag, Tag } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { format } from "date-fns";
 
 export default function Cart() {
   const { items, removeItem, updateQuantity, getSubtotal, clearCart } = useCartStore();
@@ -94,6 +95,9 @@ export default function Cart() {
                     {item.custom_options && Object.entries(item.custom_options).map(([k, v]) => (
                       <p key={k} className="text-xs text-muted-foreground">{k}: {v}</p>
                     ))}
+                    {item.is_backorder && item.backorder_date && (
+                      <p className="text-xs text-amber-600 font-medium">📦 Back in stock {format(new Date(item.backorder_date), "dd MMM yyyy")} (pre-order)</p>
+                    )}
                     <p className="font-bold text-primary mt-1">€{item.price?.toFixed(2)}</p>
                   </div>
                   <div className="flex items-center gap-2">
