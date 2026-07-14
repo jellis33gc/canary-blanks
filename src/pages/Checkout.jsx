@@ -312,7 +312,7 @@ export default function Checkout() {
                 {items.map((item, i) => (
                   <div key={i} className="flex gap-3 items-center">
                     <div className="w-12 h-12 rounded-xl bg-muted overflow-hidden shrink-0">
-                      {item.image ? <img src={item.image} alt="" className="w-full h-full object-cover" /> : <div className="flex items-center justify-center h-full text-xl">🎂</div>}
+                      {item.image ? <img src={item.image} alt="" className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center bg-muted"><img src="https://media.base44.com/images/public/6a3fafd9aa6b3dbb7c575d28/662e2144c_CanaryBlankslogo.png" alt="Canary Blanks" className="w-full h-full object-contain opacity-40" /></div>}
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium truncate">{item.product_name}</p>
